@@ -287,3 +287,24 @@ function wpcamp_hub_wordmark( $class_attr = '' ) {
 		esc_url( home_url( '/' ) )
 	);
 }
+
+/**
+ * Build up-to-two-letter initials from a name for avatar placeholders.
+ *
+ * @param string $name Person/handle name.
+ * @return string
+ */
+function wpcamp_hub_initials( $name ) {
+	$name = trim( (string) $name );
+	if ( '' === $name ) {
+		return '';
+	}
+
+	$parts    = preg_split( '/\s+/', $name );
+	$initials = '';
+	foreach ( array_slice( is_array( $parts ) ? $parts : array(), 0, 2 ) as $part ) {
+		$initials .= mb_strtoupper( mb_substr( $part, 0, 1 ) );
+	}
+
+	return $initials;
+}

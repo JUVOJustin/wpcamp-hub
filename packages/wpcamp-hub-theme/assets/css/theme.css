@@ -207,3 +207,140 @@ a { color: var(--brand); text-decoration: none; }
 @media (max-width: 560px) {
   .foot-grid { grid-template-columns: 1fr; }
 }
+
+/* ============================================================
+   Events archive
+   ============================================================ */
+.wpch-events { padding: 0 0 64px; }
+.wpch-events__grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 24px;
+  align-items: stretch;
+}
+@media (max-width: 980px) { .wpch-events__grid { grid-template-columns: repeat(2, 1fr); } }
+@media (max-width: 700px) { .wpch-events__grid { grid-template-columns: 1fr; } }
+
+.wpch-event-card {
+  --wpch-src: var(--wp--preset--color--fest-gold, #ffb020);
+  background: #fff;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  overflow: hidden;
+  display: flex;
+  transition: border-color .15s ease, box-shadow .15s ease;
+}
+.wpch-event-card:hover { box-shadow: var(--shadow-sm); border-color: var(--line-strong); }
+.wpch-event-card__link {
+  display: flex; flex-direction: column; flex: 1;
+  text-decoration: none; color: inherit;
+}
+.wpch-event-card__accent { display: block; height: 6px; background: var(--wpch-src); }
+.wpch-event-card__body { padding: 18px 20px; display: flex; flex-direction: column; flex: 1; }
+.wpch-event-card__top { display: flex; align-items: center; gap: 8px; margin-bottom: 12px; }
+.wpch-event-card__badge {
+  font-size: 11px; font-weight: 700; letter-spacing: .07em; text-transform: uppercase;
+  padding: 4px 8px; border-radius: 2px; line-height: 1.3;
+  color: var(--wpch-src);
+  background: color-mix(in srgb, var(--wpch-src) 12%, #fff);
+}
+.wpch-event-card__type {
+  margin-left: auto; font-size: 12.5px; font-weight: 600;
+  color: var(--wpch-src);
+}
+.wpch-event-card__title {
+  margin: 0 0 8px; font-family: var(--font-sans);
+  font-size: 19px; font-weight: 700; letter-spacing: -.01em; line-height: 1.25;
+  color: var(--ink-900);
+}
+.wpch-event-card__excerpt {
+  margin: 0; font-size: 14.5px; line-height: 1.55; color: var(--ink-600); flex: 1;
+}
+.wpch-event-card__meta {
+  margin-top: 16px; display: flex; flex-direction: column; gap: 6px;
+  font: 500 13px var(--font-mono); color: var(--ink-600);
+}
+
+/* ============================================================
+   Single event
+   ============================================================ */
+.wpch-event { --wpch-accent: var(--wp--preset--color--brand, #3858e9); }
+.wpch-event__header {
+  background: color-mix(in srgb, var(--wpch-accent) 10%, #fff);
+  padding: 48px 0 36px;
+  border-bottom: 1px solid var(--line);
+}
+.wpch-event__badges { display: flex; align-items: center; gap: 10px; margin-bottom: 14px; }
+.wpch-event__badge {
+  font-size: 11px; font-weight: 700; letter-spacing: .07em; text-transform: uppercase;
+  padding: 4px 9px; border-radius: 2px; line-height: 1.3;
+  color: var(--wpch-accent); background: #fff;
+}
+.wpch-event__type {
+  display: inline-flex; align-items: center; gap: 7px;
+  font-size: 13.5px; font-weight: 600; color: var(--wpch-accent);
+}
+.wpch-event__dot { width: 10px; height: 10px; border-radius: 50%; background: var(--wpch-accent); }
+.wpch-event__title {
+  margin: 0 0 14px;
+  font-family: var(--font-display);
+  font-size: clamp(32px, 4vw, 46px); font-weight: 600; line-height: 1.1;
+  letter-spacing: -.01em; color: var(--ink-900); text-wrap: balance;
+}
+.wpch-event__meta {
+  display: flex; flex-wrap: wrap; gap: 8px 22px;
+  font: 500 14px var(--font-mono); color: var(--ink-700);
+}
+
+.wpch-event__body { padding: 40px 24px 72px; max-width: 760px; }
+.wpch-event__description { font-size: 17px; line-height: 1.7; color: var(--ink-700); }
+.wpch-event__description p { max-width: none; }
+
+.wpch-event__section { margin-top: 40px; }
+.wpch-event__section-title {
+  margin: 0 0 18px; font-size: 13px; font-weight: 700;
+  letter-spacing: .08em; text-transform: uppercase; color: var(--ink-500);
+}
+
+/* attendees */
+.wpch-event__attendees { display: flex; align-items: center; gap: 14px; }
+.wpch-event__stack { display: flex; }
+.wpch-event__avatar {
+  width: 38px; height: 38px; border-radius: 50%; flex: none;
+  display: grid; place-items: center;
+  background: var(--wp--preset--color--blue-200, #b7c3fb);
+  color: var(--wp--preset--color--brand-press, #243596);
+  font-size: 13px; font-weight: 700;
+  border: 2px solid #fff; margin-left: -10px;
+}
+.wpch-event__stack .wpch-event__avatar:first-child { margin-left: 0; }
+.wpch-event__going { font-size: 15px; color: var(--ink-600); }
+
+/* sessions */
+.wpch-event__sessions { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 10px; }
+.wpch-event__session { --wpch-track: var(--wp--preset--color--brand, #3858e9); }
+.wpch-event__session a {
+  display: flex; align-items: center; gap: 12px;
+  padding: 14px 16px; border: 1px solid var(--line); border-left: 4px solid var(--wpch-track);
+  border-radius: 6px; text-decoration: none; color: inherit;
+  transition: background .15s ease;
+}
+.wpch-event__session a:hover { background: var(--bg-subtle); }
+.wpch-event__session-dot { width: 9px; height: 9px; border-radius: 50%; background: var(--wpch-track); flex: none; }
+.wpch-event__session-title { font-weight: 600; font-size: 15px; }
+.wpch-event__session-track { font-size: 12.5px; font-weight: 600; color: var(--wpch-track); }
+.wpch-event__session-time { margin-left: auto; font: 500 12.5px var(--font-mono); color: var(--ink-500); white-space: nowrap; }
+
+/* tweets */
+.wpch-event__tweets { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+@media (max-width: 600px) { .wpch-event__tweets { grid-template-columns: 1fr; } }
+.wpch-event__tweet {
+  border: 1px solid var(--line); border-radius: 8px; padding: 16px;
+  display: flex; flex-direction: column;
+}
+.wpch-event__tweet-head { display: flex; align-items: center; gap: 10px; margin-bottom: 10px; }
+.wpch-event__tweet-name { font-weight: 700; font-size: 14px; }
+.wpch-event__tweet-handle { font: 500 12px var(--font-mono); color: var(--ink-500); }
+.wpch-event__tweet-text { margin: 0 0 12px; font-size: 14px; line-height: 1.55; color: var(--ink-700); flex: 1; }
+.wpch-event__tweet-link { font-size: 13px; font-weight: 600; color: var(--brand); text-decoration: none; }
+.wpch-event__tweet-link:hover { text-decoration: underline; }

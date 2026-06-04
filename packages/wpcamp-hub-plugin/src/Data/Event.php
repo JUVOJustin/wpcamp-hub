@@ -20,6 +20,64 @@ class Event extends Post_Entity {
 	}
 
 	/**
+	 * Event start date/time (stored ISO 8601 string).
+	 */
+	public function get_start(): string {
+		$value = get_post_meta( $this->get_id(), 'wpcamp_date_start', true );
+
+		return is_string( $value ) ? $value : '';
+	}
+
+	/**
+	 * Event end date/time (stored ISO 8601 string).
+	 */
+	public function get_end(): string {
+		$value = get_post_meta( $this->get_id(), 'wpcamp_date_end', true );
+
+		return is_string( $value ) ? $value : '';
+	}
+
+	/**
+	 * Human-readable location.
+	 */
+	public function get_location(): string {
+		$value = get_post_meta( $this->get_id(), 'wpcamp_location', true );
+
+		return is_string( $value ) ? $value : '';
+	}
+
+	/**
+	 * Official event URL.
+	 */
+	public function get_official_url(): string {
+		$value = get_post_meta( $this->get_id(), 'wpcamp_official_url', true );
+
+		return is_string( $value ) ? $value : '';
+	}
+
+	/**
+	 * Source key (e.g. official / community / x).
+	 */
+	public function get_source(): string {
+		$value = get_post_meta( $this->get_id(), 'wpcamp_source', true );
+
+		return is_string( $value ) ? $value : '';
+	}
+
+	/**
+	 * Event type term assigned to this event.
+	 */
+	public function get_type(): ?Event_Type {
+		$terms = get_the_terms( $this->get_id(), Data_Structure::TAXONOMY_EVENT_TYPE );
+
+		if ( ! is_array( $terms ) || array() === $terms ) {
+			return null;
+		}
+
+		return Event_Type::from( reset( $terms ) );
+	}
+
+	/**
 	 * Attendee profiles related to this event.
 	 *
 	 * @return list<User_Profile>
