@@ -135,6 +135,59 @@ function wpcamp_hub_icon( $name, $size = 20 ) {
 }
 
 /**
+ * Extract a Lucide icon name from a menu item's CSS classes.
+ *
+ * Recognises a class of the form "licon-<name>" (e.g. "licon-calendar")
+ * assigned in the menu editor's "CSS Classes" field.
+ *
+ * @param array $classes Menu item CSS classes.
+ * @return string Lucide icon name, or empty string if none.
+ */
+function wpcamp_hub_menu_item_icon( $classes ) {
+	foreach ( (array) $classes as $class ) {
+		if ( 0 === strpos( $class, 'licon-' ) ) {
+			return substr( $class, 6 );
+		}
+	}
+	return '';
+}
+
+/**
+ * Prepend a Lucide icon to mobile bottom-bar menu items.
+ *
+ * Set an icon by adding a "licon-<name>" CSS class to the menu item
+ * (Appearance → Menus → item → "CSS Classes"; enable the field under
+ * Screen Options if hidden). The label is wrapped so it can be styled
+ * or hidden independently of the icon.
+ *
+ * @param string   $item_output The menu item's starting HTML.
+ * @param WP_Post  $item        Menu item data object.
+ * @param int      $depth       Depth of the menu item.
+ * @param stdClass $args        wp_nav_menu() arguments.
+ * @return string
+ */
+function wpcamp_hub_mobile_menu_icons( $item_output, $item, $depth, $args ) {
+	if ( empty( $args->theme_location ) || 'mobile' !== $args->theme_location ) {
+		return $item_output;
+	}
+
+	$icon = wpcamp_hub_menu_item_icon( $item->classes );
+	if ( '' === $icon ) {
+		return $item_output;
+	}
+
+	// Inject the icon right after the opening <a ...> tag, and wrap the
+	// remaining label text in a span for styling.
+	return preg_replace(
+		'/(<a\b[^>]*>)(.*)(<\/a>)/s',
+		'$1' . wpcamp_hub_icon( $icon, 22 ) . '<span class="mobile-nav-label">$2</span>$3',
+		$item_output,
+		1
+	);
+}
+add_filter( 'walker_nav_menu_start_el', 'wpcamp_hub_mobile_menu_icons', 10, 4 );
+
+/**
  * Register theme options in the Customizer.
  *
  * @param WP_Customize_Manager $wp_customize Customizer manager.

@@ -74,7 +74,8 @@ if ( has_nav_menu( 'mobile' ) ) :
 			array(
 				'theme_location' => 'mobile',
 				'container'      => false,
-				'items_wrap'     => '%3$s',
+				'menu_class'     => 'mobile-nav-list',
+				'items_wrap'     => '<ul class="%2$s">%3$s</ul>',
 				'fallback_cb'    => false,
 				'depth'          => 1,
 			)
