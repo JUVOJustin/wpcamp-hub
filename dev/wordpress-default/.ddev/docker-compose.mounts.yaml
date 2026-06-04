@@ -7,3 +7,6 @@ services:
       - type: bind
         source: ${DDEV_APPROOT}/../../packages/wpcamp-hub-theme
         target: /var/www/html/wp-content/themes/wpcamp-hub-theme
+      - type: bind
+        source: ${DDEV_APPROOT}/../../packages/wpcamp-hub-plugin
+        target: /var/www/html/wp-content/plugins/wpcamp-hub-plugin

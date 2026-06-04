@@ -1,0 +1,93 @@
+name: wpcamp-hub-plugin Setup Environment
+
+on:
+  workflow_call:
+    inputs:
+      mode:
+        description: Either dev or prod.
+        required: true
+        default: dev
+        type: string
+    outputs:
+      php-cache-key:
+        description: The PHP dependencies cache key.
+        value: ${{ jobs.wpcamp-hub-plugin-setup.outputs.php-cache-key }}
+      node-cache-key:
+        description: The Node dependencies cache key.
+        value: ${{ jobs.wpcamp-hub-plugin-setup.outputs.node-cache-key }}
+
+jobs:
+  wpcamp-hub-plugin-setup:
+    runs-on: ubuntu-latest
+    outputs:
+      php-cache-key: ${{ steps.cache-keys.outputs.php-key }}
+      node-cache-key: ${{ steps.cache-keys.outputs.node-key }}
+
+    defaults:
+      run:
+        working-directory: packages/wpcamp-hub-plugin
+
+    steps:
+      - uses: actions/checkout@v6
+
+      - name: Generate cache keys
+        id: cache-keys
+        run: |
+          echo "php-key=php-${{ inputs.mode }}-${{ runner.os }}-${{ hashFiles('packages/wpcamp-hub-plugin/composer.lock', 'packages/wpcamp-hub-plugin/composer.json') }}" >> $GITHUB_OUTPUT
+          echo "node-key=node-${{ inputs.mode }}-${{ runner.os }}-${{ hashFiles('packages/wpcamp-hub-plugin/package-lock.json') }}" >> $GITHUB_OUTPUT
+
+      - name: PHP dependencies cache
+        uses: actions/cache@v5
+        id: php-cache
+        with:
+          path: |
+            packages/wpcamp-hub-plugin/vendor
+            packages/wpcamp-hub-plugin/vendor-prefixed
+          key: ${{ steps.cache-keys.outputs.php-key }}
+          restore-keys: |
+            php-${{ inputs.mode }}-${{ runner.os }}-
+            php-${{ runner.os }}-
+
+      - name: Node dependencies cache
+        uses: actions/cache@v5
+        id: node-cache
+        with:
+          path: |
+            packages/wpcamp-hub-plugin/node_modules
+            packages/wpcamp-hub-plugin/build
+          key: ${{ steps.cache-keys.outputs.node-key }}
+          restore-keys: |
+            node-${{ inputs.mode }}-${{ runner.os }}-
+            node-${{ runner.os }}-
+
+      - name: Setup PHP
+        if: steps.php-cache.outputs.cache-hit != 'true'
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.2'
+
+      - name: Setup Node
+        if: steps.node-cache.outputs.cache-hit != 'true'
+        uses: actions/setup-node@v6
+        with:
+          node-version: '24'
+
+      - name: Install Composer dependencies
+        if: steps.php-cache.outputs.cache-hit != 'true'
+        run: |
+          composer validate --strict
+          mkdir -p vendor-prefixed
+          mkdir -p bin
+          if [ "${{ inputs.mode }}" = "dev" ]; then
+            composer install --prefer-dist --no-interaction --no-progress
+          else
+            composer install --no-dev --prefer-dist --no-progress --no-suggest --ignore-platform-reqs --optimize-autoloader --classmap-authoritative
+          fi
+
+      - name: Install NPM dependencies
+        if: steps.node-cache.outputs.cache-hit != 'true'
+        run: npm ci
+
+      - name: Build assets
+        if: inputs.mode == 'prod' && steps.node-cache.outputs.cache-hit != 'true'
+        run: npm run build
