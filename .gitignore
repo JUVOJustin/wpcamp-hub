@@ -1,0 +1,38 @@
+# Ignore all skills - Should be managed by `npx skills`
+.agents/skills/*
+!.agents/skills/client-monorepo/**
+
+# Legacy local WordPress runtime folder. New WordPress dev environments use dev/wordpress-*.
+/dev/wordpress/
+
+# WordPress dev environments ship only DDEV's portable config and package mounts.
+/dev/wordpress-*/*
+!/dev/wordpress-*/.ddev/
+/dev/wordpress-*/.ddev/*
+!/dev/wordpress-*/.ddev/config.yaml
+!/dev/wordpress-*/.ddev/docker-compose.mounts.yaml
+
+/.local-assets/*
+!/.local-assets/.gitkeep
+!/.local-assets/plugins/
+!/.local-assets/plugins/.gitkeep
+!/.local-assets/db/
+!/.local-assets/db/.gitkeep
+!/.local-assets/files/
+!/.local-assets/files/.gitkeep
+
+.DS_Store
+
+# Baseline generated dependency and build output directories across packages and dev environments.
+# Packages should keep package-specific ignore rules in their own .gitignore files.
+**/node_modules/
+**/vendor/
+**/dist/
+**/build/
+**/coverage/
+
+# Astro generated development state.
+**/.astro/
+
+# Wrangler generated local development state.
+**/.wrangler/

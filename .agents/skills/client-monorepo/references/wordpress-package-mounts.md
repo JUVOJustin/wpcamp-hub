@@ -1,0 +1,1 @@
+../../../../docs/setup/wordpress-package-mounts.md

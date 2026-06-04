@@ -1,0 +1,1 @@
+../../../../docs/setup/how-to-write-docs.md

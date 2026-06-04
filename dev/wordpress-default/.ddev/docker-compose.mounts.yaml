@@ -1,0 +1,13 @@
+services:
+  web:
+    # Add package mounts here when a WordPress package exists.
+    # DDEV_APPROOT points to this dev/wordpress-* environment folder on the host.
+    #
+    # volumes:
+    #   - type: bind
+    #     source: ${DDEV_APPROOT}/../../packages/<plugin-package>
+    #     target: /var/www/html/wp-content/plugins/<wordpress-plugin-folder>
+    #   - type: bind
+    #     source: ${DDEV_APPROOT}/../../packages/<theme-package>
+    #     target: /var/www/html/wp-content/themes/<wordpress-theme-folder>
+    volumes: []

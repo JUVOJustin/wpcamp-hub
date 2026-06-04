@@ -1,0 +1,12 @@
+name: wordpress-default
+type: wordpress
+docroot: ""
+php_version: "8.4"
+webserver_type: nginx-fpm
+xdebug_enabled: false
+database:
+  type: mariadb
+  version: "11.8"
+use_dns_when_possible: true
+composer_version: "2"
+corepack_enable: false
