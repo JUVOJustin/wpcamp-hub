@@ -108,6 +108,7 @@ class WPCAMP_HUB {
 
 		$this->loader->add_action( 'add_meta_boxes', $this->data_structure, 'register_meta_boxes', 10, 0 );
 		$this->loader->add_action( 'save_post', $this->data_structure, 'save_post_meta', 10, 2 );
+		$this->loader->add_action( 'enqueue_block_editor_assets', $this, 'add_editor_block_data', 10, 0 );
 
 		add_action(
 			'admin_enqueue_scripts',
@@ -115,6 +116,17 @@ class WPCAMP_HUB {
 				$this->enqueue_entrypoint( 'wpcamp-hub-admin' );
 			},
 			100
+		);
+	}
+
+	/**
+	 * Add data consumed by editor blocks.
+	 */
+	public function add_editor_block_data(): void {
+		wp_add_inline_script(
+			generate_block_asset_handle( 'wpcamp-hub/post-meta-panel', 'editorScript' ),
+			'window.wpcamp_hub = window.wpcamp_hub || {}; window.wpcamp_hub.postMetaFields = ' . wp_json_encode( $this->data_structure->get_editor_post_meta_fields() ) . ';',
+			'before'
 		);
 	}
 

@@ -79,6 +79,33 @@ class DataStructureTest extends WP_UnitTestCase {
 	}
 
 	/**
+	 * Editor controls only receive REST-exposed post meta fields.
+	 */
+	public function test_editor_meta_fields_only_include_rest_exposed_fields(): void {
+		$editor_fields = ( new Data_Structure() )->get_editor_post_meta_fields();
+
+		$this->assertArrayHasKey( 'wpcamp_tweet_url', $editor_fields[ Data_Structure::POST_TYPE_TWEET ] );
+		$this->assertArrayNotHasKey( 'wpcamp_tweet_id', $editor_fields[ Data_Structure::POST_TYPE_TWEET ] );
+		$this->assertArrayNotHasKey( 'wpcamp_author_handle', $editor_fields[ Data_Structure::POST_TYPE_TWEET ] );
+	}
+
+	/**
+	 * Platform post types start with the controlled meta block in the editor.
+	 */
+	public function test_post_types_include_meta_panel_block_template(): void {
+		foreach ( array_keys( Data_Structure::get_post_types() ) as $post_type ) {
+			$post_type_object = get_post_type_object( $post_type );
+
+			$this->assertSame(
+				array(
+					array( 'wpcamp-hub/post-meta-panel' ),
+				),
+				$post_type_object->template
+			);
+		}
+	}
+
+	/**
 	 * Entity wrappers initialize from native IDs and expose the wrapped object.
 	 */
 	public function test_entity_wrappers_initialize_from_ids(): void {

@@ -43,7 +43,11 @@ class Data_Structure {
 				array( $this, 'render_meta_box' ),
 				$post_type,
 				'normal',
-				'default'
+				'default',
+				array(
+					'__block_editor_compatible_meta_box' => true,
+					'__back_compat_meta_box'             => true,
+				)
 			);
 		}
 	}
@@ -225,6 +229,32 @@ class Data_Structure {
 	}
 
 	/**
+	 * Post meta fields exposed to the block editor.
+	 *
+	 * @return array<string,array<string,array{type:string,description:string,format:string|null,properties:array<string,string>|null}>>
+	 */
+	public function get_editor_post_meta_fields(): array {
+		$editable_fields = array();
+
+		foreach ( self::get_post_meta_fields() as $post_type => $fields ) {
+			foreach ( $fields as $meta_key => $field ) {
+				if ( empty( $field['show_in_rest'] ) ) {
+					continue;
+				}
+
+				$editable_fields[ $post_type ][ $meta_key ] = array(
+					'type'        => (string) $field['type'],
+					'description' => (string) $field['description'],
+					'format'      => is_string( $field['format'] ) ? $field['format'] : null,
+					'properties'  => is_array( $field['properties'] ) ? $field['properties'] : null,
+				);
+			}
+		}
+
+		return $editable_fields;
+	}
+
+	/**
 	 * Convert post type to platform entity type.
 	 *
 	 * @param string $post_type Registered post type.
@@ -301,6 +331,9 @@ class Data_Structure {
 					'supports'      => $config['supports'],
 					'taxonomies'    => $config['taxonomies'],
 					'rewrite'       => array( 'slug' => str_replace( 'wpcamp_', '', $post_type ) ),
+					'template'      => array(
+						array( 'wpcamp-hub/post-meta-panel' ),
+					),
 					'capability_type' => 'post',
 				)
 			);
