@@ -202,7 +202,14 @@ function UrlControl( { help, label, metaKey, onChange, value } ) {
 				__next40pxDefaultSize
 				hideLabelFromVision
 				label={ label }
-				prefix={ <Icon icon={ globe } size={ 20 } /> }
+				prefix={
+					<span
+						aria-hidden="true"
+						className="wpcamp-hub-editor-url-prefix"
+					>
+						<Icon icon={ globe } size={ 20 } />
+					</span>
+				}
 				type="url"
 				value={ value || '' }
 				onChange={ ( nextValue ) => onChange( nextValue ?? '' ) }
