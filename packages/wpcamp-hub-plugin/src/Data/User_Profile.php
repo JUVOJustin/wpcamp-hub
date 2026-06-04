@@ -20,7 +20,9 @@ class User_Profile extends User_Entity {
 	 * @return self
 	 */
 	public static function create_attendee( string $identifier, string $name ): self {
-		$slug    = sanitize_user( $identifier, true );
+		$slug = sanitize_user( $identifier, true );
+
+		// wp_insert_user creates the profile without triggering WordPress' new-user notification email.
 		$user_id = wp_insert_user(
 			array(
 				'user_login'   => $slug,

@@ -100,6 +100,26 @@ class DataStructureTest extends WP_UnitTestCase {
 	}
 
 	/**
+	 * Attendee profile creation must not send an invitation email.
+	 */
+	public function test_create_attendee_does_not_send_invite_email(): void {
+		$mail_attempts = 0;
+		$pre_wp_mail   = static function ( null|bool $return, array $atts ) use ( &$mail_attempts ): bool {
+			++$mail_attempts;
+			return false;
+		};
+
+		add_filter( 'pre_wp_mail', $pre_wp_mail, 10, 2 );
+		try {
+			User_Profile::create_attendee( 'no-invite-attendee', 'No Invite Attendee' );
+		} finally {
+			remove_filter( 'pre_wp_mail', $pre_wp_mail, 10 );
+		}
+
+		$this->assertSame( 0, $mail_attempts );
+	}
+
+	/**
 	 * Term wrappers initialize from IDs.
 	 */
 	public function test_term_wrappers_initialize_from_ids(): void {
