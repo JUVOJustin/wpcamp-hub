@@ -1,0 +1,23 @@
+{
+  "name": "wpcamp-hub",
+  "devDependencies": {
+    "@wordpress/env": "^11.7.0",
+    "@wordpress/scripts": "^32.1.0"
+  },
+  "scripts": {
+    "start": "wp-scripts start --blocks-manifest",
+    "build": "wp-scripts build --blocks-manifest",
+    "lint:style": "wp-scripts lint-style 'resources/**/*.{css,scss,sass}'",
+    "lint:js": "wp-scripts lint-js ./resources",
+    "lint:fix:js": "wp-scripts lint-js ./resources --fix",
+    "lint:fix:style": "wp-scripts lint-style 'resources/**/*.{css,scss,sass}' --fix",
+    "format": "wp-scripts format ./resources",
+    "packages-update": "wp-scripts packages-update",
+    "create-block": "bash -lc \"mkdir -p src/Blocks && cd src/Blocks && npx @wordpress/create-block --no-plugin --namespace=wpcamp-hub --textdomain=wpcamp-hub\"",
+    "env:start": "wp-env start --update",
+    "env:stop": "wp-env stop",
+    "env:destroy": "wp-env destroy",
+    "env:cli": "wp-env run cli --env-cwd=wp-content/plugins/wpcamp-hub",
+    "test:php": "wp-env run tests-cli --env-cwd=wp-content/plugins/wpcamp-hub bash -lc 'composer install --working-dir=tests --no-interaction && vendor/bin/phpunit'"
+  }
+}

@@ -1,0 +1,96 @@
+{
+    "name": "juvo/wordpress-plugin-boilerplate",
+    "description": "A boilerplate for WordPress plugin development. Supercharged with Autoloading, @wordpress/scripts, PHPStan and PHPCS.",
+    "license": "GPL-3.0-or-later",
+    "authors": [
+        {
+            "name": "Justin Vogt",
+            "email": "mail@justin-vogt.com",
+            "homepage": "https://justin-vogt.com"
+        }
+    ],
+    "require-dev": {
+        "composer/installers": "^v2",
+        "phpstan/phpstan": "^2.1.2",
+        "phpstan/extension-installer": "^1.1",
+        "szepeviktor/phpstan-wordpress": "^v2.0.1",
+        "php-stubs/wp-cli-stubs": "^v2.5.0",
+        "yoast/phpunit-polyfills": "^3.1.1",
+        "wp-coding-standards/wpcs": "^3.1.0",
+        "phpunit/phpunit": "^9.6"
+    },
+    "minimum-stability": "stable",
+    "prefer-stable": true,
+    "autoload": {
+        "classmap": [
+            "vendor-prefixed/"
+        ],
+        "psr-4": {
+            "WPCAMP_HUB\\": "src/"
+        }
+    },
+    "scripts": {
+        "prefix-namespaces": [
+            "sh -c 'if [ ! -f ./bin/strauss.phar ] || [ $(find ./bin/strauss.phar -mtime +1 -print 2>/dev/null) ]; then rm -f ./bin/strauss.phar && curl -o bin/strauss.phar -L -C - https://github.com/BrianHenryIE/strauss/releases/latest/download/strauss.phar; fi'",
+            "@php bin/strauss.phar",
+            "@composer dump-autoload"
+        ],
+        "pre-autoload-dump": [
+            "mkdir -p vendor-prefixed"
+        ],
+        "post-install-cmd": [
+            "@prefix-namespaces"
+        ],
+        "post-update-cmd": [
+            "@prefix-namespaces"
+        ],
+        "clean:vendor": [
+            "rm -rf vendor && rm -rf vendor-prefixed"
+        ],
+        "phpstan": "@php ./vendor/bin/phpstan analyse",
+        "phpstan:ci": "@php ./vendor/bin/phpstan analyse --error-format=checkstyle | cs2pr",
+        "phpcs": "@php ./vendor/bin/phpcs --report-full",
+        "phpcs:ci": "@phpcs --report-checkstyle=./phpcs-report.xml",
+        "phpcbf": "@php ./vendor/bin/phpcbf",
+        "i18n:extract": "wp i18n make-pot . languages/wpcamp-hub.pot --exclude=resources,vendor,vendor-prefixed,node_modules && wp i18n update-po languages/wpcamp-hub.pot languages/",
+        "i18n:compile": "wp i18n make-json languages/ --no-purge && wp i18n make-mo languages/ && wp i18n make-php languages/"
+    },
+    "extra": {
+        "installer-paths": {
+            "vendor/{$vendor}/{$name}/": [
+                "type:wordpress-plugin"
+            ]
+        },
+        "strauss": {
+            "target_directory": "vendor-prefixed",
+            "namespace_prefix": "WPCAMP_HUB\\Dependencies\\",
+            "classmap_prefix": "WPCAMP_HUB_",
+            "constant_prefix": "WPCAMP_HUB_",
+            "exclude_from_copy": {
+                "packages": [
+                    "phpstan/phpstan",
+                    "szepeviktor/phpstan-wordpress"
+                ]
+            },
+            "exclude_from_prefix": {
+                "packages": [
+                    "timber/timber",
+                    "twig/twig"
+                ]
+            }
+        }
+    },
+    "config": {
+        "platform": {
+            "php": "8.0"
+        },
+        "allow-plugins": {
+            "phpstan/extension-installer": true,
+            "composer/installers": true,
+            "dealerdirect/phpcodesniffer-composer-installer": true
+        }
+    },
+    "require": {
+        "php": ">=8.0"
+    }
+}

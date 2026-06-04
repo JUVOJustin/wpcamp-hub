@@ -1,0 +1,30 @@
+.ddev
+
+/vendor/
+/vendor-prefixed/
+/node_modules/
+setup.sh
+
+.idea
+.vscode
+
+build/
+
+.budfiles/
+bin/*
+!bin/.gitkeep
+/phpcs-report.xml
+phpunit.xml
+.phpunit.result.cache
+
+/lib/
+
+# Generated language files (compiled in CI/CD pipeline)
+languages/*.mo
+languages/*.json
+languages/*.php
+
+# Test dependencies — installed locally and on CI, never committed
+tests/vendor/
+tests/setup/plugins/
+tests/auth.json

@@ -1,0 +1,12 @@
+{
+	"$schema": "https://schemas.wp.org/trunk/wp-env.json",
+	"core": null,
+	"phpVersion": "8.1",
+	"mappings": {
+		"wp-content/plugins/wpcamp-hub": ".",
+		"wp-content/plugins/": "./tests/setup/plugins/"
+	},
+	"lifecycleScripts": {
+		"afterStart": "wp-env run cli wp plugin activate wpcamp-hub"
+	}
+}

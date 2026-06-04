@@ -1,0 +1,113 @@
+name: wpcamp-hub-plugin Release
+
+on:
+  push:
+    tags:
+      - wpcamp-hub-plugin-v*
+
+jobs:
+  wpcamp-hub-plugin-setup:
+    if: github.repository != 'JUVOJustin/wordpress-plugin-boilerplate'
+    uses: ./.github/workflows/wpcamp-hub-plugin-setup.yml
+    with:
+      mode: prod
+
+  wpcamp-hub-plugin-release:
+    if: github.repository != 'JUVOJustin/wordpress-plugin-boilerplate'
+    runs-on: ubuntu-latest
+    needs: wpcamp-hub-plugin-setup
+
+    permissions:
+      contents: write
+
+    defaults:
+      run:
+        working-directory: packages/wpcamp-hub-plugin
+
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+
+      - name: PHP dependencies cache
+        uses: actions/cache@v5
+        with:
+          path: |
+            packages/wpcamp-hub-plugin/vendor
+            packages/wpcamp-hub-plugin/vendor-prefixed
+          key: ${{ needs.wpcamp-hub-plugin-setup.outputs.php-cache-key }}
+          fail-on-cache-miss: true
+
+      - name: Node dependencies cache
+        uses: actions/cache@v5
+        with:
+          path: |
+            packages/wpcamp-hub-plugin/node_modules
+            packages/wpcamp-hub-plugin/build
+          key: ${{ needs.wpcamp-hub-plugin-setup.outputs.node-cache-key }}
+          fail-on-cache-miss: true
+
+      - uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.2'
+          tools: wp-cli
+
+      - name: Install latest version of dist-archive-command
+        run: wp package install wp-cli/dist-archive-command:v3.1.0
+
+      - name: Set environment
+        run: |
+          RELEASE_TAG="${GITHUB_REF#refs/tags/}"
+          RELEASE_VERSION="${RELEASE_TAG#wpcamp-hub-plugin-v}"
+          echo "RELEASE_VERSION=$RELEASE_VERSION" >> $GITHUB_ENV
+          if [[ "$RELEASE_VERSION" =~ -(alpha|beta|rc) ]]; then
+            echo "IS_PRERELEASE=true" >> $GITHUB_ENV
+            echo "MAKE_LATEST=false" >> $GITHUB_ENV
+          else
+            echo "IS_PRERELEASE=false" >> $GITHUB_ENV
+            echo "MAKE_LATEST=true" >> $GITHUB_ENV
+          fi
+
+      - name: Update version in WordPress files
+        run: |
+          sed -i -E "s/(const PLUGIN_VERSION = ')[^']*(';)/\1${{ env.RELEASE_VERSION }}\2/" src/WPCAMP_HUB.php
+          sed -i -E 's/([[:blank:]]*\*[[:blank:]]*Version:[[:blank:]]*).*/\1${{ env.RELEASE_VERSION }}/' wpcamp-hub.php
+          sed -i -E 's/Stable tag: .*/Stable tag: ${{ env.RELEASE_VERSION }}/' README.txt
+
+      - name: Start wp-env
+        run: npm run env:start
+
+      - name: Compile translations in wp-env from po files
+        run: npm run env:cli composer run i18n:compile
+
+      - name: Build dist archive on host
+        run: |
+          wp dist-archive . ./wpcamp-hub-${{ env.RELEASE_VERSION }}.zip --plugin-dirname=wpcamp-hub
+          mkdir tmp-build
+          unzip wpcamp-hub-${{ env.RELEASE_VERSION }}.zip -d tmp-build
+
+      - name: Stop wp-env
+        if: always()
+        run: npm run env:stop
+
+      - name: Persist stable version to default branch
+        if: env.IS_PRERELEASE == 'false'
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add src/WPCAMP_HUB.php wpcamp-hub.php README.txt
+          if git diff --cached --quiet; then
+            echo "No changes to commit; skipping commit and push."
+          else
+            git commit -m "Update wpcamp-hub-plugin to ${{ env.RELEASE_VERSION }}"
+            git push origin HEAD:refs/heads/${{ github.event.repository.default_branch }}
+          fi
+
+      - name: Release
+        uses: ncipollo/release-action@v1
+        with:
+          allowUpdates: true
+          omitBodyDuringUpdate: true
+          artifacts: packages/wpcamp-hub-plugin/wpcamp-hub-${{ env.RELEASE_VERSION }}.zip
+          prerelease: ${{ env.IS_PRERELEASE }}
+          makeLatest: ${{ env.MAKE_LATEST }}
