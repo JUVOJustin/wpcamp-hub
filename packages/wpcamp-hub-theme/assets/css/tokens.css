@@ -1,0 +1,250 @@
+/* ============================================================
+   WPCAMP-HUB — Colors & Type Foundations
+   Brand inspired by WordPress.org. Built for WordCamp Europe 2026.
+   ------------------------------------------------------------
+   Load fonts via CDN (self-host later by dropping ttf/woff2 in
+   /fonts and swapping these @imports for @font-face rules).
+   ============================================================ */
+
+@import url('https://fonts.googleapis.com/css2?family=EB+Garamond:ital,wght@0,400;0,500;0,600;0,700;1,400;1,500&family=Hanken+Grotesk:ital,wght@0,400;0,500;0,600;0,700;0,800;1,400;1,500&family=JetBrains+Mono:wght@400;500;700&display=swap');
+
+:root {
+  /* ---------------------------------------------------------
+     1. BRAND COLOR — WordPress "Blueberry" family
+     Blue is reserved for CTAs, links, key actions, highlights.
+     --------------------------------------------------------- */
+  --wp-blue-50:  #EEF1FE;
+  --wp-blue-100: #DCE2FD;
+  --wp-blue-200: #B7C3FB;
+  --wp-blue-300: #8B9DF6;
+  --wp-blue-400: #5F77F0;
+  --wp-blue-500: #3858E9;  /* PRIMARY — WordPress brand blue */
+  --wp-blue-600: #2E45C4;  /* hover */
+  --wp-blue-700: #243596;  /* active/press */
+  --wp-blue-800: #1B2870;
+  --wp-blue-900: #141d52;
+
+  --brand:        var(--wp-blue-500);
+  --brand-hover:  var(--wp-blue-600);
+  --brand-press:  var(--wp-blue-700);
+  --brand-tint:   var(--wp-blue-50);   /* faint blue wash for highlight blocks */
+
+  /* Festival accents — WordCamp "get-together" palette (Lisbon sunset + sea).
+     SECONDARY to blue: used for track colour-coding, motifs & celebration.
+     Never for primary CTAs — those stay brand blue. */
+  --fest-coral:  #FF5A4D;  --fest-coral-tint:  #FFE9E6;
+  --fest-gold:   #FFB020;  --fest-gold-tint:   #FFF2D9;
+  --fest-teal:   #14B8A6;  --fest-teal-tint:   #DEF6F3;
+  --fest-violet: #7C5CFF;  --fest-violet-tint: #ECE7FF;
+
+  /* ---------------------------------------------------------
+     2. NEUTRALS — charcoal text on white, warm-neutral grays
+     Mirrors Gutenberg's #1E1E1E ink + admin grays.
+     --------------------------------------------------------- */
+  --ink-900: #1E1E1E;  /* primary text / charcoal */
+  --ink-700: #2C3338;  /* strong headings on tinted bg */
+  --ink-600: #50575E;  /* secondary text */
+  --ink-500: #757575;  /* muted / captions / meta */
+  --ink-400: #949494;  /* placeholder */
+
+  --line-strong: #C3C4C7;  /* input borders, dividers w/ contrast */
+  --line:        #DCDCDE;  /* default hairline border */
+  --line-soft:   #ECECEC;  /* faint divider */
+
+  --bg:          #FFFFFF;  /* primary surface */
+  --bg-subtle:   #F6F7F7;  /* WordPress admin gray — section bands */
+  --bg-sunken:   #FBFBFB;  /* faint sunken panels */
+  --bg-ink:      #1E1E1E;  /* dark footer / inverse band */
+
+  /* ---------------------------------------------------------
+     3. SEMANTIC / STATUS — WordPress component palette
+     --------------------------------------------------------- */
+  --success:     #00822A;
+  --success-bg:  #EDFAEF;
+  --warning:     #BD8600;
+  --warning-bg:  #FCF5E6;
+  --error:       #CC1818;
+  --error-bg:    #FCEFEF;
+  --info:        var(--wp-blue-500);
+  --info-bg:     var(--wp-blue-50);
+
+  /* On-brand text (white on blue) */
+  --on-brand:    #FFFFFF;
+  --on-ink:      #F6F7F7;
+
+  /* Focus ring — accessible blue halo (WordPress focus style) */
+  --focus-ring:  0 0 0 1.5px #FFFFFF, 0 0 0 3.5px var(--wp-blue-500);
+
+  /* ---------------------------------------------------------
+     4. TYPE FAMILIES
+     Sans-serif throughout (editorial grotesque). Mono for code,
+     event metadata, ticket/schedule data.
+     --------------------------------------------------------- */
+  --font-display: 'EB Garamond', Georgia, 'Times New Roman', serif;  /* serif for large editorial headlines */
+  --font-sans: 'Hanken Grotesk', -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif;
+  --font-mono: 'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+
+  /* ---------------------------------------------------------
+     5. TYPE SCALE — high contrast between display & body.
+     Editorial: large bold headlines, comfortable reading body.
+     --------------------------------------------------------- */
+  --text-display: 4.5rem;   /* 72px — hero headlines */
+  --text-h1:      3.25rem;  /* 52px */
+  --text-h2:      2.5rem;   /* 40px */
+  --text-h3:      1.875rem; /* 30px */
+  --text-h4:      1.375rem; /* 22px */
+  --text-lead:    1.25rem;  /* 20px — intros / standfirst */
+  --text-body:    1.0625rem;/* 17px — comfortable reading */
+  --text-sm:      0.9375rem;/* 15px */
+  --text-xs:      0.8125rem;/* 13px — meta, eyebrows */
+
+  --weight-regular: 400;
+  --weight-medium:  500;
+  --weight-semi:    600;
+  --weight-bold:    700;
+  --weight-black:   800;
+
+  --leading-tight:  1.05;
+  --leading-snug:   1.2;
+  --leading-normal: 1.5;
+  --leading-relaxed:1.65;
+
+  --tracking-tight: -0.02em;  /* large headlines */
+  --tracking-snug:  -0.01em;
+  --tracking-normal: 0;
+  --tracking-wide:  0.08em;   /* eyebrows / labels (uppercase) */
+
+  --measure: 68ch;  /* comfortable reading width */
+
+  /* ---------------------------------------------------------
+     6. SPACING — 4px base, generous editorial rhythm
+     --------------------------------------------------------- */
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-5: 24px;
+  --space-6: 32px;
+  --space-7: 48px;
+  --space-8: 64px;
+  --space-9: 96px;
+  --space-10:128px;
+
+  /* ---------------------------------------------------------
+     7. RADII — restrained (Gutenberg uses tiny radii)
+     --------------------------------------------------------- */
+  --radius-xs: 2px;   /* buttons, inputs, chips */
+  --radius-sm: 4px;
+  --radius-md: 8px;   /* cards */
+  --radius-lg: 12px;  /* feature panels */
+  --radius-full: 999px;
+
+  /* ---------------------------------------------------------
+     8. ELEVATION — flat first; borders do most of the work.
+     Shadows are soft and sparing.
+     --------------------------------------------------------- */
+  --shadow-xs: 0 1px 2px rgba(30, 30, 30, 0.06);
+  --shadow-sm: 0 1px 3px rgba(30, 30, 30, 0.08), 0 1px 2px rgba(30,30,30,0.04);
+  --shadow-md: 0 4px 12px rgba(30, 30, 30, 0.08);
+  --shadow-lg: 0 12px 32px rgba(30, 30, 30, 0.12);
+  --shadow-focus: var(--focus-ring);
+
+  /* ---------------------------------------------------------
+     9. LAYOUT
+     --------------------------------------------------------- */
+  --container: 1200px;     /* max content width */
+  --container-narrow: 760px;/* article / reading width */
+  --gutter: 24px;
+}
+
+/* ============================================================
+   SEMANTIC ELEMENT STYLES
+   Apply --font-sans on body; map headings to the scale.
+   Drop these classes/elements straight into any page.
+   ============================================================ */
+
+.ds-type-reset,
+body.ds {
+  font-family: var(--font-sans);
+  color: var(--ink-900);
+  background: var(--bg);
+  font-size: var(--text-body);
+  line-height: var(--leading-relaxed);
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+}
+
+.display {
+  font-family: var(--font-display);
+  font-size: var(--text-display);
+  font-weight: var(--weight-semi);  /* 600 — serif carries weight differently */
+  line-height: var(--leading-tight);
+  letter-spacing: var(--tracking-snug);
+  text-wrap: balance;
+}
+h1, .h1 {
+  font-size: var(--text-h1);
+  font-weight: var(--weight-bold);
+  line-height: var(--leading-snug);
+  letter-spacing: var(--tracking-tight);
+  text-wrap: balance;
+}
+h2, .h2 {
+  font-size: var(--text-h2);
+  font-weight: var(--weight-bold);
+  line-height: var(--leading-snug);
+  letter-spacing: var(--tracking-snug);
+  text-wrap: balance;
+}
+h3, .h3 {
+  font-size: var(--text-h3);
+  font-weight: var(--weight-bold);
+  line-height: var(--leading-snug);
+  letter-spacing: var(--tracking-snug);
+}
+h4, .h4 {
+  font-size: var(--text-h4);
+  font-weight: var(--weight-semi);
+  line-height: var(--leading-normal);
+}
+.lead {
+  font-size: var(--text-lead);
+  font-weight: var(--weight-regular);
+  line-height: var(--leading-relaxed);
+  color: var(--ink-600);
+}
+p, .body {
+  font-size: var(--text-body);
+  line-height: var(--leading-relaxed);
+  max-width: var(--measure);
+}
+.small { font-size: var(--text-sm); }
+.meta {
+  font-size: var(--text-xs);
+  color: var(--ink-500);
+  font-weight: var(--weight-medium);
+}
+.eyebrow {
+  font-size: var(--text-xs);
+  font-weight: var(--weight-bold);
+  letter-spacing: var(--tracking-wide);
+  text-transform: uppercase;
+  color: var(--brand);
+}
+a, .link {
+  color: var(--brand);
+  text-decoration: none;
+}
+a:hover, .link:hover { color: var(--brand-hover); text-decoration: underline; }
+
+code, .mono, kbd {
+  font-family: var(--font-mono);
+  font-size: 0.9em;
+}
+code {
+  background: var(--bg-subtle);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-xs);
+  padding: 0.1em 0.4em;
+  color: var(--ink-700);
+}
