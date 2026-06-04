@@ -63,12 +63,12 @@ function wpcamp_hub_enqueue_assets() {
 	$theme   = wp_get_theme();
 	$version = $theme->get( 'Version' );
 
-	// Fonts — EB Garamond (display), Hanken Grotesk (sans), JetBrains Mono (mono).
+	// Fonts — self-hosted (EB Garamond, Hanken Grotesk, JetBrains Mono).
 	wp_enqueue_style(
 		'wpcamp-hub-fonts',
-		'https://fonts.googleapis.com/css2?family=EB+Garamond:ital,wght@0,400;0,500;0,600;0,700;1,400;1,500&family=Hanken+Grotesk:ital,wght@0,400;0,500;0,600;0,700;0,800;1,400;1,500&family=JetBrains+Mono:wght@400;500;700&display=swap',
+		get_theme_file_uri( 'assets/css/fonts.css' ),
 		array(),
-		null
+		$version
 	);
 
 	// Design tokens (CSS custom properties: colours, type, spacing, radii).
@@ -95,18 +95,7 @@ function wpcamp_hub_enqueue_assets() {
 		$version
 	);
 
-	// Lucide icons (used by the header search button & mobile nav).
-	wp_enqueue_script(
-		'lucide',
-		'https://unpkg.com/lucide@latest/dist/umd/lucide.js',
-		array(),
-		null,
-		true
-	);
-	wp_add_inline_script(
-		'lucide',
-		'document.addEventListener("DOMContentLoaded",function(){if(window.lucide){window.lucide.createIcons();}});'
-	);
+	// Icons are rendered inline as SVG (see wpcamp_hub_icon) — no external library.
 
 	// Header behaviours (collapsible search).
 	wp_enqueue_script(
@@ -120,17 +109,49 @@ function wpcamp_hub_enqueue_assets() {
 add_action( 'wp_enqueue_scripts', 'wpcamp_hub_enqueue_assets' );
 
 /**
- * Render an inline Lucide icon placeholder.
+ * Inner SVG markup for the icons used by the theme.
  *
- * @param string $name Lucide icon name.
+ * Self-hosted Lucide icons (v1.17.0, ISC). Add an entry here to support a new
+ * "licon-<name>" menu class — no external icon library is loaded.
+ *
+ * @return array<string,string> Map of icon name => inner SVG markup.
+ */
+function wpcamp_hub_icon_paths() {
+	return array(
+		'search'     => '<path d="m21 21-4.34-4.34"/><circle cx="11" cy="11" r="8"/>',
+		'bookmark'   => '<path d="M17 3a2 2 0 0 1 2 2v15a1 1 0 0 1-1.496.868l-4.512-2.578a2 2 0 0 0-1.984 0l-4.512 2.578A1 1 0 0 1 5 20V5a2 2 0 0 1 2-2z"/>',
+		'home'       => '<path d="M15 21v-8a1 1 0 0 0-1-1h-4a1 1 0 0 0-1 1v8"/><path d="M3 10a2 2 0 0 1 .709-1.528l7-6a2 2 0 0 1 2.582 0l7 6A2 2 0 0 1 21 10v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/>',
+		'hash'       => '<line x1="4" x2="20" y1="9" y2="9"/><line x1="4" x2="20" y1="15" y2="15"/><line x1="10" x2="8" y1="3" y2="21"/><line x1="16" x2="14" y1="3" y2="21"/>',
+		'calendar'   => '<path d="M8 2v4"/><path d="M16 2v4"/><rect width="18" height="18" x="3" y="4" rx="2"/><path d="M3 10h18"/>',
+		'users'      => '<path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><path d="M16 3.128a4 4 0 0 1 0 7.744"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><circle cx="9" cy="7" r="4"/>',
+		'user-round' => '<circle cx="12" cy="8" r="5"/><path d="M20 21a8 8 0 0 0-16 0"/>',
+		'bell'       => '<path d="M10.268 21a2 2 0 0 0 3.464 0"/><path d="M3.262 15.326A1 1 0 0 0 4 17h16a1 1 0 0 0 .74-1.673C19.41 13.956 18 12.499 18 8A6 6 0 0 0 6 8c0 4.499-1.411 5.956-2.738 7.326"/>',
+		'clock'      => '<circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/>',
+		'heart'      => '<path d="M2 9.5a5.5 5.5 0 0 1 9.591-3.676.56.56 0 0 0 .818 0A5.49 5.49 0 0 1 22 9.5c0 2.29-1.5 4-3 5.5l-5.492 5.313a2 2 0 0 1-3 .019L5 15c-1.5-1.5-3-3.2-3-5.5"/>',
+		'star'       => '<path d="M11.525 2.295a.53.53 0 0 1 .95 0l2.31 4.679a2.123 2.123 0 0 0 1.595 1.16l5.166.756a.53.53 0 0 1 .294.904l-3.736 3.638a2.123 2.123 0 0 0-.611 1.878l.882 5.14a.53.53 0 0 1-.771.56l-4.618-2.428a2.122 2.122 0 0 0-1.973 0L6.396 21.01a.53.53 0 0 1-.77-.56l.881-5.139a2.122 2.122 0 0 0-.611-1.879L2.16 9.795a.53.53 0 0 1 .294-.906l5.165-.755a2.122 2.122 0 0 0 1.597-1.16z"/>',
+		'map-pin'    => '<path d="M20 10c0 4.993-5.539 10.193-7.399 11.799a1 1 0 0 1-1.202 0C9.539 20.193 4 14.993 4 10a8 8 0 0 1 16 0"/><circle cx="12" cy="10" r="3"/>',
+		'x'          => '<path d="M18 6 6 18"/><path d="m6 6 12 12"/>',
+	);
+}
+
+/**
+ * Render an inline SVG icon.
+ *
+ * @param string $name Icon name (see wpcamp_hub_icon_paths()).
  * @param int    $size Pixel size.
- * @return string HTML <i data-lucide> element.
+ * @return string Inline <svg> markup, or empty string for an unknown icon.
  */
 function wpcamp_hub_icon( $name, $size = 20 ) {
+	$paths = wpcamp_hub_icon_paths();
+	if ( ! isset( $paths[ $name ] ) ) {
+		return '';
+	}
+
 	return sprintf(
-		'<i class="licon" data-lucide="%1$s" style="width:%2$dpx;height:%2$dpx" aria-hidden="true"></i>',
+		'<svg class="licon licon-%1$s" width="%2$d" height="%2$d" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false">%3$s</svg>',
 		esc_attr( $name ),
-		(int) $size
+		(int) $size,
+		$paths[ $name ] // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- trusted static SVG markup.
 	);
 }
 
