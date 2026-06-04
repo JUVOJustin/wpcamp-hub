@@ -1,4 +1,4 @@
-/* eslint-disable import/no-unresolved, import/no-extraneous-dependencies */
+/* eslint-disable import/no-unresolved, import/no-extraneous-dependencies, @wordpress/no-unsafe-wp-apis */
 import { registerBlockType } from '@wordpress/blocks';
 import { useBlockProps } from '@wordpress/block-editor';
 import { useEntityProp } from '@wordpress/core-data';
@@ -9,10 +9,12 @@ import {
 	Button,
 	ComboboxControl,
 	DateTimePicker,
+	__experimentalInputControl as InputControl,
 	TextControl,
 	TextareaControl,
 	ToggleControl,
 } from '@wordpress/components';
+import { globe, Icon } from '@wordpress/icons';
 import { Stack, Text } from '@wordpress/ui';
 
 import metadata from './block.json';
@@ -167,6 +169,27 @@ function RelationArrayControl( {
 					</Stack>
 				) }
 			</Stack>
+		</BaseControl>
+	);
+}
+
+function UrlControl( { help, label, metaKey, onChange, value } ) {
+	return (
+		<BaseControl
+			__nextHasNoMarginBottom
+			id={ `wpcamp-hub-editor-${ metaKey }` }
+			label={ label }
+			help={ help }
+		>
+			<InputControl
+				__next40pxDefaultSize
+				hideLabelFromVision
+				label={ label }
+				prefix={ <Icon icon={ globe } size={ 20 } /> }
+				type="url"
+				value={ value || '' }
+				onChange={ ( nextValue ) => onChange( nextValue ?? '' ) }
+			/>
 		</BaseControl>
 	);
 }
@@ -327,11 +350,23 @@ function FieldControl( { field, metaKey, options, value, onChange } ) {
 		);
 	}
 
+	if ( field.format === 'uri' ) {
+		return (
+			<UrlControl
+				help={ help }
+				label={ label }
+				metaKey={ metaKey }
+				onChange={ onChange }
+				value={ value }
+			/>
+		);
+	}
+
 	return (
 		<TextControl
 			__next40pxDefaultSize
 			__nextHasNoMarginBottom
-			type={ field.format === 'uri' ? 'url' : 'text' }
+			type="text"
 			label={ label }
 			help={ help }
 			value={ value || '' }
