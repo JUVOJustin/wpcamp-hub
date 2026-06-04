@@ -10,6 +10,7 @@ import {
 	ComboboxControl,
 	DateTimePicker,
 	__experimentalInputControl as InputControl,
+	__experimentalInputControlPrefixWrapper as InputControlPrefixWrapper,
 	TextControl,
 	TextareaControl,
 	ToggleControl,
@@ -198,12 +199,9 @@ function UrlControl( { help, label, metaKey, onChange, value } ) {
 				hideLabelFromVision
 				label={ label }
 				prefix={
-					<span
-						aria-hidden="true"
-						className="wpcamp-hub-editor-url-prefix"
-					>
-						<Icon icon={ globe } size={ 20 } />
-					</span>
+					<InputControlPrefixWrapper variant="icon">
+						<Icon icon={ globe } />
+					</InputControlPrefixWrapper>
 				}
 				type="url"
 				value={ value || '' }
