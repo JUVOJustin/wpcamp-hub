@@ -1,0 +1,62 @@
+/**
+ * Page Intro — shared styles (front end + editor).
+ * Tinted band by default (overridable via the block's colour setting).
+ * Colours, fonts and sizes come from theme.json presets.
+ */
+
+.wpch-intro {
+	padding: 56px 0 30px;
+	font-family: var( --wp--preset--font-family--sans );
+
+	/* default "band" tint when no custom background is chosen */
+	&:not( .has-background ) {
+		background: var( --wp--preset--color--base-subtle, #f6f7f7 );
+	}
+
+	* {
+		box-sizing: border-box;
+	}
+
+	.wpch-intro__inner {
+		max-width: var( --wp--style--global--content-size, 1200px );
+		margin: 0 auto;
+		padding: 0 24px;
+	}
+
+	.wpch-intro__eyebrow {
+		font-size: 13px;
+		font-weight: 700;
+		letter-spacing: 0.08em;
+		text-transform: uppercase;
+		color: var( --wp--preset--color--brand, #3858e9 );
+		margin-bottom: 10px;
+	}
+
+	.wpch-intro__title {
+		margin: 0 0 8px;
+		font-family: var( --wp--preset--font-family--display );
+		font-size: 3.25rem;
+		font-weight: 700;
+		line-height: 1.2;
+		letter-spacing: -0.02em;
+		text-wrap: balance;
+		color: var( --wp--preset--color--ink-900, #1e1e1e );
+	}
+
+	.wpch-intro__lead {
+		margin: 0;
+		max-width: 52ch;
+		font-size: 1.25rem;
+		font-weight: 400;
+		line-height: 1.65;
+		color: var( --wp--preset--color--ink-600, #50575e );
+	}
+
+	@media ( max-width: 860px ) {
+		padding: 40px 0 24px;
+
+		.wpch-intro__title {
+			font-size: 2.2rem;
+		}
+	}
+}
