@@ -32,7 +32,7 @@ class Session extends Post_Entity {
 	/**
 	 * Attendee profiles related to this session.
 	 *
-	 * @return User_Profile[]
+	 * @return list<User_Profile>
 	 */
 	public function get_attendees(): array {
 		return array_map( static fn( int $user_id ): User_Profile => User_Profile::from( $user_id ), $this->get_related( 'user' ) );

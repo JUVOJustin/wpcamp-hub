@@ -41,7 +41,7 @@ class User_Profile extends User_Entity {
 	/**
 	 * Events related to this attendee.
 	 *
-	 * @return Event[]
+	 * @return list<Event>
 	 */
 	public function get_events(): array {
 		return array_map( static fn( int $event_id ): Event => Event::from( $event_id ), $this->get_related( 'event' ) );
@@ -50,7 +50,7 @@ class User_Profile extends User_Entity {
 	/**
 	 * Tweets related to this attendee.
 	 *
-	 * @return Tweet[]
+	 * @return list<Tweet>
 	 */
 	public function get_tweets(): array {
 		return array_map( static fn( int $tweet_id ): Tweet => Tweet::from( $tweet_id ), $this->get_related( 'tweet' ) );
@@ -59,7 +59,7 @@ class User_Profile extends User_Entity {
 	/**
 	 * Sessions related to this attendee.
 	 *
-	 * @return Session[]
+	 * @return list<Session>
 	 */
 	public function get_sessions(): array {
 		return array_map( static fn( int $session_id ): Session => Session::from( $session_id ), $this->get_related( 'session' ) );
@@ -68,7 +68,7 @@ class User_Profile extends User_Entity {
 	/**
 	 * Meeting invites related to this attendee.
 	 *
-	 * @return Meeting_Invite[]
+	 * @return list<Meeting_Invite>
 	 */
 	public function get_meeting_invites(): array {
 		$meeting_ids = Relationships::get_referencing( 'meeting_invite', 'user', $this->get_id() );

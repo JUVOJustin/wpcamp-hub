@@ -67,7 +67,7 @@ abstract class Post_Entity {
 	 * Return related entity IDs for this post.
 	 *
 	 * @param string $entity_type Target entity type.
-	 * @return int[]
+	 * @return list<int>
 	 */
 	public function get_related( string $entity_type ): array {
 		return Relationships::get_related( static::get_entity_type(), $this->get_id(), $entity_type );

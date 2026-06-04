@@ -32,7 +32,7 @@ class Tweet extends Post_Entity {
 	/**
 	 * Attendee profiles related to this tweet.
 	 *
-	 * @return User_Profile[]
+	 * @return list<User_Profile>
 	 */
 	public function get_attendees(): array {
 		return array_map( static fn( int $user_id ): User_Profile => User_Profile::from( $user_id ), $this->get_related( 'user' ) );
@@ -41,7 +41,7 @@ class Tweet extends Post_Entity {
 	/**
 	 * Meeting invites extracted from this tweet.
 	 *
-	 * @return Meeting_Invite[]
+	 * @return list<Meeting_Invite>
 	 */
 	public function get_meeting_invites(): array {
 		$meeting_ids = Relationships::get_referencing( 'meeting_invite', 'tweet', $this->get_id() );

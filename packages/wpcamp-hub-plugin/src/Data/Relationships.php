@@ -63,7 +63,7 @@ class Relationships {
 	 * @param string $from_type Source entity type.
 	 * @param int    $from_id Source entity ID.
 	 * @param string $to_type Target entity type.
-	 * @return int[]
+	 * @return list<int>
 	 */
 	public static function get_related( string $from_type, int $from_id, string $to_type ): array {
 		$relationships = self::get_relationships( $from_type, $from_id );
@@ -72,7 +72,7 @@ class Relationships {
 			return array();
 		}
 
-		return array_values( array_map( 'intval', $relationships[ $to_type ] ) );
+		return array_map( 'intval', $relationships[ $to_type ] );
 	}
 
 	/**
@@ -81,7 +81,7 @@ class Relationships {
 	 * @param string $source_type Source entity type to search.
 	 * @param string $target_type Target entity type.
 	 * @param int    $target_id Target entity ID.
-	 * @return int[]
+	 * @return list<int>
 	 */
 	public static function get_referencing( string $source_type, string $target_type, int $target_id ): array {
 		$source_ids = self::get_entity_ids( $source_type );
@@ -129,7 +129,7 @@ class Relationships {
 	 * Sanitize a relationship map.
 	 *
 	 * @param mixed $value Raw meta value.
-	 * @return array<string,int[]>
+	 * @return array<string,list<int>>
 	 */
 	public static function sanitize_relationships( mixed $value ): array {
 		if ( ! is_array( $value ) ) {
@@ -176,7 +176,7 @@ class Relationships {
 	 *
 	 * @param string $entity_type Entity type.
 	 * @param int    $entity_id Entity ID.
-	 * @return array<string,int[]>
+	 * @return array<string,list<int>>
 	 */
 	private static function get_relationships( string $entity_type, int $entity_id ): array {
 		$raw = 'user' === $entity_type
@@ -190,7 +190,7 @@ class Relationships {
 	 * Return IDs for a platform entity type.
 	 *
 	 * @param string $entity_type Entity type.
-	 * @return int[]
+	 * @return list<int>
 	 */
 	private static function get_entity_ids( string $entity_type ): array {
 		if ( 'user' === $entity_type ) {
@@ -224,9 +224,9 @@ class Relationships {
 	/**
 	 * Persist the full relationship map for an object.
 	 *
-	 * @param string              $entity_type Entity type.
-	 * @param int                 $entity_id Entity ID.
-	 * @param array<string,int[]> $relationships Relationship map.
+	 * @param string                  $entity_type Entity type.
+	 * @param int                     $entity_id Entity ID.
+	 * @param array<string,list<int>> $relationships Relationship map.
 	 */
 	private static function update_relationships( string $entity_type, int $entity_id, array $relationships ): void {
 		if ( 'user' === $entity_type ) {

@@ -22,7 +22,7 @@ class Event extends Post_Entity {
 	/**
 	 * Attendee profiles related to this event.
 	 *
-	 * @return User_Profile[]
+	 * @return list<User_Profile>
 	 */
 	public function get_attendees(): array {
 		return array_map( static fn( int $user_id ): User_Profile => User_Profile::from( $user_id ), $this->get_related( 'user' ) );
@@ -31,13 +31,15 @@ class Event extends Post_Entity {
 	/**
 	 * Tweets related to this event.
 	 *
-	 * @return Tweet[]
+	 * @return list<Tweet>
 	 */
 	public function get_tweets(): array {
-		$tweet_ids = array_unique(
-			array_merge(
-				$this->get_related( 'tweet' ),
-				Relationships::get_referencing( 'tweet', 'event', $this->get_id() )
+		$tweet_ids = array_values(
+			array_unique(
+				array_merge(
+					$this->get_related( 'tweet' ),
+					Relationships::get_referencing( 'tweet', 'event', $this->get_id() )
+				)
 			)
 		);
 
@@ -47,13 +49,15 @@ class Event extends Post_Entity {
 	/**
 	 * Sessions related to this event.
 	 *
-	 * @return Session[]
+	 * @return list<Session>
 	 */
 	public function get_sessions(): array {
-		$session_ids = array_unique(
-			array_merge(
-				$this->get_related( 'session' ),
-				Relationships::get_referencing( 'session', 'event', $this->get_id() )
+		$session_ids = array_values(
+			array_unique(
+				array_merge(
+					$this->get_related( 'session' ),
+					Relationships::get_referencing( 'session', 'event', $this->get_id() )
+				)
 			)
 		);
 
@@ -63,7 +67,7 @@ class Event extends Post_Entity {
 	/**
 	 * Meeting invites related to this event.
 	 *
-	 * @return Meeting_Invite[]
+	 * @return list<Meeting_Invite>
 	 */
 	public function get_meeting_invites(): array {
 		$meeting_ids = Relationships::get_referencing( 'meeting_invite', 'event', $this->get_id() );

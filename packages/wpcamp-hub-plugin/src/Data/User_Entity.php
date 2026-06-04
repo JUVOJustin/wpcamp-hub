@@ -62,7 +62,7 @@ abstract class User_Entity {
 	 * Return related entity IDs for this user.
 	 *
 	 * @param string $entity_type Target entity type.
-	 * @return int[]
+	 * @return list<int>
 	 */
 	public function get_related( string $entity_type ): array {
 		return Relationships::get_related( 'user', $this->get_id(), $entity_type );
