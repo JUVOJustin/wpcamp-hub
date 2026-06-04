@@ -8,11 +8,11 @@ import {
 	BaseControl,
 	Button,
 	ComboboxControl,
-	DateTimePicker,
 	__experimentalInputControl as InputControl,
 	__experimentalInputControlPrefixWrapper as InputControlPrefixWrapper,
 	TextControl,
 	TextareaControl,
+	TimePicker,
 	ToggleControl,
 } from '@wordpress/components';
 import { globe, Icon } from '@wordpress/icons';
@@ -209,10 +209,11 @@ function DateFieldControl( { help, label, metaKey, onChange, value } ) {
 			label={ label }
 			help={ help }
 		>
-			<DateTimePicker
-				currentDate={ getDateValue( value ) }
+			<TimePicker
+				currentTime={ getDateValue( value ) }
 				onChange={ onChange }
 				is12Hour={ false }
+				hideLabelFromVision
 			/>
 		</BaseControl>
 	);
