@@ -7,6 +7,8 @@
 
 namespace WPCAMP_HUB;
 
+use WPCAMP_HUB\Data\Data_Structure;
+
 /**
  * Fired during plugin activation.
  *
@@ -23,6 +25,10 @@ class Activator {
 	 * @return void
 	 */
 	public static function activate(): void {
+		// Seed the default taxonomy terms once. Doing this on activation (not on
+		// every init) means terms the user later renames or deletes are not
+		// recreated on each request.
+		( new Data_Structure() )->seed_terms();
 	}
 
 	/**
