@@ -65,6 +65,24 @@ class Event extends Post_Entity {
 	}
 
 	/**
+	 * Geo coordinates for the event.
+	 *
+	 * @return array{latitude:float,longitude:float}|null Null when not set.
+	 */
+	public function get_coordinates(): ?array {
+		$value = get_post_meta( $this->get_id(), 'wpcamp_coordinates', true );
+
+		if ( ! is_array( $value ) || ! isset( $value['latitude'], $value['longitude'] ) ) {
+			return null;
+		}
+
+		return array(
+			'latitude'  => (float) $value['latitude'],
+			'longitude' => (float) $value['longitude'],
+		);
+	}
+
+	/**
 	 * Event type term assigned to this event.
 	 */
 	public function get_type(): ?Event_Type {

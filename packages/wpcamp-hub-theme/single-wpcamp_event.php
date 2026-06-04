@@ -59,6 +59,33 @@ while ( have_posts() ) :
 	$attendees = $event ? $event->get_attendees() : array();
 	$sessions  = $event ? $event->get_sessions() : array();
 	$tweets    = $event ? $event->get_tweets() : array();
+	$coords    = $event ? $event->get_coordinates() : null;
+
+	// Precompute normalised session rows shared by the list, map and timetable.
+	$session_rows = array();
+	foreach ( $sessions as $session ) {
+		$s_id    = $session->get_id();
+		$s_track = $session->get_track();
+		$s_time  = $session->get_start_time();
+		$s_ts    = '' !== $s_time ? strtotime( $s_time ) : 0;
+
+		$session_rows[] = array(
+			'id'    => $s_id,
+			'title' => get_the_title( $s_id ),
+			'track' => $s_track ? $s_track->get_name() : '',
+			'color' => $s_track ? $s_track->get_color() : '#3858e9',
+			'room'  => (string) get_post_meta( $s_id, 'wpcamp_room', true ),
+			'ts'    => $s_ts,
+			'time'  => $s_ts ? wp_date( 'H:i', $s_ts ) : '',
+			'day'   => $s_ts ? wp_date( 'D j M', $s_ts ) : '',
+			'url'   => (string) get_permalink( $s_id ),
+		);
+	}
+	// Sort by start time for the timetable.
+	usort(
+		$session_rows,
+		static fn( array $a, array $b ): int => $a['ts'] <=> $b['ts']
+	);
 	?>
 	<main id="content" class="site-content wpch-event" style="--wpch-accent:<?php echo esc_attr( $accent ); ?>">
 
@@ -122,32 +149,93 @@ while ( have_posts() ) :
 				</section>
 			<?php endif; ?>
 
-			<?php if ( array() !== $sessions ) : ?>
-				<section class="wpch-event__section">
-					<h2 class="wpch-event__section-title"><?php esc_html_e( 'Sessions', 'wpcamp-hub' ); ?></h2>
-					<ul class="wpch-event__sessions">
-						<?php
-						foreach ( $sessions as $session ) :
-							$s_id    = $session->get_id();
-							$s_track = $session->get_track();
-							$s_color = $s_track ? $s_track->get_color() : 'var(--wp--preset--color--brand, #3858e9)';
-							$s_time  = $session->get_start_time();
-							$s_when  = '' !== $s_time ? wp_date( 'D H:i', strtotime( $s_time ) ) : '';
-							?>
-							<li class="wpch-event__session" style="--wpch-track:<?php echo esc_attr( $s_color ); ?>">
-								<a href="<?php echo esc_url( (string) get_permalink( $s_id ) ); ?>">
-									<span class="wpch-event__session-dot" aria-hidden="true"></span>
-									<span class="wpch-event__session-title"><?php echo esc_html( get_the_title( $s_id ) ); ?></span>
-									<?php if ( $s_track ) : ?>
-										<span class="wpch-event__session-track"><?php echo esc_html( $s_track->get_name() ); ?></span>
-									<?php endif; ?>
-									<?php if ( '' !== $s_when ) : ?>
-										<span class="wpch-event__session-time"><?php echo esc_html( $s_when ); ?></span>
-									<?php endif; ?>
-								</a>
-							</li>
-						<?php endforeach; ?>
-					</ul>
+			<?php if ( array() !== $session_rows ) : ?>
+				<section class="wpch-event__section wpch-sv"
+					<?php if ( null !== $coords ) : ?>
+						data-lat="<?php echo esc_attr( (string) $coords['latitude'] ); ?>"
+						data-lng="<?php echo esc_attr( (string) $coords['longitude'] ); ?>"
+						data-label="<?php echo esc_attr( get_the_title() . ( '' !== $location ? ' — ' . $location : '' ) ); ?>"
+					<?php endif; ?>
+				>
+					<div class="wpch-sv__head">
+						<h2 class="wpch-event__section-title"><?php esc_html_e( 'Sessions', 'wpcamp-hub' ); ?></h2>
+						<div class="wpch-sv__switch" role="tablist">
+							<button type="button" class="wpch-sv__btn is-active" data-view="list" aria-selected="true"><?php esc_html_e( 'List', 'wpcamp-hub' ); ?></button>
+							<?php if ( null !== $coords ) : ?>
+								<button type="button" class="wpch-sv__btn" data-view="map" aria-selected="false"><?php esc_html_e( 'Map', 'wpcamp-hub' ); ?></button>
+							<?php endif; ?>
+							<button type="button" class="wpch-sv__btn" data-view="timetable" aria-selected="false"><?php esc_html_e( 'Timetable', 'wpcamp-hub' ); ?></button>
+						</div>
+					</div>
+
+					<?php // ---- List view ---- ?>
+					<div class="wpch-sv__view wpch-sv__view--list is-active" data-view="list">
+						<ul class="wpch-event__sessions">
+							<?php foreach ( $session_rows as $row ) : ?>
+								<li class="wpch-event__session" style="--wpch-track:<?php echo esc_attr( $row['color'] ); ?>">
+									<a href="<?php echo esc_url( $row['url'] ); ?>">
+										<span class="wpch-event__session-dot" aria-hidden="true"></span>
+										<span class="wpch-event__session-title"><?php echo esc_html( $row['title'] ); ?></span>
+										<?php if ( '' !== $row['track'] ) : ?>
+											<span class="wpch-event__session-track"><?php echo esc_html( $row['track'] ); ?></span>
+										<?php endif; ?>
+										<?php if ( '' !== $row['day'] || '' !== $row['time'] ) : ?>
+											<span class="wpch-event__session-time"><?php echo esc_html( trim( $row['day'] . ' ' . $row['time'] ) ); ?></span>
+										<?php endif; ?>
+									</a>
+								</li>
+							<?php endforeach; ?>
+						</ul>
+					</div>
+
+					<?php // ---- Map view ---- ?>
+					<?php if ( null !== $coords ) : ?>
+						<div class="wpch-sv__view wpch-sv__view--map" data-view="map">
+							<div class="wpch-sv__map-wrap">
+								<div
+									class="wpch-sv__map"
+									id="wpch-event-map"
+									data-sessions="<?php echo esc_attr( (string) wp_json_encode( array_map( static fn( array $r ): array => array( 'title' => $r['title'], 'track' => $r['track'], 'time' => trim( $r['day'] . ' ' . $r['time'] ), 'room' => $r['room'], 'url' => $r['url'] ), $session_rows ) ) ); ?>"
+								></div>
+								<p class="wpch-sv__map-note">
+									<?php echo esc_html( '' !== $location ? $location : __( 'Event location', 'wpcamp-hub' ) ); ?>
+								</p>
+							</div>
+						</div>
+					<?php endif; ?>
+
+					<?php // ---- Timetable view ---- ?>
+					<div class="wpch-sv__view wpch-sv__view--timetable" data-view="timetable">
+						<div class="wpch-tt">
+							<?php
+							// Group sessions by day for the timetable.
+							$by_day = array();
+							foreach ( $session_rows as $row ) {
+								$day_key                = '' !== $row['day'] ? $row['day'] : __( 'Unscheduled', 'wpcamp-hub' );
+								$by_day[ $day_key ][]   = $row;
+							}
+							foreach ( $by_day as $day_label => $rows ) :
+								?>
+								<div class="wpch-tt__day">
+									<div class="wpch-tt__day-label"><?php echo esc_html( $day_label ); ?></div>
+									<div class="wpch-tt__rows">
+										<?php foreach ( $rows as $row ) : ?>
+											<a class="wpch-tt__block" href="<?php echo esc_url( $row['url'] ); ?>" style="--wpch-track:<?php echo esc_attr( $row['color'] ); ?>">
+												<span class="wpch-tt__time"><?php echo esc_html( '' !== $row['time'] ? $row['time'] : '—' ); ?></span>
+												<span class="wpch-tt__title"><?php echo esc_html( $row['title'] ); ?></span>
+												<?php if ( '' !== $row['room'] ) : ?>
+													<span class="wpch-tt__room"><?php echo esc_html( $row['room'] ); ?></span>
+												<?php endif; ?>
+												<?php if ( '' !== $row['track'] ) : ?>
+													<span class="wpch-tt__track"><?php echo esc_html( $row['track'] ); ?></span>
+												<?php endif; ?>
+											</a>
+										<?php endforeach; ?>
+									</div>
+								</div>
+							<?php endforeach; ?>
+						</div>
+					</div>
 				</section>
 			<?php endif; ?>
 

@@ -105,6 +105,38 @@ function wpcamp_hub_enqueue_assets() {
 		$version,
 		true
 	);
+
+	// Single event: self-hosted Leaflet for the map view + the event-detail
+	// view switcher / map init.
+	if ( is_singular( 'wpcamp_event' ) ) {
+		wp_enqueue_style(
+			'leaflet',
+			get_theme_file_uri( 'assets/leaflet/leaflet.css' ),
+			array(),
+			'1.9.4'
+		);
+		wp_enqueue_script(
+			'leaflet',
+			get_theme_file_uri( 'assets/leaflet/leaflet.js' ),
+			array(),
+			'1.9.4',
+			true
+		);
+		wp_enqueue_script(
+			'wpcamp-hub-event',
+			get_theme_file_uri( 'assets/js/event.js' ),
+			array( 'leaflet' ),
+			$version,
+			true
+		);
+		wp_localize_script(
+			'wpcamp-hub-event',
+			'wpcampHubEvent',
+			array(
+				'markerBase' => get_theme_file_uri( 'assets/leaflet/images/' ),
+			)
+		);
+	}
 }
 add_action( 'wp_enqueue_scripts', 'wpcamp_hub_enqueue_assets' );
 
