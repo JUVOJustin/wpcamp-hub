@@ -1,6 +1,7 @@
 /* eslint-disable import/no-unresolved, import/no-extraneous-dependencies, @wordpress/no-unsafe-wp-apis */
 import { useEntityProp } from '@wordpress/core-data';
 import { useSelect } from '@wordpress/data';
+import { useState } from '@wordpress/element';
 import { PluginDocumentSettingPanel } from '@wordpress/editor';
 import { __ } from '@wordpress/i18n';
 import { registerPlugin } from '@wordpress/plugins';
@@ -16,7 +17,6 @@ import {
 	ToggleControl,
 } from '@wordpress/components';
 import { globe, Icon } from '@wordpress/icons';
-import { Text } from '@wordpress/ui';
 
 import './editor.scss';
 
@@ -65,6 +65,8 @@ const dateRangeFields = {
 const dateRangeEndFields = Object.values( dateRangeFields ).map(
 	( range ) => range.endKey
 );
+const relationQueryLimit = 20;
+const selectedRelationQueryLimit = 100;
 
 const getFieldLabel = ( metaKey ) =>
 	metaKey
@@ -91,34 +93,136 @@ const isDateField = ( metaKey ) =>
 	metaKey.includes( 'time' ) ||
 	metaKey.includes( 'timestamp' );
 
-const buildPostOptions = ( records ) =>
-	( records || [] ).map( ( record ) => ( {
-		label: record.title?.rendered || record.title?.raw || `#${ record.id }`,
-		value: String( record.id ),
-	} ) );
+const getRelationEntity = ( target ) =>
+	target === 'user'
+		? { kind: 'root', name: 'user' }
+		: { kind: 'postType', name: target };
 
-const buildUserOptions = ( records ) =>
-	( records || [] ).map( ( record ) => ( {
-		label: record.name || record.slug || `#${ record.id }`,
-		value: String( record.id ),
-	} ) );
+const getRelationQuery = ( target, query ) => ( {
+	per_page: relationQueryLimit,
+	...( target === 'user' ? {} : { status: 'any' } ),
+	...( query.length > 0 ? { search: query } : {} ),
+} );
 
-function RelationArrayControl( {
+const getSelectedRelationQuery = ( target, selectedIds ) => {
+	const includedIds = selectedIds.slice( 0, selectedRelationQueryLimit );
+
+	return {
+		per_page: includedIds.length,
+		include: includedIds,
+		...( target === 'user' ? {} : { status: 'any' } ),
+	};
+};
+
+const getRelationOption = ( target, record ) => ( {
+	label:
+		target === 'user'
+			? record.name || record.slug || `#${ record.id }`
+			: record.title?.rendered || record.title?.raw || `#${ record.id }`,
+	value: String( record.id ),
+} );
+
+const getFallbackRelationOption = ( id ) => ( {
+	label: `#${ id }`,
+	value: String( id ),
+} );
+
+const mergeRelationOptions = ( ...optionGroups ) => {
+	const optionsByValue = new Map();
+
+	optionGroups.flat().forEach( ( option ) => {
+		optionsByValue.set( option.value, option );
+	} );
+
+	return [ ...optionsByValue.values() ];
+};
+
+const toRelationIds = ( value, multiple ) => {
+	const values = multiple && Array.isArray( value ) ? value : [ value ];
+
+	return values
+		.map( ( item ) => Number.parseInt( item, 10 ) )
+		.filter( ( id ) => Number.isInteger( id ) && id > 0 );
+};
+
+function AsyncRelationControl( {
 	help,
 	label,
 	metaKey,
+	multiple,
 	onChange,
-	options,
+	target,
 	value,
 } ) {
-	const selectedIds = Array.isArray( value )
-		? value
-				.map( ( item ) => Number.parseInt( item, 10 ) )
-				.filter( Number.isInteger )
-		: [];
-	const selectedOptions = options.filter( ( option ) =>
-		selectedIds.includes( Number.parseInt( option.value, 10 ) )
+	const [ query, setQuery ] = useState( '' );
+	const selectedIds = toRelationIds( value, multiple );
+	const selectedIdsKey = selectedIds.join( ',' );
+	const trimmedQuery = query.trim();
+	const { records, selectedRecords, isLoading } = useSelect(
+		( select ) => {
+			const { kind, name } = getRelationEntity( target );
+			const core = select( 'core' );
+			const selectedIdsForQuery =
+				selectedIdsKey.length > 0
+					? selectedIdsKey
+							.split( ',' )
+							.map( ( id ) => Number.parseInt( id, 10 ) )
+							.filter( Number.isInteger )
+					: [];
+			const recordsQuery = getRelationQuery( target, trimmedQuery );
+			const selectedQuery =
+				selectedIdsForQuery.length > 0
+					? getSelectedRelationQuery( target, selectedIdsForQuery )
+					: null;
+			const relationRecords =
+				core.getEntityRecords( kind, name, recordsQuery ) || [];
+
+			return {
+				records: relationRecords,
+				selectedRecords: selectedQuery
+					? core.getEntityRecords( kind, name, selectedQuery ) || []
+					: [],
+				isLoading: Boolean(
+					core.isResolving?.( 'getEntityRecords', [
+						kind,
+						name,
+						recordsQuery,
+					] )
+				),
+			};
+		},
+		[ target, trimmedQuery, selectedIdsKey ]
 	);
+	const options = mergeRelationOptions(
+		selectedIds.map( getFallbackRelationOption ),
+		selectedRecords.map( ( record ) =>
+			getRelationOption( target, record )
+		),
+		records.map( ( record ) => getRelationOption( target, record ) )
+	);
+	const selectedOptions = selectedIds.map(
+		( id ) =>
+			options.find( ( option ) => option.value === String( id ) ) ||
+			getFallbackRelationOption( id )
+	);
+	const updateSelection = ( nextValue ) => {
+		const nextId = Number.parseInt( nextValue, 10 );
+
+		if ( ! Number.isInteger( nextId ) ) {
+			if ( ! multiple ) {
+				onChange( 0 );
+			}
+			return;
+		}
+
+		if ( multiple ) {
+			onChange( [ ...new Set( [ ...selectedIds, nextId ] ) ] );
+		} else {
+			onChange( nextId );
+		}
+
+		setQuery( '' );
+	};
 
 	return (
 		<BaseControl
@@ -131,22 +235,17 @@ function RelationArrayControl( {
 				<ComboboxControl
 					__next40pxDefaultSize
 					__nextHasNoMarginBottom
-					label={ label }
+					allowReset={ ! multiple }
 					hideLabelFromVision
+					isLoading={ isLoading }
+					label={ label }
+					onChange={ updateSelection }
+					onFilterValueChange={ setQuery }
 					options={ options }
-					value=""
-					onChange={ ( nextValue ) => {
-						const nextId = Number.parseInt( nextValue, 10 );
-						if ( ! Number.isInteger( nextId ) ) {
-							return;
-						}
-
-						onChange( [
-							...new Set( [ ...selectedIds, nextId ] ),
-						] );
-					} }
+					placeholder={ __( 'Search relations', 'wpcamp-hub' ) }
+					value={ multiple ? '' : selectedOptions[ 0 ]?.value || '' }
 				/>
-				{ selectedOptions.length > 0 && (
+				{ multiple && selectedOptions.length > 0 && (
 					<div className="wpcamp-hub-editor-relation-list">
 						{ selectedOptions.map( ( option ) => (
 							<Button
@@ -259,7 +358,7 @@ function DateRangeControl( {
 	);
 }
 
-function FieldControl( { field, metaKey, options, value, onChange } ) {
+function FieldControl( { field, metaKey, relationTarget, value, onChange } ) {
 	const label = getFieldLabel( metaKey );
 	const help = field.description;
 
@@ -288,18 +387,16 @@ function FieldControl( { field, metaKey, options, value, onChange } ) {
 	}
 
 	if ( field.type === 'integer' ) {
-		if ( options.length > 0 ) {
+		if ( relationTarget ) {
 			return (
-				<ComboboxControl
-					__next40pxDefaultSize
-					__nextHasNoMarginBottom
-					label={ label }
+				<AsyncRelationControl
 					help={ help }
-					options={ options }
-					value={ value ? String( value ) : '' }
-					onChange={ ( nextValue ) =>
-						onChange( Number.parseInt( nextValue, 10 ) || 0 )
-					}
+					label={ label }
+					metaKey={ metaKey }
+					multiple={ false }
+					onChange={ onChange }
+					target={ relationTarget }
+					value={ value }
 				/>
 			);
 		}
@@ -324,14 +421,15 @@ function FieldControl( { field, metaKey, options, value, onChange } ) {
 	}
 
 	if ( field.type === 'array' ) {
-		if ( options.length > 0 ) {
+		if ( relationTarget ) {
 			return (
-				<RelationArrayControl
+				<AsyncRelationControl
 					help={ help }
 					label={ label }
 					metaKey={ metaKey }
+					multiple
 					onChange={ onChange }
-					options={ options }
+					target={ relationTarget }
 					value={ value }
 				/>
 			);
@@ -442,42 +540,6 @@ function MetaPanel() {
 	);
 	const fields = fieldsByPostType[ postType ] || {};
 	const [ meta, setMeta ] = useEntityProp( 'postType', postType, 'meta' );
-	const relationRecords = useSelect(
-		( select ) => ( {
-			events: select( 'core' ).getEntityRecords(
-				'postType',
-				'wpcamp_event',
-				{ per_page: 100, status: 'any' }
-			),
-			tweets: select( 'core' ).getEntityRecords(
-				'postType',
-				'wpcamp_tweet',
-				{ per_page: 100, status: 'any' }
-			),
-			users: select( 'core' ).getEntityRecords( 'root', 'user', {
-				per_page: 100,
-			} ),
-		} ),
-		[]
-	);
-
-	const getOptions = ( metaKey ) => {
-		const target = relationTargets[ metaKey ];
-
-		if ( target === 'wpcamp_event' ) {
-			return buildPostOptions( relationRecords.events );
-		}
-
-		if ( target === 'wpcamp_tweet' ) {
-			return buildPostOptions( relationRecords.tweets );
-		}
-
-		if ( target === 'user' ) {
-			return buildUserOptions( relationRecords.users );
-		}
-
-		return [];
-	};
 
 	const updateMeta = ( metaKey, nextValue ) => {
 		setMeta( {
@@ -522,7 +584,7 @@ function MetaPanel() {
 				key={ metaKey }
 				field={ field }
 				metaKey={ metaKey }
-				options={ getOptions( metaKey ) }
+				relationTarget={ relationTargets[ metaKey ] }
 				value={ meta?.[ metaKey ] }
 				onChange={ ( nextValue ) => updateMeta( metaKey, nextValue ) }
 			/>
@@ -536,12 +598,12 @@ function MetaPanel() {
 				title={ __( 'WPCamp Hub Details', 'wpcamp-hub' ) }
 				className="wpcamp-hub-editor-meta-panel"
 			>
-				<Text>
+				<p className="wpcamp-hub-editor-empty-state">
 					{ __(
 						'No editable WPCamp Hub fields are registered for this post type.',
 						'wpcamp-hub'
 					) }
-				</Text>
+				</p>
 			</PluginDocumentSettingPanel>
 		);
 	}
