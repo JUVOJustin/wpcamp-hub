@@ -24,7 +24,7 @@ abstract class Term_Entity {
 	 *
 	 * @param int|\WP_Term $term Term ID or object.
 	 */
-	final public function __construct( $term ) {
+	final public function __construct( int|\WP_Term $term ) {
 		$wp_term = $term instanceof \WP_Term ? $term : get_term( $term, static::get_taxonomy() );
 
 		if ( ! $wp_term instanceof \WP_Term || static::get_taxonomy() !== $wp_term->taxonomy ) {
@@ -40,7 +40,7 @@ abstract class Term_Entity {
 	 * @param int|\WP_Term $term Term ID or object.
 	 * @return static
 	 */
-	public static function from( $term ): self {
+	public static function from( int|\WP_Term $term ): static {
 		return new static( $term );
 	}
 
@@ -69,7 +69,7 @@ abstract class Term_Entity {
 	 * @param string $name Property name.
 	 * @return mixed
 	 */
-	public function __get( string $name ) {
+	public function __get( string $name ): mixed {
 		return $this->wp_entity->{$name} ?? null;
 	}
 }

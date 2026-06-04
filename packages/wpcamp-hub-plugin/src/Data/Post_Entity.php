@@ -24,7 +24,7 @@ abstract class Post_Entity {
 	 *
 	 * @param int|\WP_Post $post Post ID or object.
 	 */
-	final public function __construct( $post ) {
+	final public function __construct( int|\WP_Post $post ) {
 		$wp_post = $post instanceof \WP_Post ? $post : get_post( $post );
 
 		if ( ! $wp_post instanceof \WP_Post || static::get_post_type() !== $wp_post->post_type ) {
@@ -40,7 +40,7 @@ abstract class Post_Entity {
 	 * @param int|\WP_Post $post Post ID or object.
 	 * @return static
 	 */
-	public static function from( $post ): self {
+	public static function from( int|\WP_Post $post ): static {
 		return new static( $post );
 	}
 
@@ -96,7 +96,7 @@ abstract class Post_Entity {
 	 * @param string $name Property name.
 	 * @return mixed
 	 */
-	public function __get( string $name ) {
+	public function __get( string $name ): mixed {
 		return $this->wp_entity->{$name} ?? null;
 	}
 }

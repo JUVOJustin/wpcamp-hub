@@ -82,7 +82,7 @@
     },
     "config": {
         "platform": {
-            "php": "8.0"
+            "php": "8.4"
         },
         "allow-plugins": {
             "phpstan/extension-installer": true,
@@ -91,6 +91,6 @@
         }
     },
     "require": {
-        "php": ">=8.0"
+        "php": ">=8.4"
     }
 }

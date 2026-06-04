@@ -31,8 +31,8 @@ use WPCAMP_HUB\Data\Data_Structure;
 class WPCAMP_HUB {
 
 
-	const PLUGIN_NAME    = 'wpcamp-hub';
-	const PLUGIN_VERSION = '1.0.0';
+	public const string PLUGIN_NAME    = 'wpcamp-hub';
+	public const string PLUGIN_VERSION = '1.0.0';
 
 	/**
 	 * The loader that's responsible for maintaining and registering all hooks that power

@@ -12,7 +12,7 @@ namespace WPCAMP_HUB\Data;
  */
 class Relationships {
 
-	const META_KEY = '_wpcamp_hub_relationships';
+	public const string META_KEY = '_wpcamp_hub_relationships';
 
 	/**
 	 * Relationship rules keyed by source and target entity types.
@@ -112,7 +112,7 @@ class Relationships {
 	 * @param mixed $value Raw meta value.
 	 * @return array<string,int[]>
 	 */
-	public static function sanitize_relationships( $value ): array {
+	public static function sanitize_relationships( mixed $value ): array {
 		if ( ! is_array( $value ) ) {
 			return array();
 		}

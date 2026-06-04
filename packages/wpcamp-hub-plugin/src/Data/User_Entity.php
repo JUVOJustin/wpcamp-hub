@@ -24,7 +24,7 @@ abstract class User_Entity {
 	 *
 	 * @param int|\WP_User $user User ID or object.
 	 */
-	final public function __construct( $user ) {
+	final public function __construct( int|\WP_User $user ) {
 		$wp_user = $user instanceof \WP_User ? $user : get_user_by( 'id', $user );
 
 		if ( ! $wp_user instanceof \WP_User ) {
@@ -40,7 +40,7 @@ abstract class User_Entity {
 	 * @param int|\WP_User $user User ID or object.
 	 * @return static
 	 */
-	public static function from( $user ): self {
+	public static function from( int|\WP_User $user ): static {
 		return new static( $user );
 	}
 
@@ -84,7 +84,7 @@ abstract class User_Entity {
 	 * @param string $name Property name.
 	 * @return mixed
 	 */
-	public function __get( string $name ) {
+	public function __get( string $name ): mixed {
 		return $this->wp_entity->{$name} ?? null;
 	}
 }

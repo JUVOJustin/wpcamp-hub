@@ -1,7 +1,7 @@
 {
 	"$schema": "https://schemas.wp.org/trunk/wp-env.json",
 	"core": null,
-	"phpVersion": "8.1",
+	"phpVersion": "8.4",
 	"mappings": {
 		"wp-content/plugins/wpcamp-hub": ".",
 		"wp-content/plugins/": "./tests/setup/plugins/"

@@ -12,14 +12,14 @@ namespace WPCAMP_HUB\Data;
  */
 class Data_Structure {
 
-	const POST_TYPE_EVENT          = 'wpcamp_event';
-	const POST_TYPE_TWEET          = 'wpcamp_tweet';
-	const POST_TYPE_SESSION        = 'wpcamp_session';
-	const POST_TYPE_MEETING_INVITE = 'wpcamp_meeting';
+	public const string POST_TYPE_EVENT          = 'wpcamp_event';
+	public const string POST_TYPE_TWEET          = 'wpcamp_tweet';
+	public const string POST_TYPE_SESSION        = 'wpcamp_session';
+	public const string POST_TYPE_MEETING_INVITE = 'wpcamp_meeting';
 
-	const TAXONOMY_EVENT_TYPE  = 'wpcamp_event_type';
-	const TAXONOMY_TWEET_LABEL = 'wpcamp_tweet_label';
-	const TAXONOMY_TRACK       = 'wpcamp_track';
+	public const string TAXONOMY_EVENT_TYPE  = 'wpcamp_event_type';
+	public const string TAXONOMY_TWEET_LABEL = 'wpcamp_tweet_label';
+	public const string TAXONOMY_TRACK       = 'wpcamp_track';
 
 	/**
 	 * Register all data structures.
@@ -408,7 +408,7 @@ class Data_Structure {
 	 * @param string $object_type Object type.
 	 * @return mixed
 	 */
-	public function sanitize_registered_meta( $value, string $meta_key, string $object_type ) {
+	public function sanitize_registered_meta( mixed $value, string $meta_key, string $object_type ): mixed {
 		$field = $this->find_field( $meta_key, $object_type );
 		return $this->sanitize_meta_input( $value, $field );
 	}
@@ -441,7 +441,7 @@ class Data_Structure {
 	 * @param array<string,mixed> $field Field config.
 	 * @return mixed
 	 */
-	private function sanitize_meta_input( $value, array $field ) {
+	private function sanitize_meta_input( mixed $value, array $field ): mixed {
 		if ( 'integer' === $field['type'] ) {
 			return absint( $value );
 		}
@@ -476,7 +476,7 @@ class Data_Structure {
 	 * @param string $type JSON schema type.
 	 * @return mixed
 	 */
-	private function default_for_type( string $type ) {
+	private function default_for_type( string $type ): mixed {
 		if ( 'array' === $type ) {
 			return array();
 		}
