@@ -90,7 +90,14 @@
             "dealerdirect/phpcodesniffer-composer-installer": true
         }
     },
+    "repositories": [
+        {
+            "type": "vcs",
+            "url": "https://github.com/Xquik-dev/x-twitter-scraper-php.git"
+        }
+    ],
     "require": {
-        "php": ">=8.4"
+        "php": ">=8.4",
+        "xquik/x-twitter-scraper": "dev-main"
     }
 }

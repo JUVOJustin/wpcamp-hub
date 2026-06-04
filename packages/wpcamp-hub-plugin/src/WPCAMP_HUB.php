@@ -14,6 +14,9 @@
 namespace WPCAMP_HUB;
 
 use WPCAMP_HUB\Data\Data_Structure;
+use WPCAMP_HUB\Integrations\Twitter\Twitter_Service;
+use WPCAMP_HUB\Integrations\Twitter\Tweet_Admin;
+use WPCAMP_HUB\Integrations\Twitter\Tweet_Import_Command;
 
 /**
  * The core plugin class.
@@ -64,6 +67,7 @@ class WPCAMP_HUB {
 		$this->set_locale();
 		$this->define_admin_hooks();
 		$this->define_public_hooks();
+		$this->define_twitter_hooks();
 
 		$this->loader->add_action( 'init', $this, 'register_blocks' );
 	}
@@ -154,6 +158,24 @@ class WPCAMP_HUB {
 			},
 			100
 		);
+	}
+
+	/**
+	 * Register the X/Twitter import hooks (CLI + admin).
+	 *
+	 * @access private
+	 */
+	private function define_twitter_hooks(): void {
+		$service = new Twitter_Service();
+
+		// WP-CLI: wp wpcamp import-tweets --query=... --limit=...
+		$this->loader->add_cli( 'wpcamp import-tweets', new Tweet_Import_Command( $service ) );
+
+		// Admin: settings + manual import trigger under the Tweets CPT.
+		$admin = new Tweet_Admin( $service );
+		$this->loader->add_action( 'admin_init', $admin, 'register_settings' );
+		$this->loader->add_action( 'admin_init', $admin, 'maybe_run_import' );
+		$this->loader->add_action( 'admin_menu', $admin, 'register_page' );
 	}
 
 	/**
