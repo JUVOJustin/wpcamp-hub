@@ -61,9 +61,23 @@
 		"columns": {
 			"type": "number",
 			"default": 3
+		},
+		"contentSource": {
+			"type": "string",
+			"default": "manual"
+		},
+		"legendSource": {
+			"type": "string",
+			"default": "manual"
+		},
+		"sessionsCount": {
+			"type": "number",
+			"default": 3
 		}
 	},
+	"usesContext": [],
 	"editorScript": "file:./index.js",
 	"editorStyle": "file:./index.css",
-	"style": "file:./style-index.css"
+	"style": "file:./style-index.css",
+	"render": "file:./render.php"
 }

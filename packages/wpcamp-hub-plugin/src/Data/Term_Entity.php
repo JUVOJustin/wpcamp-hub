@@ -65,6 +65,13 @@ abstract class Term_Entity {
 	}
 
 	/**
+	 * Term display name.
+	 */
+	public function get_name(): string {
+		return (string) $this->wp_entity->name;
+	}
+
+	/**
 	 * Pass unknown property reads through to the native WP_Term.
 	 *
 	 * @param string $name Property name.
