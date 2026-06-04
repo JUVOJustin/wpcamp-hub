@@ -110,6 +110,12 @@ class WPCAMP_HUB {
 		$this->loader->add_action( 'save_post', $this->data_structure, 'save_post_meta', 10, 2 );
 		$this->loader->add_action( 'enqueue_block_editor_assets', $this, 'add_editor_block_data', 10, 0 );
 
+		// Track accent colour field on the taxonomy term forms.
+		$this->loader->add_action( 'wpcamp_track_add_form_fields', $this->data_structure, 'add_track_color_field', 10, 0 );
+		$this->loader->add_action( 'wpcamp_track_edit_form_fields', $this->data_structure, 'edit_track_color_field', 10, 1 );
+		$this->loader->add_action( 'created_wpcamp_track', $this->data_structure, 'save_track_color', 10, 1 );
+		$this->loader->add_action( 'edited_wpcamp_track', $this->data_structure, 'save_track_color', 10, 1 );
+
 		add_action(
 			'admin_enqueue_scripts',
 			function () {

@@ -13,6 +13,8 @@ import {
 	RangeControl,
 	ToggleControl,
 	TextControl,
+	SelectControl,
+	Notice,
 	Button,
 	Flex,
 	FlexItem,
@@ -79,8 +81,14 @@ export default function Edit( { attributes, setAttributes } ) {
 		linkUrl,
 		showLegend,
 		legend,
+		legendSource,
 		columns,
+		contentSource,
+		sessionsCount,
 	} = attributes;
+
+	const isDynamicCards = contentSource === 'sessions';
+	const isDynamicLegend = legendSource === 'tracks';
 
 	const blockProps = useBlockProps( { className: 'wpch-programme' } );
 
@@ -119,6 +127,40 @@ export default function Edit( { attributes, setAttributes } ) {
 	return (
 		<>
 			<InspectorControls>
+				<PanelBody title={ __( 'Content', 'wpcamp-hub' ) }>
+					<SelectControl
+						label={ __( 'Cards', 'wpcamp-hub' ) }
+						value={ contentSource }
+						options={ [
+							{
+								label: __( 'Manual', 'wpcamp-hub' ),
+								value: 'manual',
+							},
+							{
+								label: __( 'Sessions (CPT)', 'wpcamp-hub' ),
+								value: 'sessions',
+							},
+						] }
+						onChange={ ( v ) =>
+							setAttributes( { contentSource: v } )
+						}
+						help={ __(
+							'Manual: place cards yourself. Sessions: pull the latest sessions automatically.',
+							'wpcamp-hub'
+						) }
+					/>
+					{ isDynamicCards && (
+						<RangeControl
+							label={ __( 'Number of sessions', 'wpcamp-hub' ) }
+							value={ sessionsCount }
+							min={ 1 }
+							max={ 12 }
+							onChange={ ( v ) =>
+								setAttributes( { sessionsCount: v || 1 } )
+							}
+						/>
+					) }
+				</PanelBody>
 				<PanelBody title={ __( 'Section', 'wpcamp-hub' ) }>
 					<TextControl
 						label={ __( 'Link label', 'wpcamp-hub' ) }
@@ -147,7 +189,40 @@ export default function Edit( { attributes, setAttributes } ) {
 						checked={ showLegend }
 						onChange={ ( v ) => setAttributes( { showLegend: v } ) }
 					/>
-					{ legend.map( ( t, i ) => (
+					{ showLegend && (
+						<SelectControl
+							label={ __( 'Legend source', 'wpcamp-hub' ) }
+							value={ legendSource }
+							options={ [
+								{
+									label: __( 'Manual', 'wpcamp-hub' ),
+									value: 'manual',
+								},
+								{
+									label: __(
+										'Tracks (taxonomy)',
+										'wpcamp-hub'
+									),
+									value: 'tracks',
+								},
+							] }
+							onChange={ ( v ) =>
+								setAttributes( { legendSource: v } )
+							}
+						/>
+					) }
+					{ showLegend &&
+						isDynamicLegend && (
+							<Notice status="info" isDismissible={ false }>
+								{ __(
+									'The legend is built from the Tracks taxonomy (name + colour).',
+									'wpcamp-hub'
+								) }
+							</Notice>
+						) }
+					{ showLegend &&
+						! isDynamicLegend &&
+						legend.map( ( t, i ) => (
 						<Flex
 							key={ i }
 							align="flex-end"
@@ -189,9 +264,11 @@ export default function Edit( { attributes, setAttributes } ) {
 							</FlexItem>
 						</Flex>
 					) ) }
-					<Button variant="secondary" onClick={ addTrack }>
-						{ __( 'Add track', 'wpcamp-hub' ) }
-					</Button>
+					{ showLegend && ! isDynamicLegend && (
+						<Button variant="secondary" onClick={ addTrack }>
+							{ __( 'Add track', 'wpcamp-hub' ) }
+						</Button>
+					) }
 				</PanelBody>
 			</InspectorControls>
 
@@ -225,9 +302,30 @@ export default function Edit( { attributes, setAttributes } ) {
 						</span>
 					</div>
 
-					{ showLegend && <Legend items={ legend } /> }
+					{ showLegend && ! isDynamicLegend && (
+						<Legend items={ legend } />
+					) }
+					{ showLegend && isDynamicLegend && (
+						<div className="wpch-programme__legend wpch-programme__legend--placeholder">
+							<span className="wpch-programme__legend-item">
+								{ __(
+									'Legend from Tracks taxonomy →',
+									'wpcamp-hub'
+								) }
+							</span>
+						</div>
+					) }
 
-					<div { ...innerBlocksProps } />
+					{ isDynamicCards ? (
+						<div className="wpch-programme__placeholder">
+							{ __(
+								'Session cards are pulled from the Sessions CPT and render on the front end.',
+								'wpcamp-hub'
+							) }
+						</div>
+					) : (
+						<div { ...innerBlocksProps } />
+					) }
 				</div>
 			</section>
 		</>

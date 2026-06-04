@@ -21,12 +21,15 @@ class Data_Structure {
 	public const string TAXONOMY_TWEET_LABEL = 'wpcamp_tweet_label';
 	public const string TAXONOMY_TRACK       = 'wpcamp_track';
 
+	public const string TERM_META_COLOR = 'wpcamp_color';
+
 	/**
 	 * Register all data structures.
 	 */
 	public function register(): void {
 		$this->register_post_types();
 		$this->register_taxonomies();
+		$this->register_term_meta();
 		$this->register_post_meta();
 		$this->register_user_meta();
 		( new Relationships() )->register_meta();
@@ -389,6 +392,77 @@ class Data_Structure {
 				}
 			}
 		}
+	}
+
+	/**
+	 * Register taxonomy term meta (track accent colour).
+	 */
+	private function register_term_meta(): void {
+		register_term_meta(
+			self::TAXONOMY_TRACK,
+			self::TERM_META_COLOR,
+			array(
+				'type'              => 'string',
+				'description'       => __( 'Accent colour for the track (hex).', 'wpcamp-hub' ),
+				'single'            => true,
+				'show_in_rest'      => true,
+				'sanitize_callback' => 'sanitize_hex_color',
+				'default'           => '',
+			)
+		);
+	}
+
+	/**
+	 * Render the colour field on the "Add Track" form.
+	 */
+	public function add_track_color_field(): void {
+		?>
+		<div class="form-field term-wpcamp-color-wrap">
+			<label for="wpcamp-color"><?php esc_html_e( 'Accent colour', 'wpcamp-hub' ); ?></label>
+			<input type="color" name="<?php echo esc_attr( self::TERM_META_COLOR ); ?>" id="wpcamp-color" value="#3858E9" />
+			<p><?php esc_html_e( 'Used for the track legend and session card accents.', 'wpcamp-hub' ); ?></p>
+		</div>
+		<?php
+	}
+
+	/**
+	 * Render the colour field on the "Edit Track" form.
+	 *
+	 * @param \WP_Term $term Term being edited.
+	 */
+	public function edit_track_color_field( \WP_Term $term ): void {
+		$color = get_term_meta( $term->term_id, self::TERM_META_COLOR, true );
+		$color = is_string( $color ) && '' !== $color ? $color : '#3858E9';
+		?>
+		<tr class="form-field term-wpcamp-color-wrap">
+			<th scope="row">
+				<label for="wpcamp-color"><?php esc_html_e( 'Accent colour', 'wpcamp-hub' ); ?></label>
+			</th>
+			<td>
+				<input type="color" name="<?php echo esc_attr( self::TERM_META_COLOR ); ?>" id="wpcamp-color" value="<?php echo esc_attr( $color ); ?>" />
+				<p class="description"><?php esc_html_e( 'Used for the track legend and session card accents.', 'wpcamp-hub' ); ?></p>
+			</td>
+		</tr>
+		<?php
+	}
+
+	/**
+	 * Persist the track colour when a term is created or edited.
+	 *
+	 * @param int $term_id Term ID.
+	 */
+	public function save_track_color( int $term_id ): void {
+		// phpcs:ignore WordPress.Security.NonceVerification.Missing -- core handles the term-form nonce.
+		if ( ! isset( $_POST[ self::TERM_META_COLOR ] ) ) {
+			return;
+		}
+		// phpcs:ignore WordPress.Security.NonceVerification.Missing
+		$color = sanitize_hex_color( wp_unslash( $_POST[ self::TERM_META_COLOR ] ) );
+		if ( null === $color || '' === $color ) {
+			delete_term_meta( $term_id, self::TERM_META_COLOR );
+			return;
+		}
+		update_term_meta( $term_id, self::TERM_META_COLOR, $color );
 	}
 
 	/**

@@ -7,4 +7,19 @@
 	.wpch-programme__grid > .block-editor-block-list__layout {
 		display: contents;
 	}
+
+	/* dynamic-mode placeholder shown in the editor */
+	.wpch-programme__placeholder {
+		border: 1px dashed var( --wp--preset--color--line, #dcdcde );
+		border-radius: 8px;
+		padding: 32px 24px;
+		text-align: center;
+		color: var( --wp--preset--color--ink-500, #757575 );
+		font-size: 14px;
+	}
+
+	.wpch-programme__legend--placeholder .wpch-programme__legend-item {
+		color: var( --wp--preset--color--ink-500, #757575 );
+		font-style: italic;
+	}
 }

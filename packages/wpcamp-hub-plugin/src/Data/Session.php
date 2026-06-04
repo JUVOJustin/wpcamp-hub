@@ -30,6 +30,49 @@ class Session extends Post_Entity {
 	}
 
 	/**
+	 * Track term assigned to this session.
+	 */
+	public function get_track(): ?Track {
+		$terms = get_the_terms( $this->get_id(), Data_Structure::TAXONOMY_TRACK );
+
+		if ( ! is_array( $terms ) || array() === $terms ) {
+			return null;
+		}
+
+		return Track::from( reset( $terms ) );
+	}
+
+	/**
+	 * Session start time as a stored ISO 8601 string.
+	 */
+	public function get_start_time(): string {
+		$value = get_post_meta( $this->get_id(), 'wpcamp_start_time', true );
+
+		return is_string( $value ) ? $value : '';
+	}
+
+	/**
+	 * Room/location for this session (free-form meta).
+	 */
+	public function get_room(): string {
+		$value = get_post_meta( $this->get_id(), 'wpcamp_room', true );
+
+		return is_string( $value ) ? $value : '';
+	}
+
+	/**
+	 * Display names of the session speakers.
+	 *
+	 * @return list<string>
+	 */
+	public function get_speaker_names(): array {
+		return array_map(
+			static fn( User_Profile $profile ): string => (string) ( $profile->get_wp_entity()->display_name ?? '' ),
+			$this->get_attendees()
+		);
+	}
+
+	/**
 	 * Attendee profiles related to this session.
 	 *
 	 * @return list<User_Profile>
