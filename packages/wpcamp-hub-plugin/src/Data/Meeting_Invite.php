@@ -1,0 +1,21 @@
+<?php
+/**
+ * Meeting invite entity wrapper.
+ *
+ * @package WPCAMP_HUB
+ */
+
+namespace WPCAMP_HUB\Data;
+
+/**
+ * Represents open one-to-one meeting opportunities.
+ */
+class Meeting_Invite extends Post_Entity {
+
+	/**
+	 * The registered post type represented by the wrapper.
+	 */
+	public static function get_post_type(): string {
+		return Data_Structure::POST_TYPE_MEETING_INVITE;
+	}
+}

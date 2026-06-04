@@ -13,6 +13,8 @@
 
 namespace WPCAMP_HUB;
 
+use WPCAMP_HUB\Data\Data_Structure;
+
 /**
  * The core plugin class.
  *
@@ -39,6 +41,13 @@ class WPCAMP_HUB {
 	 * @var Loader
 	 */
 	protected Loader $loader;
+
+	/**
+	 * Central data structure registration.
+	 *
+	 * @var Data_Structure
+	 */
+	protected Data_Structure $data_structure;
 
 	/**
 	 * Define the core functionality of the plugin.
@@ -70,7 +79,8 @@ class WPCAMP_HUB {
 	 */
 	private function load_dependencies(): void {
 
-		$this->loader = new Loader();
+		$this->loader         = new Loader();
+		$this->data_structure = new Data_Structure();
 	}
 
 	/**
@@ -96,6 +106,9 @@ class WPCAMP_HUB {
 	 */
 	private function define_admin_hooks(): void {
 
+		$this->loader->add_action( 'add_meta_boxes', $this->data_structure, 'register_meta_boxes', 10, 0 );
+		$this->loader->add_action( 'save_post', $this->data_structure, 'save_post_meta', 10, 2 );
+
 		add_action(
 			'admin_enqueue_scripts',
 			function () {
@@ -113,6 +126,8 @@ class WPCAMP_HUB {
 	 * @access   private
 	 */
 	private function define_public_hooks(): void {
+
+		$this->loader->add_action( 'init', $this->data_structure, 'register' );
 
 		add_action(
 			'wp_enqueue_scripts',

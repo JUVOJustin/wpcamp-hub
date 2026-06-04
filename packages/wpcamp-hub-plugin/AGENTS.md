@@ -6,6 +6,7 @@ This plugin is a modern WordPress plugin with strict conventions and automated w
 - **All plugin logic lives in `src/`**. Organize by feature/context (e.g., `Admin/`, `Frontend/`, `Integrations/`).
 - **Main plugin file (`wpcamp-hub.php`) only bootstraps**. Never place business logic here.
 - **Loader pattern**: Register hooks, filters, shortcodes, CLI commands, and abilities via the `Loader` class. Do not register hooks in constructors.
+- **Data layer**: Platform data structures live in `src/Data/`. `Data_Structure` centrally registers CPTs, taxonomies, and meta. Dedicated wrapper classes initialize from `WP_Post`, `WP_Term`, `WP_User`, or IDs and use `Relationships` for cross-entity links.
 
 ### Asset Management
 
