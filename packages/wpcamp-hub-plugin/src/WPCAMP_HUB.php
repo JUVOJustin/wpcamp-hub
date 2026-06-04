@@ -103,7 +103,7 @@ class WPCAMP_HUB {
 			},
 			100
 		);
-}
+	}
 
 	/**
 	 * Register all of the hooks related to the public-facing functionality
