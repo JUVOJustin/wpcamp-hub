@@ -1,0 +1,266 @@
+/**
+ * Hero Section — shared styles (front end + editor).
+ *
+ * Colours, fonts and spacing come from the theme's theme.json presets
+ * (var(--wp--preset--*)). Only hero-specific layout lives here. Scoped under
+ * .wpch-hero.
+ */
+
+.wpch-hero {
+	font-family: var( --wp--preset--font-family--sans );
+	color: var( --wp--preset--color--ink-900 );
+	padding: var( --wp--preset--spacing--80, 64px ) 0;
+
+	* {
+		box-sizing: border-box;
+	}
+
+	.wpch-hero__inner {
+		max-width: var( --wp--style--global--content-size, 1200px );
+		margin: 0 auto;
+		padding: 0 24px;
+		display: grid;
+		grid-template-columns: 1.04fr 0.96fr;
+		gap: 56px;
+		align-items: center;
+	}
+
+	/* ---------- content column ---------- */
+	.wpch-hero__eyebrow-row {
+		display: flex;
+		align-items: center;
+		gap: 12px;
+		margin-bottom: 16px;
+		flex-wrap: wrap;
+	}
+
+	.wpch-hero__eyebrow {
+		font-size: 13px;
+		font-weight: 700;
+		letter-spacing: 0.08em;
+		text-transform: uppercase;
+		color: var( --wp--preset--color--brand );
+	}
+
+	.wpch-hero__title {
+		font-family: var( --wp--preset--font-family--display );
+		font-weight: 600;
+		font-size: var( --wp--preset--font-size--display, clamp( 46px, 5.6vw, 76px ) );
+		line-height: 1.05;
+		letter-spacing: -0.01em;
+		margin: 0 0 20px;
+		text-wrap: balance;
+	}
+
+	.wpch-hero__lead {
+		font-size: var( --wp--preset--font-size--large, 20px );
+		line-height: 1.65;
+		color: var( --wp--preset--color--ink-600 );
+		margin: 0 0 28px;
+		max-width: 46ch;
+	}
+
+	/* ---------- actions row: nested core/buttons + date ---------- */
+	.wpch-hero__actions-row {
+		display: flex;
+		gap: 12px;
+		flex-wrap: wrap;
+		align-items: center;
+	}
+
+	/* The nested core/buttons block. */
+	.wpch-hero__actions.wp-block-buttons {
+		gap: 12px;
+		margin: 0;
+	}
+
+	/* Secondary (outline) button → white with brand outline, per the design. */
+	.wpch-hero__actions .wp-block-button.is-style-outline .wp-block-button__link {
+		background: #fff;
+		color: var( --wp--preset--color--brand );
+		border-color: var( --wp--preset--color--brand );
+
+		&:hover {
+			background: var( --wp--preset--color--brand-tint );
+		}
+	}
+
+	.wpch-hero__actions .wp-block-button__link {
+		font-size: 16px;
+		padding: 13px 22px;
+	}
+
+	.wpch-hero__when {
+		font: 600 13px var( --wp--preset--font-family--mono );
+		color: var( --wp--preset--color--ink-500 );
+		margin-left: 4px;
+	}
+
+	/* ---------- pills ---------- */
+	.wpch-hero__pill {
+		display: inline-flex;
+		align-items: center;
+		gap: 8px;
+		background: var( --wp--preset--color--fest-gold );
+		color: #4a3300;
+		font-weight: 700;
+		font-size: 14px;
+		padding: 9px 16px;
+		border-radius: 999px;
+		box-shadow: 0 1px 3px rgba( 30, 30, 30, 0.08 ),
+			0 1px 2px rgba( 30, 30, 30, 0.04 );
+	}
+
+	.wpch-hero__pill--location {
+		font-size: 13px;
+		padding: 6px 13px;
+	}
+
+	.wpch-hero__pin {
+		flex: none;
+	}
+
+	.wpch-hero__perf {
+		width: 7px;
+		height: 7px;
+		border-radius: 50%;
+		background: #4a3300;
+		opacity: 0.55;
+	}
+
+	/* ---------- media collage ---------- */
+	.wpch-hero__media {
+		position: relative;
+		height: 400px;
+	}
+
+	.wpch-hero__geo {
+		height: 100%;
+		border-radius: 16px;
+		overflow: hidden;
+		background: var( --wp--preset--color--brand-tint );
+
+		svg {
+			display: block;
+		}
+	}
+
+	.wpch-hero__img {
+		display: block;
+		width: 100%;
+		height: 100%;
+		object-fit: cover;
+	}
+
+	.wpch-hero__confetti {
+		position: absolute;
+		border-radius: 50%;
+	}
+
+	.wpch-hero__confetti--1 {
+		width: 16px;
+		height: 16px;
+		background: var( --wp--preset--color--fest-coral );
+		top: -8px;
+		left: 40px;
+	}
+
+	.wpch-hero__confetti--2 {
+		width: 11px;
+		height: 11px;
+		background: var( --wp--preset--color--fest-gold );
+		top: 30px;
+		right: -6px;
+	}
+
+	.wpch-hero__confetti--3 {
+		width: 13px;
+		height: 13px;
+		background: var( --wp--preset--color--fest-teal );
+		bottom: 80px;
+		left: -8px;
+	}
+
+	.wpch-hero__pill--rotated {
+		position: absolute;
+		top: 22px;
+		right: 18px;
+		transform: rotate( 5deg );
+	}
+
+	.wpch-hero__date {
+		white-space: nowrap;
+	}
+
+	/* float card */
+	.wpch-hero__float-card {
+		position: absolute;
+		bottom: 20px;
+		left: -18px;
+		white-space: nowrap;
+		background: #fff;
+		border: 1px solid var( --wp--preset--color--line );
+		border-radius: 10px;
+		box-shadow: 0 4px 12px rgba( 30, 30, 30, 0.08 );
+		display: flex;
+		align-items: center;
+		gap: 10px;
+		padding: 12px 16px;
+	}
+
+	.wpch-hero__stack {
+		display: flex;
+	}
+
+	.wpch-hero__avatar {
+		width: 34px;
+		height: 34px;
+		border-radius: 50%;
+		border: 2px solid #fff;
+		margin-left: -10px;
+
+		&:first-child {
+			margin-left: 0;
+		}
+	}
+
+	img.wpch-hero__avatar {
+		object-fit: cover;
+		background: var( --wp--preset--color--brand-tint );
+	}
+
+	.wpch-hero__avatar--b200 {
+		background: var( --wp--preset--color--blue-200 );
+	}
+	.wpch-hero__avatar--b300 {
+		background: var( --wp--preset--color--blue-300 );
+	}
+	.wpch-hero__avatar--b400 {
+		background: var( --wp--preset--color--blue-400 );
+	}
+
+	.wpch-hero__going-count {
+		font-weight: 700;
+		font-size: 15px;
+		line-height: 1.15;
+	}
+
+	.wpch-hero__going-sub {
+		font-size: 12.5px;
+		color: var( --wp--preset--color--ink-500 );
+	}
+
+	/* ---------- responsive ---------- */
+	@media ( max-width: 860px ) {
+		padding: 48px 0 40px;
+
+		.wpch-hero__inner {
+			grid-template-columns: 1fr;
+			gap: 40px;
+		}
+
+		.wpch-hero__media {
+			height: 320px;
+		}
+	}
+}

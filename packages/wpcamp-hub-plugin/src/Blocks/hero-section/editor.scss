@@ -1,0 +1,17 @@
+/**
+ * Hero Section — editor-only styles.
+ */
+
+.wpch-hero {
+	/* RichText buttons are spans in the editor; keep them looking like buttons. */
+	.wpch-hero__btn {
+		cursor: text;
+	}
+
+	/* Make the editable date/going fields obvious without breaking layout. */
+	.wpch-hero__date,
+	.wpch-hero__going-count,
+	.wpch-hero__going-sub {
+		min-width: 1ch;
+	}
+}

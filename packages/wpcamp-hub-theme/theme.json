@@ -1,0 +1,117 @@
+{
+	"$schema": "https://schemas.wp.org/trunk/theme.json",
+	"version": 3,
+	"settings": {
+		"appearanceTools": true,
+		"useRootPaddingAwareAlignments": true,
+		"layout": {
+			"contentSize": "1200px",
+			"wideSize": "1200px"
+		},
+		"color": {
+			"defaultPalette": false,
+			"defaultGradients": false,
+			"palette": [
+				{ "slug": "brand", "color": "#3858E9", "name": "Brand (WordPress blue)" },
+				{ "slug": "brand-hover", "color": "#2E45C4", "name": "Brand hover" },
+				{ "slug": "brand-press", "color": "#243596", "name": "Brand press" },
+				{ "slug": "brand-tint", "color": "#EEF1FE", "name": "Brand tint" },
+				{ "slug": "blue-200", "color": "#B7C3FB", "name": "Blue 200" },
+				{ "slug": "blue-300", "color": "#8B9DF6", "name": "Blue 300" },
+				{ "slug": "blue-400", "color": "#5F77F0", "name": "Blue 400" },
+				{ "slug": "fest-coral", "color": "#FF5A4D", "name": "Festival coral" },
+				{ "slug": "fest-gold", "color": "#FFB020", "name": "Festival gold" },
+				{ "slug": "fest-teal", "color": "#14B8A6", "name": "Festival teal" },
+				{ "slug": "fest-violet", "color": "#7C5CFF", "name": "Festival violet" },
+				{ "slug": "ink-900", "color": "#1E1E1E", "name": "Ink 900" },
+				{ "slug": "ink-700", "color": "#2C3338", "name": "Ink 700" },
+				{ "slug": "ink-600", "color": "#50575E", "name": "Ink 600" },
+				{ "slug": "ink-500", "color": "#757575", "name": "Ink 500" },
+				{ "slug": "line", "color": "#DCDCDE", "name": "Hairline" },
+				{ "slug": "base", "color": "#FFFFFF", "name": "Base" },
+				{ "slug": "base-subtle", "color": "#F6F7F7", "name": "Base subtle" },
+				{ "slug": "ink", "color": "#1E1E1E", "name": "Ink (inverse band)" }
+			]
+		},
+		"typography": {
+			"fluid": true,
+			"defaultFontSizes": false,
+			"fontFamilies": [
+				{
+					"slug": "sans",
+					"name": "Hanken Grotesk",
+					"fontFamily": "'Hanken Grotesk', -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif"
+				},
+				{
+					"slug": "display",
+					"name": "EB Garamond",
+					"fontFamily": "'EB Garamond', Georgia, 'Times New Roman', serif"
+				},
+				{
+					"slug": "mono",
+					"name": "JetBrains Mono",
+					"fontFamily": "'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, Consolas, monospace"
+				}
+			],
+			"fontSizes": [
+				{ "slug": "small", "size": "0.9375rem", "name": "Small" },
+				{ "slug": "medium", "size": "1.0625rem", "name": "Medium" },
+				{ "slug": "large", "size": "1.25rem", "name": "Large" },
+				{ "slug": "x-large", "size": "1.875rem", "name": "Extra large" },
+				{ "slug": "xx-large", "size": "2.5rem", "name": "2X large" },
+				{ "slug": "display", "size": "clamp(46px, 5.6vw, 76px)", "name": "Display" }
+			]
+		},
+		"spacing": {
+			"defaultSpacingSizes": false,
+			"spacingSizes": [
+				{ "slug": "20", "size": "8px", "name": "1" },
+				{ "slug": "30", "size": "12px", "name": "2" },
+				{ "slug": "40", "size": "16px", "name": "3" },
+				{ "slug": "50", "size": "24px", "name": "4" },
+				{ "slug": "60", "size": "32px", "name": "5" },
+				{ "slug": "70", "size": "48px", "name": "6" },
+				{ "slug": "80", "size": "64px", "name": "7" },
+				{ "slug": "90", "size": "96px", "name": "8" }
+			]
+		}
+	},
+	"styles": {
+		"color": {
+			"background": "var(--wp--preset--color--base)",
+			"text": "var(--wp--preset--color--ink-900)"
+		},
+		"typography": {
+			"fontFamily": "var(--wp--preset--font-family--sans)",
+			"fontSize": "var(--wp--preset--font-size--medium)",
+			"lineHeight": "1.65"
+		},
+		"elements": {
+			"heading": {
+				"typography": {
+					"fontFamily": "var(--wp--preset--font-family--display)"
+				}
+			},
+			"button": {
+				"border": { "radius": "2px" },
+				"color": {
+					"background": "var(--wp--preset--color--brand)",
+					"text": "#ffffff"
+				},
+				"typography": {
+					"fontFamily": "var(--wp--preset--font-family--sans)",
+					"fontWeight": "600"
+				},
+				":hover": {
+					"color": { "background": "var(--wp--preset--color--brand-hover)" }
+				},
+				":focus": {
+					"color": { "background": "var(--wp--preset--color--brand-hover)" }
+				},
+				":active": {
+					"color": { "background": "var(--wp--preset--color--brand-press)" }
+				}
+			}
+		}
+	}
+}
