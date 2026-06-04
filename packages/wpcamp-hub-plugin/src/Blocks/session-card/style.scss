@@ -1,0 +1,141 @@
+/**
+ * Session Card — shared styles (front end + editor).
+ * Accent colour is provided per-card via --wpch-card-accent.
+ */
+
+.wpch-card {
+	--wpch-card-accent: #3858e9;
+
+	background: #fff;
+	border: 1px solid var( --wp--preset--color--line, #dcdcde );
+	border-top: 4px solid var( --wpch-card-accent );
+	border-radius: 8px;
+	overflow: hidden;
+	display: flex;
+	flex-direction: column;
+	transition: border-color 0.15s ease, box-shadow 0.15s ease;
+
+	* {
+		box-sizing: border-box;
+	}
+
+	&:hover {
+		box-shadow: 0 1px 3px rgba( 30, 30, 30, 0.08 ),
+			0 1px 2px rgba( 30, 30, 30, 0.04 );
+	}
+
+	.wpch-card__link {
+		display: flex;
+		flex-direction: column;
+		flex: 1;
+		text-decoration: none;
+		color: inherit;
+	}
+
+	/* decorative header band tinted with the accent */
+	.wpch-card__head {
+		height: 132px;
+		background:
+			radial-gradient(
+				circle at 30% 40%,
+				var( --wpch-card-accent ) 0%,
+				transparent 55%
+			),
+			radial-gradient(
+				circle at 75% 70%,
+				var( --wpch-card-accent ) 0%,
+				transparent 45%
+			);
+		opacity: 0.16;
+	}
+
+	.wpch-card__body {
+		padding: 18px 20px;
+		display: flex;
+		flex-direction: column;
+		flex: 1;
+	}
+
+	.wpch-card__top {
+		display: flex;
+		align-items: center;
+		gap: 8px;
+		margin-bottom: 12px;
+	}
+
+	.wpch-card__type {
+		font-size: 11px;
+		font-weight: 700;
+		letter-spacing: 0.07em;
+		text-transform: uppercase;
+		padding: 4px 8px;
+		border-radius: 2px;
+		line-height: 1.3;
+		color: var( --wp--preset--color--brand, #3858e9 );
+		background: var( --wp--preset--color--brand-tint, #eef1fe );
+	}
+
+	.wpch-card__track {
+		display: inline-flex;
+		align-items: center;
+		gap: 8px;
+		margin-left: auto;
+		font-size: 12.5px;
+		font-weight: 600;
+		color: var( --wpch-card-accent );
+	}
+
+	.wpch-card__dot {
+		width: 10px;
+		height: 10px;
+		border-radius: 50%;
+		flex: none;
+		background: var( --wpch-card-accent );
+	}
+
+	.wpch-card__title {
+		margin: 0 0 8px;
+		font-family: var( --wp--preset--font-family--sans );
+		font-size: 20px;
+		font-weight: 700;
+		letter-spacing: -0.01em;
+		line-height: 1.25;
+		color: var( --wp--preset--color--ink-900, #1e1e1e );
+	}
+
+	.wpch-card__blurb {
+		margin: 0;
+		font-size: 14.5px;
+		line-height: 1.55;
+		color: var( --wp--preset--color--ink-600, #50575e );
+		flex: 1;
+	}
+
+	.wpch-card__foot {
+		margin-top: 18px;
+		display: flex;
+		align-items: center;
+		gap: 10px;
+	}
+
+	.wpch-card__avatar {
+		width: 30px;
+		height: 30px;
+		border-radius: 50%;
+		flex: none;
+		background: var( --wp--preset--color--blue-200, #b7c3fb );
+	}
+
+	.wpch-card__speaker-name {
+		font-size: 14px;
+		font-weight: 600;
+		line-height: 1.2;
+		color: var( --wp--preset--color--ink-900, #1e1e1e );
+	}
+
+	.wpch-card__meta {
+		font:
+			500 11.5px var( --wp--preset--font-family--mono, monospace );
+		color: var( --wp--preset--color--ink-500, #757575 );
+	}
+}
