@@ -2,11 +2,9 @@
    WPCAMP-HUB — Colors & Type Foundations
    Brand inspired by WordPress.org. Built for WordCamp Europe 2026.
    ------------------------------------------------------------
-   Load fonts via CDN (self-host later by dropping ttf/woff2 in
-   /fonts and swapping these @imports for @font-face rules).
+   Fonts are self-hosted in assets/fonts/ and declared in
+   assets/css/fonts.css (enqueued separately) — no external CDN.
    ============================================================ */
-
-@import url('https://fonts.googleapis.com/css2?family=EB+Garamond:ital,wght@0,400;0,500;0,600;0,700;1,400;1,500&family=Hanken+Grotesk:ital,wght@0,400;0,500;0,600;0,700;0,800;1,400;1,500&family=JetBrains+Mono:wght@400;500;700&display=swap');
 
 :root {
   /* ---------------------------------------------------------
