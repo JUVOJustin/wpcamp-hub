@@ -15,7 +15,7 @@ import {
 	ToggleControl,
 } from '@wordpress/components';
 import { globe, Icon } from '@wordpress/icons';
-import { Stack, Text } from '@wordpress/ui';
+import { Text } from '@wordpress/ui';
 
 import './editor.scss';
 
@@ -136,7 +136,7 @@ function RelationArrayControl( {
 			label={ label }
 			help={ help }
 		>
-			<Stack spacing={ 2 }>
+			<div className="wpcamp-hub-editor-control-list">
 				<ComboboxControl
 					__next40pxDefaultSize
 					__nextHasNoMarginBottom
@@ -156,11 +156,7 @@ function RelationArrayControl( {
 					} }
 				/>
 				{ selectedOptions.length > 0 && (
-					<Stack
-						className="wpcamp-hub-editor-relation-list"
-						direction="row"
-						spacing={ 2 }
-					>
+					<div className="wpcamp-hub-editor-relation-list">
 						{ selectedOptions.map( ( option ) => (
 							<Button
 								key={ option.value }
@@ -182,9 +178,9 @@ function RelationArrayControl( {
 								{ option.label }
 							</Button>
 						) ) }
-					</Stack>
+					</div>
 				) }
-			</Stack>
+			</div>
 		</BaseControl>
 	);
 }
@@ -377,7 +373,7 @@ function FieldControl( { field, metaKey, options, value, onChange } ) {
 				label={ label }
 				help={ help }
 			>
-				<Stack direction="row" spacing={ 3 }>
+				<div className="wpcamp-hub-editor-inline-blocks">
 					{ Object.entries( properties ).map(
 						( [ property, propertyType ] ) => (
 							<TextControl
@@ -406,7 +402,7 @@ function FieldControl( { field, metaKey, options, value, onChange } ) {
 							/>
 						)
 					) }
-				</Stack>
+				</div>
 			</BaseControl>
 		);
 	}
@@ -567,11 +563,11 @@ function MetaPanel() {
 			title={ __( 'WPCamp Hub Details', 'wpcamp-hub' ) }
 			className="wpcamp-hub-editor-meta-panel"
 		>
-			<Stack spacing={ 4 }>
+			<div className="wpcamp-hub-editor-control-list">
 				{ Object.entries( fields ).map( ( [ metaKey, field ] ) =>
 					renderFieldControl( metaKey, field )
 				) }
-			</Stack>
+			</div>
 		</PluginDocumentSettingPanel>
 	);
 }
