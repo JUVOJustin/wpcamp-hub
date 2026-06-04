@@ -23,6 +23,7 @@ abstract class Post_Entity {
 	 * Wrap a post ID or native post object.
 	 *
 	 * @param int|\WP_Post $post Post ID or object.
+	 * @throws \InvalidArgumentException When the post cannot be wrapped by this entity.
 	 */
 	final public function __construct( int|\WP_Post $post ) {
 		$wp_post = $post instanceof \WP_Post ? $post : get_post( $post );

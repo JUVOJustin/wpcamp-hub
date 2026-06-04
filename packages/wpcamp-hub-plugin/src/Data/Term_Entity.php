@@ -23,6 +23,7 @@ abstract class Term_Entity {
 	 * Wrap a term ID or native term object.
 	 *
 	 * @param int|\WP_Term $term Term ID or object.
+	 * @throws \InvalidArgumentException When the term cannot be wrapped by this entity.
 	 */
 	final public function __construct( int|\WP_Term $term ) {
 		$wp_term = $term instanceof \WP_Term ? $term : get_term( $term, static::get_taxonomy() );

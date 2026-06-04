@@ -18,6 +18,7 @@ class User_Profile extends User_Entity {
 	 * @param string $identifier Stable local identifier.
 	 * @param string $name Display name.
 	 * @return self
+	 * @throws \RuntimeException When WordPress cannot create the attendee.
 	 */
 	public static function create_attendee( string $identifier, string $name ): self {
 		$slug = sanitize_user( $identifier, true );

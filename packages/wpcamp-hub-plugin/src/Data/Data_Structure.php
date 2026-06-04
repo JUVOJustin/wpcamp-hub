@@ -77,13 +77,14 @@ class Data_Structure {
 		}
 
 		foreach ( self::get_post_meta_fields()[ $post->post_type ] as $meta_key => $field ) {
-			$input_name = $this->input_name( $meta_key );
+			$input_name = sanitize_key( $this->input_name( $meta_key ) );
 			if ( ! isset( $_POST[ $input_name ] ) ) {
 				delete_post_meta( $post_id, $meta_key );
 				continue;
 			}
 
-			$value = $this->sanitize_meta_input( wp_unslash( $_POST[ $input_name ] ), $field );
+			$raw_value = sanitize_text_field( wp_unslash( $_POST[ $input_name ] ) );
+			$value     = $this->sanitize_meta_input( $raw_value, $field );
 			update_post_meta( $post_id, $meta_key, $value );
 		}
 	}
@@ -169,7 +170,15 @@ class Data_Structure {
 				'wpcamp_date_start'        => self::field( 'string', 'Event start date/time in ISO 8601 format.' ),
 				'wpcamp_date_end'          => self::field( 'string', 'Event end date/time in ISO 8601 format.' ),
 				'wpcamp_location'          => self::field( 'string', 'Human-readable event location.' ),
-				'wpcamp_coordinates'       => self::field( 'object', 'Latitude and longitude coordinates.', true, array( 'latitude' => 'number', 'longitude' => 'number' ) ),
+				'wpcamp_coordinates'       => self::field(
+					'object',
+					'Latitude and longitude coordinates.',
+					true,
+					array(
+						'latitude'  => 'number',
+						'longitude' => 'number',
+					)
+				),
 				'wpcamp_official_url'      => self::field( 'string', 'Official event URL.', true, null, 'uri' ),
 				'wpcamp_source'            => self::field( 'string', 'Event source such as curated, WordCamp, or Twitter/X.' ),
 				'wpcamp_related_tweets'    => self::field( 'array', 'Related tweet IDs.' ),
@@ -308,7 +317,7 @@ class Data_Structure {
 			register_post_type(
 				$post_type,
 				array(
-					'labels'        => array(
+					'labels'          => array(
 						'name'          => $config['plural'],
 						'singular_name' => $config['singular'],
 						'add_new_item'  => sprintf(
@@ -322,13 +331,13 @@ class Data_Structure {
 							$config['singular']
 						),
 					),
-					'public'        => true,
-					'show_in_rest'  => true,
-					'has_archive'   => true,
-					'menu_icon'     => $config['menu_icon'],
-					'supports'      => $config['supports'],
-					'taxonomies'    => $config['taxonomies'],
-					'rewrite'       => array( 'slug' => str_replace( 'wpcamp_', '', $post_type ) ),
+					'public'          => true,
+					'show_in_rest'    => true,
+					'has_archive'     => true,
+					'menu_icon'       => $config['menu_icon'],
+					'supports'        => $config['supports'],
+					'taxonomies'      => $config['taxonomies'],
+					'rewrite'         => array( 'slug' => str_replace( 'wpcamp_', '', $post_type ) ),
 					'capability_type' => 'post',
 				)
 			);

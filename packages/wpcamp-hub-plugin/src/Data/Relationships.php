@@ -242,6 +242,7 @@ class Relationships {
 	 *
 	 * @param string $from_type Source entity type.
 	 * @param string $to_type Target entity type.
+	 * @throws \InvalidArgumentException When the relationship is not supported.
 	 */
 	private static function validate_rule( string $from_type, string $to_type ): void {
 		if ( ! isset( self::$rules[ $from_type ][ $to_type ] ) ) {

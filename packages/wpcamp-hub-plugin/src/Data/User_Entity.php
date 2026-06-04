@@ -23,6 +23,7 @@ abstract class User_Entity {
 	 * Wrap a user ID or native user object.
 	 *
 	 * @param int|\WP_User $user User ID or object.
+	 * @throws \InvalidArgumentException When the user cannot be wrapped by this entity.
 	 */
 	final public function __construct( int|\WP_User $user ) {
 		$wp_user = $user instanceof \WP_User ? $user : get_user_by( 'id', $user );
