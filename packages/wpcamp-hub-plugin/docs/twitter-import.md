@@ -11,14 +11,17 @@ below (separate work).
 | Class | Role |
 | --- | --- |
 | `Tweet_Client_Interface` | Contract returning normalised tweet arrays. |
-| `X_Scraper_Client` | Adapter around the prefixed `XTwitterScraper\Client` SDK. |
+| `X_Scraper_Client` | Talks to the Xquik REST API directly via `wp_remote_get`. |
 | `Tweet_Importer` | Fetch → dedupe (by tweet id) → filter → insert into the CPT → batch action. |
 | `Twitter_Service` | Resolves the API key, builds the importer, runs imports. |
 | `Tweet_Import_Command` | WP-CLI command. |
 | `Tweet_Admin` | Settings + manual run page under the Tweets CPT. |
 
-The scraper SDK is pulled via Composer (`xquik/x-twitter-scraper`) and prefixed
-by Strauss to `WPCAMP_HUB\Dependencies\XTwitterScraper`.
+The client calls `GET https://xquik.com/api/v1/x/tweets/search` with an
+`x-api-key` header through the WordPress HTTP API — no third-party HTTP SDK or
+Composer dependency is needed. It paginates via the opaque `next_cursor` until
+the requested limit is reached. Raw tweet fields: `id`, `text`,
+`author.{username,name}`, `createdAt`.
 
 ## Field mapping
 
