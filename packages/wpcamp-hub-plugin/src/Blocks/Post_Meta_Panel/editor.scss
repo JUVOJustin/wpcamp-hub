@@ -10,3 +10,14 @@
 .wpcamp-hub-editor-relation-list {
 	flex-wrap: wrap;
 }
+
+.wpcamp-hub-editor-inline-blocks {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 16px;
+}
+
+.wpcamp-hub-editor-inline-blocks > .components-base-control {
+	display: inline-block;
+	min-width: 280px;
+}

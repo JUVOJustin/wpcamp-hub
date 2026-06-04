@@ -58,6 +58,23 @@ const comboboxOptions = {
 		{ label: __( 'Track 2', 'wpcamp-hub' ), value: 'Track 2' },
 	],
 };
+const dateRangeFields = {
+	wpcamp_date_start: {
+		endKey: 'wpcamp_date_end',
+		label: __( 'Event Dates', 'wpcamp-hub' ),
+		startLabel: __( 'Start', 'wpcamp-hub' ),
+		endLabel: __( 'End', 'wpcamp-hub' ),
+	},
+	wpcamp_start_time: {
+		endKey: 'wpcamp_end_time',
+		label: __( 'Session Time', 'wpcamp-hub' ),
+		startLabel: __( 'Start', 'wpcamp-hub' ),
+		endLabel: __( 'End', 'wpcamp-hub' ),
+	},
+};
+const dateRangeEndFields = Object.values( dateRangeFields ).map(
+	( range ) => range.endKey
+);
 
 const getFieldLabel = ( metaKey ) =>
 	metaKey
@@ -194,24 +211,76 @@ function UrlControl( { help, label, metaKey, onChange, value } ) {
 	);
 }
 
+function DateFieldControl( { help, label, metaKey, onChange, value } ) {
+	return (
+		<BaseControl
+			__nextHasNoMarginBottom
+			id={ `wpcamp-hub-editor-${ metaKey }` }
+			label={ label }
+			help={ help }
+		>
+			<DateTimePicker
+				currentDate={ getDateValue( value ) }
+				onChange={ onChange }
+				is12Hour={ false }
+			/>
+		</BaseControl>
+	);
+}
+
+function DateRangeControl( {
+	endField,
+	endKey,
+	endValue,
+	label,
+	onChange,
+	startField,
+	startKey,
+	startValue,
+	startLabel,
+	endLabel,
+} ) {
+	return (
+		<BaseControl
+			__nextHasNoMarginBottom
+			id={ `wpcamp-hub-editor-${ startKey }-${ endKey }` }
+			label={ label }
+		>
+			<div className="wpcamp-hub-editor-inline-blocks">
+				<DateFieldControl
+					help={ startField.description }
+					label={ startLabel }
+					metaKey={ startKey }
+					onChange={ ( nextValue ) =>
+						onChange( startKey, nextValue )
+					}
+					value={ startValue }
+				/>
+				<DateFieldControl
+					help={ endField.description }
+					label={ endLabel }
+					metaKey={ endKey }
+					onChange={ ( nextValue ) => onChange( endKey, nextValue ) }
+					value={ endValue }
+				/>
+			</div>
+		</BaseControl>
+	);
+}
+
 function FieldControl( { field, metaKey, options, value, onChange } ) {
 	const label = getFieldLabel( metaKey );
 	const help = field.description;
 
 	if ( isDateField( metaKey ) ) {
 		return (
-			<BaseControl
-				__nextHasNoMarginBottom
-				id={ `wpcamp-hub-editor-${ metaKey }` }
-				label={ label }
+			<DateFieldControl
 				help={ help }
-			>
-				<DateTimePicker
-					currentDate={ getDateValue( value ) }
-					onChange={ onChange }
-					is12Hour={ false }
-				/>
-			</BaseControl>
+				label={ label }
+				metaKey={ metaKey }
+				onChange={ onChange }
+				value={ value }
+			/>
 		);
 	}
 
@@ -428,6 +497,49 @@ function Edit() {
 			[ metaKey ]: nextValue,
 		} );
 	};
+	const renderFieldControl = ( metaKey, field ) => {
+		const dateRange = dateRangeFields[ metaKey ];
+
+		if ( dateRange && fields[ dateRange.endKey ] ) {
+			return (
+				<DateRangeControl
+					key={ metaKey }
+					endField={ fields[ dateRange.endKey ] }
+					endKey={ dateRange.endKey }
+					endValue={ meta?.[ dateRange.endKey ] }
+					label={ dateRange.label }
+					onChange={ updateMeta }
+					startField={ field }
+					startKey={ metaKey }
+					startValue={ meta?.[ metaKey ] }
+					startLabel={ dateRange.startLabel }
+					endLabel={ dateRange.endLabel }
+				/>
+			);
+		}
+
+		if ( dateRangeEndFields.includes( metaKey ) ) {
+			const hasStartField = Object.entries( dateRangeFields ).some(
+				( [ startKey, range ] ) =>
+					range.endKey === metaKey && Boolean( fields[ startKey ] )
+			);
+
+			if ( hasStartField ) {
+				return null;
+			}
+		}
+
+		return (
+			<FieldControl
+				key={ metaKey }
+				field={ field }
+				metaKey={ metaKey }
+				options={ getOptions( metaKey ) }
+				value={ meta?.[ metaKey ] }
+				onChange={ ( nextValue ) => updateMeta( metaKey, nextValue ) }
+			/>
+		);
+	};
 
 	if ( Object.keys( fields ).length === 0 ) {
 		return (
@@ -448,18 +560,9 @@ function Edit() {
 				<Text weight={ 600 }>
 					{ __( 'WPCamp Hub Details', 'wpcamp-hub' ) }
 				</Text>
-				{ Object.entries( fields ).map( ( [ metaKey, field ] ) => (
-					<FieldControl
-						key={ metaKey }
-						field={ field }
-						metaKey={ metaKey }
-						options={ getOptions( metaKey ) }
-						value={ meta?.[ metaKey ] }
-						onChange={ ( nextValue ) =>
-							updateMeta( metaKey, nextValue )
-						}
-					/>
-				) ) }
+				{ Object.entries( fields ).map( ( [ metaKey, field ] ) =>
+					renderFieldControl( metaKey, field )
+				) }
 			</Stack>
 		</div>
 	);
