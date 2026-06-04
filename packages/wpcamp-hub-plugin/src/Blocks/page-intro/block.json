@@ -1,0 +1,48 @@
+{
+	"$schema": "https://schemas.wp.org/trunk/block.json",
+	"apiVersion": 3,
+	"name": "wpcamp-hub/page-intro",
+	"version": "1.0.0",
+	"title": "Page Intro",
+	"category": "design",
+	"icon": "heading",
+	"description": "Page intro band — eyebrow, page title and a lead paragraph. Used at the top of inner pages like Attendees.",
+	"keywords": [ "intro", "page header", "title", "hero", "band" ],
+	"textdomain": "wpcamp-hub",
+	"supports": {
+		"html": false,
+		"anchor": true,
+		"align": [ "full" ],
+		"color": {
+			"background": true,
+			"gradients": true,
+			"text": false
+		},
+		"spacing": {
+			"padding": true,
+			"margin": true
+		}
+	},
+	"attributes": {
+		"eyebrow": {
+			"type": "string",
+			"source": "html",
+			"selector": ".wpch-intro__eyebrow",
+			"default": "Attendees"
+		},
+		"title": {
+			"type": "string",
+			"source": "html",
+			"selector": ".wpch-intro__title",
+			"default": "Find your people"
+		},
+		"lead": {
+			"type": "string",
+			"source": "html",
+			"selector": ".wpch-intro__lead",
+			"default": "2,500+ people are coming to Lisbon. Search, find common ground, and say hello early."
+		}
+	},
+	"editorScript": "file:./index.js",
+	"style": "file:./style-index.css"
+}
