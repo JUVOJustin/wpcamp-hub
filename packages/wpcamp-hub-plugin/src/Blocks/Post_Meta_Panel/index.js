@@ -1,9 +1,9 @@
 /* eslint-disable import/no-unresolved, import/no-extraneous-dependencies, @wordpress/no-unsafe-wp-apis */
-import { registerBlockType } from '@wordpress/blocks';
-import { useBlockProps } from '@wordpress/block-editor';
 import { useEntityProp } from '@wordpress/core-data';
 import { useSelect } from '@wordpress/data';
+import { PluginDocumentSettingPanel } from '@wordpress/editor';
 import { __ } from '@wordpress/i18n';
+import { registerPlugin } from '@wordpress/plugins';
 import {
 	BaseControl,
 	Button,
@@ -17,7 +17,6 @@ import {
 import { globe, Icon } from '@wordpress/icons';
 import { Stack, Text } from '@wordpress/ui';
 
-import metadata from './block.json';
 import './editor.scss';
 
 const config = window.wpcamp_hub || {};
@@ -451,10 +450,7 @@ function FieldControl( { field, metaKey, options, value, onChange } ) {
 	);
 }
 
-function Edit() {
-	const blockProps = useBlockProps( {
-		className: 'wpcamp-hub-editor-meta-panel',
-	} );
+function MetaPanel() {
 	const postType = useSelect(
 		( select ) => select( 'core/editor' ).getCurrentPostType(),
 		[]
@@ -550,33 +546,36 @@ function Edit() {
 
 	if ( Object.keys( fields ).length === 0 ) {
 		return (
-			<div { ...blockProps }>
+			<PluginDocumentSettingPanel
+				name="wpcamp-hub-details"
+				title={ __( 'WPCamp Hub Details', 'wpcamp-hub' ) }
+				className="wpcamp-hub-editor-meta-panel"
+			>
 				<Text>
 					{ __(
 						'No editable WPCamp Hub fields are registered for this post type.',
 						'wpcamp-hub'
 					) }
 				</Text>
-			</div>
+			</PluginDocumentSettingPanel>
 		);
 	}
 
 	return (
-		<div { ...blockProps }>
+		<PluginDocumentSettingPanel
+			name="wpcamp-hub-details"
+			title={ __( 'WPCamp Hub Details', 'wpcamp-hub' ) }
+			className="wpcamp-hub-editor-meta-panel"
+		>
 			<Stack spacing={ 4 }>
-				<Text weight={ 600 }>
-					{ __( 'WPCamp Hub Details', 'wpcamp-hub' ) }
-				</Text>
 				{ Object.entries( fields ).map( ( [ metaKey, field ] ) =>
 					renderFieldControl( metaKey, field )
 				) }
 			</Stack>
-		</div>
+		</PluginDocumentSettingPanel>
 	);
 }
 
-registerBlockType( metadata.name, {
-	...metadata,
-	edit: Edit,
-	save: () => null,
+registerPlugin( 'wpcamp-hub-details', {
+	render: MetaPanel,
 } );

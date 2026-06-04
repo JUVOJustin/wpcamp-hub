@@ -331,9 +331,6 @@ class Data_Structure {
 					'supports'      => $config['supports'],
 					'taxonomies'    => $config['taxonomies'],
 					'rewrite'       => array( 'slug' => str_replace( 'wpcamp_', '', $post_type ) ),
-					'template'      => array(
-						array( 'wpcamp-hub/post-meta-panel' ),
-					),
 					'capability_type' => 'post',
 				)
 			);

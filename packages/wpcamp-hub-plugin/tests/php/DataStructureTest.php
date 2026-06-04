@@ -90,18 +90,13 @@ class DataStructureTest extends WP_UnitTestCase {
 	}
 
 	/**
-	 * Platform post types start with the controlled meta block in the editor.
+	 * Platform post types do not inject the controlled meta panel into post content.
 	 */
-	public function test_post_types_include_meta_panel_block_template(): void {
+	public function test_post_types_do_not_include_meta_panel_block_template(): void {
 		foreach ( array_keys( Data_Structure::get_post_types() ) as $post_type ) {
 			$post_type_object = get_post_type_object( $post_type );
 
-			$this->assertSame(
-				array(
-					array( 'wpcamp-hub/post-meta-panel' ),
-				),
-				$post_type_object->template
-			);
+			$this->assertEmpty( $post_type_object->template );
 		}
 	}
 
