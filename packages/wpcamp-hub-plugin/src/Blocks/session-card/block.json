@@ -1,0 +1,68 @@
+{
+	"$schema": "https://schemas.wp.org/trunk/block.json",
+	"apiVersion": 3,
+	"name": "wpcamp-hub/session-card",
+	"version": "1.0.0",
+	"title": "Session Card",
+	"category": "design",
+	"icon": "id",
+	"description": "A single programme session card — type, track, title, blurb, speaker and time. Will later be populated dynamically from the sessions CPT.",
+	"keywords": [ "session", "card", "programme", "talk" ],
+	"textdomain": "wpcamp-hub",
+	"parent": [ "wpcamp-hub/programme" ],
+	"supports": {
+		"html": false,
+		"reusable": false
+	},
+	"attributes": {
+		"type": {
+			"type": "string",
+			"source": "html",
+			"selector": ".wpch-card__type",
+			"default": "Talk"
+		},
+		"track": {
+			"type": "string",
+			"source": "html",
+			"selector": ".wpch-card__track-label",
+			"default": "Building"
+		},
+		"accent": {
+			"type": "string",
+			"default": "#3858E9"
+		},
+		"title": {
+			"type": "string",
+			"source": "html",
+			"selector": ".wpch-card__title",
+			"default": "Session title"
+		},
+		"blurb": {
+			"type": "string",
+			"source": "html",
+			"selector": ".wpch-card__blurb",
+			"default": ""
+		},
+		"speaker": {
+			"type": "string",
+			"source": "html",
+			"selector": ".wpch-card__speaker-name",
+			"default": "Speaker name"
+		},
+		"meta": {
+			"type": "string",
+			"source": "html",
+			"selector": ".wpch-card__meta",
+			"default": "10:00 · Main hall"
+		},
+		"link": {
+			"type": "string",
+			"source": "attribute",
+			"selector": ".wpch-card__link",
+			"attribute": "href",
+			"default": ""
+		}
+	},
+	"editorScript": "file:./index.js",
+	"style": "file:./style-index.css"
+}

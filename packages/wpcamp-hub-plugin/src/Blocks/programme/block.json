@@ -1,0 +1,64 @@
+{
+	"$schema": "https://schemas.wp.org/trunk/block.json",
+	"apiVersion": 3,
+	"name": "wpcamp-hub/programme",
+	"version": "1.0.0",
+	"title": "Programme Excerpt",
+	"category": "design",
+	"icon": "list-view",
+	"description": "Programme section — heading, intro text, a link, the track legend and a grid of session cards. Cards can later be queried dynamically from the sessions CPT.",
+	"keywords": [ "programme", "sessions", "schedule", "cards" ],
+	"textdomain": "wpcamp-hub",
+	"supports": {
+		"html": false,
+		"anchor": true,
+		"align": [ "full" ],
+		"spacing": {
+			"padding": true,
+			"margin": true
+		}
+	},
+	"attributes": {
+		"eyebrow": {
+			"type": "string",
+			"source": "html",
+			"selector": ".wpch-programme__eyebrow",
+			"default": "On the programme"
+		},
+		"heading": {
+			"type": "string",
+			"source": "html",
+			"selector": ".wpch-programme__heading",
+			"default": "Sessions worth planning your day around"
+		},
+		"linkLabel": {
+			"type": "string",
+			"default": "All events"
+		},
+		"linkUrl": {
+			"type": "string",
+			"default": ""
+		},
+		"showLegend": {
+			"type": "boolean",
+			"default": true
+		},
+		"legend": {
+			"type": "array",
+			"default": [
+				{ "name": "Building", "color": "#3858E9" },
+				{ "name": "Designing", "color": "#FF5A4D" },
+				{ "name": "Community", "color": "#FFB020" },
+				{ "name": "Business", "color": "#14B8A6" },
+				{ "name": "Open web", "color": "#7C5CFF" }
+			]
+		},
+		"columns": {
+			"type": "number",
+			"default": 3
+		}
+	},
+	"editorScript": "file:./index.js",
+	"editorStyle": "file:./index.css",
+	"style": "file:./style-index.css"
+}
