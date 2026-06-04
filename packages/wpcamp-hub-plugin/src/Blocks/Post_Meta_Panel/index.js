@@ -47,16 +47,6 @@ const comboboxOptions = {
 		{ label: __( 'Curated', 'wpcamp-hub' ), value: 'curated' },
 		{ label: __( 'Rejected', 'wpcamp-hub' ), value: 'rejected' },
 	],
-	wpcamp_day: [
-		{ label: __( 'Thursday', 'wpcamp-hub' ), value: 'Thursday' },
-		{ label: __( 'Friday', 'wpcamp-hub' ), value: 'Friday' },
-		{ label: __( 'Saturday', 'wpcamp-hub' ), value: 'Saturday' },
-		{ label: __( 'Sunday', 'wpcamp-hub' ), value: 'Sunday' },
-	],
-	wpcamp_room: [
-		{ label: __( 'Track 1', 'wpcamp-hub' ), value: 'Track 1' },
-		{ label: __( 'Track 2', 'wpcamp-hub' ), value: 'Track 2' },
-	],
 };
 const dateRangeFields = {
 	wpcamp_date_start: {

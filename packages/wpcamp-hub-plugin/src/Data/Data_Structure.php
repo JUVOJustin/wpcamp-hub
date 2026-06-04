@@ -190,8 +190,6 @@ class Data_Structure {
 				'wpcamp_event'             => self::field( 'integer', 'Parent event ID.' ),
 				'wpcamp_start_time'        => self::field( 'string', 'Session start time in ISO 8601 format.' ),
 				'wpcamp_end_time'          => self::field( 'string', 'Session end time in ISO 8601 format.' ),
-				'wpcamp_day'               => self::field( 'string', 'Timetable day.' ),
-				'wpcamp_room'              => self::field( 'string', 'Session room.' ),
 				'wpcamp_related_event'     => self::field( 'integer', 'Related event ID.' ),
 				'wpcamp_official_url'      => self::field( 'string', 'Official session URL.', true, null, 'uri' ),
 				'wpcamp_source'            => self::field( 'string', 'Session source.' ),
