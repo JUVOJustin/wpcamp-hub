@@ -76,6 +76,25 @@ class Relationships {
 	}
 
 	/**
+	 * Return source entity IDs that point at the target entity.
+	 *
+	 * @param string $source_type Source entity type to search.
+	 * @param string $target_type Target entity type.
+	 * @param int    $target_id Target entity ID.
+	 * @return int[]
+	 */
+	public static function get_referencing( string $source_type, string $target_type, int $target_id ): array {
+		$source_ids = self::get_entity_ids( $source_type );
+
+		return array_values(
+			array_filter(
+				$source_ids,
+				static fn( int $source_id ): bool => in_array( $target_id, self::get_related( $source_type, $source_id, $target_type ), true )
+			)
+		);
+	}
+
+	/**
 	 * Register relationship meta for all storage object types.
 	 */
 	public function register_meta(): void {
@@ -165,6 +184,41 @@ class Relationships {
 			: get_post_meta( $entity_id, self::META_KEY, true );
 
 		return self::sanitize_relationships( $raw );
+	}
+
+	/**
+	 * Return IDs for a platform entity type.
+	 *
+	 * @param string $entity_type Entity type.
+	 * @return int[]
+	 */
+	private static function get_entity_ids( string $entity_type ): array {
+		if ( 'user' === $entity_type ) {
+			$user_query = new \WP_User_Query(
+				array(
+					'fields' => 'ID',
+					'number' => -1,
+				)
+			);
+
+			return array_values( array_map( 'intval', $user_query->get_results() ) );
+		}
+
+		$post_type = Data_Structure::entity_type_to_post_type( $entity_type );
+		if ( '' === $post_type ) {
+			return array();
+		}
+
+		$post_ids = get_posts(
+			array(
+				'post_type'      => $post_type,
+				'post_status'    => 'any',
+				'fields'         => 'ids',
+				'posts_per_page' => -1,
+			)
+		);
+
+		return array_values( array_map( 'intval', $post_ids ) );
 	}
 
 	/**

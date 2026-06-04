@@ -127,4 +127,38 @@ class DataStructureTest extends WP_UnitTestCase {
 		$this->assertContains( $data['posts']['tweet'], $meeting->get_related( 'tweet' ) );
 		$this->assertContains( $data['posts']['session'], Relationships::get_related( 'user', $data['users'][0], 'session' ) );
 	}
+
+	/**
+	 * Dedicated entity accessors expose typed relationship APIs.
+	 */
+	public function test_entity_relationship_accessors_return_wrappers(): void {
+		$data = DataStructureFixture::seed();
+
+		$event = Event::from( $data['posts']['event'] );
+		$user = User_Profile::from( $data['users'][0] );
+		$tweet = Tweet::from( $data['posts']['tweet'] );
+		$session = Session::from( $data['posts']['session'] );
+		$meeting = Meeting_Invite::from( $data['posts']['meeting_invite'] );
+
+		$this->assertSame( $data['users'][0], $event->get_attendees()[0]->get_id() );
+		$this->assertSame( $data['posts']['tweet'], $event->get_tweets()[0]->get_id() );
+		$this->assertSame( $data['posts']['session'], $event->get_sessions()[0]->get_id() );
+		$this->assertSame( $data['posts']['meeting_invite'], $event->get_meeting_invites()[0]->get_id() );
+
+		$this->assertSame( $data['posts']['event'], $user->get_events()[0]->get_id() );
+		$this->assertSame( $data['posts']['tweet'], $user->get_tweets()[0]->get_id() );
+		$this->assertSame( $data['posts']['session'], $user->get_sessions()[0]->get_id() );
+		$this->assertSame( $data['posts']['meeting_invite'], $user->get_meeting_invites()[0]->get_id() );
+
+		$this->assertSame( $data['posts']['event'], $tweet->get_event()->get_id() );
+		$this->assertSame( $data['users'][0], $tweet->get_attendees()[0]->get_id() );
+		$this->assertSame( $data['posts']['meeting_invite'], $tweet->get_meeting_invites()[0]->get_id() );
+
+		$this->assertSame( $data['posts']['event'], $session->get_event()->get_id() );
+		$this->assertSame( $data['users'][0], $session->get_attendees()[0]->get_id() );
+
+		$this->assertSame( $data['posts']['event'], $meeting->get_event()->get_id() );
+		$this->assertSame( $data['posts']['tweet'], $meeting->get_source_tweet()->get_id() );
+		$this->assertSame( $data['users'][0], $meeting->get_person()->get_id() );
+	}
 }

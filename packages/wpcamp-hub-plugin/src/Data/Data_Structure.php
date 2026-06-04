@@ -235,6 +235,21 @@ class Data_Structure {
 	}
 
 	/**
+	 * Convert platform entity type to post type.
+	 *
+	 * @param string $entity_type Platform entity type.
+	 */
+	public static function entity_type_to_post_type( string $entity_type ): string {
+		foreach ( self::get_post_types() as $post_type => $config ) {
+			if ( $entity_type === $config['entity_type'] ) {
+				return $post_type;
+			}
+		}
+
+		return '';
+	}
+
+	/**
 	 * Render the native meta box fields.
 	 *
 	 * @param \WP_Post $post Current post.

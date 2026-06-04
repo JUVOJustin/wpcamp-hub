@@ -18,4 +18,34 @@ class Tweet extends Post_Entity {
 	public static function get_post_type(): string {
 		return Data_Structure::POST_TYPE_TWEET;
 	}
+
+	/**
+	 * Event this tweet points to.
+	 */
+	public function get_event(): ?Event {
+		$event_ids = $this->get_related( 'event' );
+		$event_id  = reset( $event_ids );
+
+		return false === $event_id ? null : Event::from( $event_id );
+	}
+
+	/**
+	 * Attendee profiles related to this tweet.
+	 *
+	 * @return User_Profile[]
+	 */
+	public function get_attendees(): array {
+		return array_map( static fn( int $user_id ): User_Profile => User_Profile::from( $user_id ), $this->get_related( 'user' ) );
+	}
+
+	/**
+	 * Meeting invites extracted from this tweet.
+	 *
+	 * @return Meeting_Invite[]
+	 */
+	public function get_meeting_invites(): array {
+		$meeting_ids = Relationships::get_referencing( 'meeting_invite', 'tweet', $this->get_id() );
+
+		return array_map( static fn( int $meeting_id ): Meeting_Invite => Meeting_Invite::from( $meeting_id ), $meeting_ids );
+	}
 }
