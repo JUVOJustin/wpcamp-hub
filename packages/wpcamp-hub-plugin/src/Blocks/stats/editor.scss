@@ -1,0 +1,10 @@
+/**
+ * Stats Band — editor-only styles.
+ */
+
+.wpch-stats {
+	/* Keep the inner block list laid out as the grid in the editor. */
+	.wpch-stats__grid > .block-editor-block-list__layout {
+		display: contents;
+	}
+}

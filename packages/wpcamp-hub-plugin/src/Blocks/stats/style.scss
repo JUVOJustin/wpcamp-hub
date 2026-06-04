@@ -1,0 +1,35 @@
+/**
+ * Stats Band — shared styles (front end + editor).
+ * Dark "brand press" band with an equal-column grid of stats.
+ */
+
+.wpch-stats {
+	background: var( --wp--preset--color--brand-press, #243596 );
+	color: #fff;
+	padding: 56px 0;
+
+	* {
+		box-sizing: border-box;
+	}
+
+	.wpch-stats__inner {
+		max-width: var( --wp--style--global--content-size, 1200px );
+		margin: 0 auto;
+		padding: 0 24px;
+	}
+
+	.wpch-stats__grid {
+		display: grid;
+		grid-template-columns: repeat( var( --wpch-stats-cols, 4 ), 1fr );
+		gap: 24px;
+	}
+
+	@media ( max-width: 860px ) {
+		padding: 40px 0;
+
+		.wpch-stats__grid {
+			grid-template-columns: repeat( 2, 1fr );
+			row-gap: 28px;
+		}
+	}
+}

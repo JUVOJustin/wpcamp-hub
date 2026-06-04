@@ -1,0 +1,52 @@
+{
+	"$schema": "https://schemas.wp.org/trunk/block.json",
+	"apiVersion": 3,
+	"name": "wpcamp-hub/stat",
+	"version": "1.0.0",
+	"title": "Stat",
+	"category": "design",
+	"icon": "chart-bar",
+	"description": "A single counter — a number that counts up when scrolled into view, with a label.",
+	"keywords": [ "counter", "number", "stat", "count up" ],
+	"textdomain": "wpcamp-hub",
+	"parent": [ "wpcamp-hub/stats" ],
+	"supports": {
+		"html": false,
+		"reusable": false
+	},
+	"attributes": {
+		"number": {
+			"type": "number",
+			"default": 0
+		},
+		"prefix": {
+			"type": "string",
+			"source": "html",
+			"selector": ".wpch-stat__prefix",
+			"default": ""
+		},
+		"suffix": {
+			"type": "string",
+			"source": "html",
+			"selector": ".wpch-stat__suffix",
+			"default": ""
+		},
+		"thousandsSeparator": {
+			"type": "boolean",
+			"default": true
+		},
+		"label": {
+			"type": "string",
+			"source": "html",
+			"selector": ".wpch-stat__label",
+			"default": "Label"
+		},
+		"accent": {
+			"type": "string",
+			"default": "fest-gold"
+		}
+	},
+	"editorScript": "file:./index.js",
+	"viewScript": "file:./view.js",
+	"style": "file:./style-index.css"
+}

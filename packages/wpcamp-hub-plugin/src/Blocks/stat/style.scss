@@ -1,0 +1,52 @@
+/**
+ * Stat — shared styles (front end + editor).
+ * Colours come from theme.json palette presets.
+ */
+
+.wpch-stat {
+	text-align: center;
+
+	.wpch-stat__num {
+		display: flex;
+		align-items: baseline;
+		justify-content: center;
+		font-weight: 800;
+		font-size: 52px;
+		letter-spacing: -0.02em;
+		line-height: 1;
+		font-family: var( --wp--preset--font-family--sans );
+		color: var( --wp--preset--color--fest-gold );
+	}
+
+	.wpch-stat__value,
+	.wpch-stat__prefix,
+	.wpch-stat__suffix {
+		color: inherit;
+	}
+
+	.wpch-stat__label {
+		font-size: 13px;
+		font-weight: 600;
+		letter-spacing: 0.08em;
+		text-transform: uppercase;
+		color: var( --wp--preset--color--blue-200, #b7c3fb );
+		margin-top: 8px;
+	}
+
+	/* accent colour applied to the number */
+	&.wpch-stat--fest-gold .wpch-stat__num {
+		color: var( --wp--preset--color--fest-gold );
+	}
+	&.wpch-stat--fest-coral .wpch-stat__num {
+		color: var( --wp--preset--color--fest-coral );
+	}
+	&.wpch-stat--fest-teal .wpch-stat__num {
+		color: var( --wp--preset--color--fest-teal );
+	}
+	&.wpch-stat--fest-violet .wpch-stat__num {
+		color: var( --wp--preset--color--fest-violet );
+	}
+	&.wpch-stat--brand .wpch-stat__num {
+		color: var( --wp--preset--color--blue-300 );
+	}
+}
