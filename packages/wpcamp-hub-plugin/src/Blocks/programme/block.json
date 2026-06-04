@@ -13,6 +13,11 @@
 		"html": false,
 		"anchor": true,
 		"align": [ "full" ],
+		"color": {
+			"background": true,
+			"gradients": true,
+			"text": false
+		},
 		"spacing": {
 			"padding": true,
 			"margin": true
