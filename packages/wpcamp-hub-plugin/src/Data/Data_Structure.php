@@ -154,7 +154,7 @@ class Data_Structure {
 				'singular'     => __( 'Track', 'wpcamp-hub' ),
 				'plural'       => __( 'Tracks', 'wpcamp-hub' ),
 				'object_types' => array( self::POST_TYPE_SESSION ),
-				'terms'        => array( 'Track 1', 'Track 2', 'Developer', 'Community', 'Business', 'Design', 'Accessibility' ),
+				'terms'        => array( 'Developer', 'Community', 'Business', 'Design', 'Accessibility' ),
 			),
 		);
 	}
@@ -345,7 +345,11 @@ class Data_Structure {
 	}
 
 	/**
-	 * Register platform taxonomies and seed initial terms.
+	 * Register platform taxonomies.
+	 *
+	 * Default terms are NOT seeded here — that runs once on activation
+	 * (see seed_terms()), so terms the user later renames or deletes are not
+	 * recreated on every request.
 	 */
 	private function register_taxonomies(): void {
 		foreach ( self::get_taxonomies() as $taxonomy => $config ) {
@@ -363,6 +367,21 @@ class Data_Structure {
 					'rewrite'      => array( 'slug' => str_replace( 'wpcamp_', '', $taxonomy ) ),
 				)
 			);
+		}
+	}
+
+	/**
+	 * Seed the default taxonomy terms.
+	 *
+	 * Idempotent and intended to run on activation only. Existing terms are
+	 * left untouched, and terms the user removed are not recreated on normal
+	 * requests.
+	 */
+	public function seed_terms(): void {
+		foreach ( self::get_taxonomies() as $taxonomy => $config ) {
+			if ( ! taxonomy_exists( $taxonomy ) ) {
+				register_taxonomy( $taxonomy, $config['object_types'] );
+			}
 
 			foreach ( $config['terms'] as $term ) {
 				if ( ! term_exists( $term, $taxonomy ) ) {

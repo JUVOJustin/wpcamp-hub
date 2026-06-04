@@ -29,7 +29,11 @@ class DataStructureTest extends WP_UnitTestCase {
 	public function set_up(): void {
 		parent::set_up();
 
-		( new Data_Structure() )->register();
+		$data_structure = new Data_Structure();
+		$data_structure->register();
+		// Default terms are seeded on activation only, so seed them explicitly
+		// for tests that rely on the starter terms.
+		$data_structure->seed_terms();
 	}
 
 	/**
@@ -147,7 +151,7 @@ class DataStructureTest extends WP_UnitTestCase {
 	public function test_term_wrappers_initialize_from_ids(): void {
 		$event_type = get_term_by( 'name', 'WordCamp', Data_Structure::TAXONOMY_EVENT_TYPE );
 		$tweet_label = get_term_by( 'name', 'Wants to meet', Data_Structure::TAXONOMY_TWEET_LABEL );
-		$track = get_term_by( 'name', 'Track 1', Data_Structure::TAXONOMY_TRACK );
+		$track = get_term_by( 'name', 'Developer', Data_Structure::TAXONOMY_TRACK );
 
 		$this->assertInstanceOf( Event_Type::class, Event_Type::from( $event_type ) );
 		$this->assertInstanceOf( Tweet_Label::class, Tweet_Label::from( $tweet_label ) );
