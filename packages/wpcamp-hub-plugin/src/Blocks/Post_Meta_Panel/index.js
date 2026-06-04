@@ -6,6 +6,9 @@ import { useSelect } from '@wordpress/data';
 import { __ } from '@wordpress/i18n';
 import {
 	BaseControl,
+	Button,
+	ComboboxControl,
+	DateTimePicker,
 	TextControl,
 	TextareaControl,
 	ToggleControl,
@@ -17,6 +20,42 @@ import './editor.scss';
 
 const config = window.wpcamp_hub || {};
 const fieldsByPostType = config.postMetaFields || {};
+const relationTargets = {
+	wpcamp_event: 'wpcamp_event',
+	wpcamp_related_event: 'wpcamp_event',
+	wpcamp_related_events: 'wpcamp_event',
+	wpcamp_person: 'user',
+	wpcamp_related_attendee: 'user',
+	wpcamp_related_attendees: 'user',
+	wpcamp_speakers: 'user',
+	wpcamp_related_tweets: 'wpcamp_tweet',
+	wpcamp_source_tweet: 'wpcamp_tweet',
+};
+const comboboxOptions = {
+	wpcamp_source: [
+		{ label: __( 'Curated', 'wpcamp-hub' ), value: 'curated' },
+		{ label: __( 'WordCamp', 'wpcamp-hub' ), value: 'WordCamp' },
+		{ label: __( 'Twitter/X', 'wpcamp-hub' ), value: 'Twitter/X' },
+		{ label: __( 'Official', 'wpcamp-hub' ), value: 'official' },
+	],
+	wpcamp_processing_status: [
+		{ label: __( 'Fetched', 'wpcamp-hub' ), value: 'fetched' },
+		{ label: __( 'Queued', 'wpcamp-hub' ), value: 'queued' },
+		{ label: __( 'Processed', 'wpcamp-hub' ), value: 'processed' },
+		{ label: __( 'Curated', 'wpcamp-hub' ), value: 'curated' },
+		{ label: __( 'Rejected', 'wpcamp-hub' ), value: 'rejected' },
+	],
+	wpcamp_day: [
+		{ label: __( 'Thursday', 'wpcamp-hub' ), value: 'Thursday' },
+		{ label: __( 'Friday', 'wpcamp-hub' ), value: 'Friday' },
+		{ label: __( 'Saturday', 'wpcamp-hub' ), value: 'Saturday' },
+		{ label: __( 'Sunday', 'wpcamp-hub' ), value: 'Sunday' },
+	],
+	wpcamp_room: [
+		{ label: __( 'Track 1', 'wpcamp-hub' ), value: 'Track 1' },
+		{ label: __( 'Track 2', 'wpcamp-hub' ), value: 'Track 2' },
+	],
+};
 
 const getFieldLabel = ( metaKey ) =>
 	metaKey
@@ -33,9 +72,125 @@ const toIntegerList = ( value ) =>
 const toListValue = ( value ) =>
 	Array.isArray( value ) ? value.join( ', ' ) : '';
 
-function FieldControl( { field, metaKey, value, onChange } ) {
+const getDateValue = ( value ) =>
+	typeof value === 'string' && value.length > 0
+		? value
+		: new Date().toISOString();
+
+const isDateField = ( metaKey ) =>
+	metaKey.includes( 'date' ) ||
+	metaKey.includes( 'time' ) ||
+	metaKey.includes( 'timestamp' );
+
+const buildPostOptions = ( records ) =>
+	( records || [] ).map( ( record ) => ( {
+		label: record.title?.rendered || record.title?.raw || `#${ record.id }`,
+		value: String( record.id ),
+	} ) );
+
+const buildUserOptions = ( records ) =>
+	( records || [] ).map( ( record ) => ( {
+		label: record.name || record.slug || `#${ record.id }`,
+		value: String( record.id ),
+	} ) );
+
+function RelationArrayControl( {
+	help,
+	label,
+	metaKey,
+	onChange,
+	options,
+	value,
+} ) {
+	const selectedIds = Array.isArray( value )
+		? value
+				.map( ( item ) => Number.parseInt( item, 10 ) )
+				.filter( Number.isInteger )
+		: [];
+	const selectedOptions = options.filter( ( option ) =>
+		selectedIds.includes( Number.parseInt( option.value, 10 ) )
+	);
+
+	return (
+		<BaseControl
+			__nextHasNoMarginBottom
+			id={ `wpcamp-hub-editor-${ metaKey }` }
+			label={ label }
+			help={ help }
+		>
+			<Stack spacing={ 2 }>
+				<ComboboxControl
+					__next40pxDefaultSize
+					__nextHasNoMarginBottom
+					label={ label }
+					hideLabelFromVision
+					options={ options }
+					value=""
+					onChange={ ( nextValue ) => {
+						const nextId = Number.parseInt( nextValue, 10 );
+						if ( ! Number.isInteger( nextId ) ) {
+							return;
+						}
+
+						onChange( [
+							...new Set( [ ...selectedIds, nextId ] ),
+						] );
+					} }
+				/>
+				{ selectedOptions.length > 0 && (
+					<Stack
+						className="wpcamp-hub-editor-relation-list"
+						direction="row"
+						spacing={ 2 }
+					>
+						{ selectedOptions.map( ( option ) => (
+							<Button
+								key={ option.value }
+								size="small"
+								variant="secondary"
+								onClick={ () =>
+									onChange(
+										selectedIds.filter(
+											( selectedId ) =>
+												selectedId !==
+												Number.parseInt(
+													option.value,
+													10
+												)
+										)
+									)
+								}
+							>
+								{ option.label }
+							</Button>
+						) ) }
+					</Stack>
+				) }
+			</Stack>
+		</BaseControl>
+	);
+}
+
+function FieldControl( { field, metaKey, options, value, onChange } ) {
 	const label = getFieldLabel( metaKey );
 	const help = field.description;
+
+	if ( isDateField( metaKey ) ) {
+		return (
+			<BaseControl
+				__nextHasNoMarginBottom
+				id={ `wpcamp-hub-editor-${ metaKey }` }
+				label={ label }
+				help={ help }
+			>
+				<DateTimePicker
+					currentDate={ getDateValue( value ) }
+					onChange={ onChange }
+					is12Hour={ false }
+				/>
+			</BaseControl>
+		);
+	}
 
 	if ( field.type === 'boolean' ) {
 		return (
@@ -50,6 +205,22 @@ function FieldControl( { field, metaKey, value, onChange } ) {
 	}
 
 	if ( field.type === 'integer' ) {
+		if ( options.length > 0 ) {
+			return (
+				<ComboboxControl
+					__next40pxDefaultSize
+					__nextHasNoMarginBottom
+					label={ label }
+					help={ help }
+					options={ options }
+					value={ value ? String( value ) : '' }
+					onChange={ ( nextValue ) =>
+						onChange( Number.parseInt( nextValue, 10 ) || 0 )
+					}
+				/>
+			);
+		}
+
 		return (
 			<TextControl
 				__next40pxDefaultSize
@@ -70,6 +241,19 @@ function FieldControl( { field, metaKey, value, onChange } ) {
 	}
 
 	if ( field.type === 'array' ) {
+		if ( options.length > 0 ) {
+			return (
+				<RelationArrayControl
+					help={ help }
+					label={ label }
+					metaKey={ metaKey }
+					onChange={ onChange }
+					options={ options }
+					value={ value }
+				/>
+			);
+		}
+
 		return (
 			<TextareaControl
 				__nextHasNoMarginBottom
@@ -129,6 +313,20 @@ function FieldControl( { field, metaKey, value, onChange } ) {
 		);
 	}
 
+	if ( comboboxOptions[ metaKey ] ) {
+		return (
+			<ComboboxControl
+				__next40pxDefaultSize
+				__nextHasNoMarginBottom
+				label={ label }
+				help={ help }
+				options={ comboboxOptions[ metaKey ] }
+				value={ value || '' }
+				onChange={ onChange }
+			/>
+		);
+	}
+
 	return (
 		<TextControl
 			__next40pxDefaultSize
@@ -152,6 +350,42 @@ function Edit() {
 	);
 	const fields = fieldsByPostType[ postType ] || {};
 	const [ meta, setMeta ] = useEntityProp( 'postType', postType, 'meta' );
+	const relationRecords = useSelect(
+		( select ) => ( {
+			events: select( 'core' ).getEntityRecords(
+				'postType',
+				'wpcamp_event',
+				{ per_page: 100, status: 'any' }
+			),
+			tweets: select( 'core' ).getEntityRecords(
+				'postType',
+				'wpcamp_tweet',
+				{ per_page: 100, status: 'any' }
+			),
+			users: select( 'core' ).getEntityRecords( 'root', 'user', {
+				per_page: 100,
+			} ),
+		} ),
+		[]
+	);
+
+	const getOptions = ( metaKey ) => {
+		const target = relationTargets[ metaKey ];
+
+		if ( target === 'wpcamp_event' ) {
+			return buildPostOptions( relationRecords.events );
+		}
+
+		if ( target === 'wpcamp_tweet' ) {
+			return buildPostOptions( relationRecords.tweets );
+		}
+
+		if ( target === 'user' ) {
+			return buildUserOptions( relationRecords.users );
+		}
+
+		return [];
+	};
 
 	const updateMeta = ( metaKey, nextValue ) => {
 		setMeta( {
@@ -184,6 +418,7 @@ function Edit() {
 						key={ metaKey }
 						field={ field }
 						metaKey={ metaKey }
+						options={ getOptions( metaKey ) }
 						value={ meta?.[ metaKey ] }
 						onChange={ ( nextValue ) =>
 							updateMeta( metaKey, nextValue )
