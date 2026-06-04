@@ -1,0 +1,50 @@
+{
+	"$schema": "https://schemas.wp.org/trunk/block.json",
+	"apiVersion": 3,
+	"name": "wpcamp-hub/feed-card",
+	"version": "1.0.0",
+	"title": "Feed Card",
+	"category": "design",
+	"icon": "format-status",
+	"description": "A single community feed post — author, handle, time, text and a category pill. Will later be populated dynamically.",
+	"keywords": [ "feed", "post", "community", "social", "card" ],
+	"textdomain": "wpcamp-hub",
+	"parent": [ "wpcamp-hub/programme" ],
+	"supports": {
+		"html": false,
+		"reusable": false
+	},
+	"attributes": {
+		"author": {
+			"type": "string",
+			"source": "html",
+			"selector": ".wpch-feed__author",
+			"default": "Attendee name"
+		},
+		"handle": {
+			"type": "string",
+			"source": "html",
+			"selector": ".wpch-feed__handle",
+			"default": "@handle · 2h"
+		},
+		"text": {
+			"type": "string",
+			"source": "html",
+			"selector": ".wpch-feed__text",
+			"default": ""
+		},
+		"category": {
+			"type": "string",
+			"default": "networking"
+		},
+		"link": {
+			"type": "string",
+			"source": "attribute",
+			"selector": ".wpch-feed__link",
+			"attribute": "href",
+			"default": ""
+		}
+	},
+	"editorScript": "file:./index.js",
+	"style": "file:./style-index.css"
+}

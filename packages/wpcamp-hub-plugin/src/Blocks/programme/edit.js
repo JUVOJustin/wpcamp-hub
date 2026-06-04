@@ -21,7 +21,7 @@ import {
 
 import Legend from './legend';
 
-const ALLOWED_BLOCKS = [ 'wpcamp-hub/session-card' ];
+const ALLOWED_BLOCKS = [ 'wpcamp-hub/session-card', 'wpcamp-hub/feed-card' ];
 
 const TEMPLATE = [
 	[
