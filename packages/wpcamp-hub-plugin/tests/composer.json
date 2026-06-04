@@ -2,6 +2,7 @@
 	"name": "wpcamp-hub/test-dependencies",
 	"description": "Test-only dependencies for wpcamp-hub. Add premium or private plugins here.",
 	"require": {
+		"php": ">=8.4",
 		"composer/installers": "^2.0"
 	},
 	"extra": {

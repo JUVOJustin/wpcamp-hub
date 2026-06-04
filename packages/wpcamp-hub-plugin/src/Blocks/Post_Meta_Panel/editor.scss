@@ -1,0 +1,34 @@
+.wpcamp-hub-editor-meta-panel {
+	padding: 8px 0;
+}
+
+.wpcamp-hub-editor-meta-panel .components-base-control {
+	margin-bottom: 0;
+}
+
+.wpcamp-hub-editor-control-list {
+	display: grid;
+	gap: 20px;
+	min-width: 0;
+}
+
+.wpcamp-hub-editor-relation-list {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 8px;
+}
+
+.wpcamp-hub-editor-empty-state {
+	margin: 0;
+}
+
+.wpcamp-hub-editor-inline-blocks {
+	display: grid;
+	gap: 16px;
+	grid-template-columns: repeat(auto-fit, minmax(min(100%, 220px), 1fr));
+	min-width: 0;
+}
+
+.wpcamp-hub-editor-inline-blocks > .components-base-control {
+	min-width: 0;
+}

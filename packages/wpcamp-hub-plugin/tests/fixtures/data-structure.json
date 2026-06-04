@@ -1,0 +1,77 @@
+{
+  "users": [
+    {
+      "identifier": "wceu-attendee",
+      "name": "WCEU Attendee",
+      "meta": {
+        "wpcamp_wporg_username": "wceu-attendee",
+        "wpcamp_company": "Example Company",
+        "wpcamp_community_role": "Contributor",
+        "wpcamp_meeting_available": true
+      }
+    }
+  ],
+  "posts": [
+    {
+      "key": "event",
+      "post_type": "wpcamp_event",
+      "post_title": "WordCamp Europe 2026",
+      "post_content": "Main WordCamp Europe event.",
+      "meta": {
+        "wpcamp_date_start": "2026-06-04T09:00:00+00:00",
+        "wpcamp_date_end": "2026-06-06T18:00:00+00:00",
+        "wpcamp_location": "Krakow, Poland",
+        "wpcamp_coordinates": {
+          "latitude": 50.0647,
+          "longitude": 19.945
+        },
+        "wpcamp_official_url": "https://europe.wordcamp.org/2026/",
+        "wpcamp_source": "WordCamp"
+      }
+    },
+    {
+      "key": "tweet",
+      "post_type": "wpcamp_tweet",
+      "post_title": "Looking to meet at WCEU",
+      "post_content": "I am looking to meet WordPress contributors at WCEU.",
+      "meta": {
+        "wpcamp_tweet_id": "1234567890",
+        "wpcamp_author_handle": "wceufriend",
+        "wpcamp_author_name": "WCEU Friend",
+        "wpcamp_tweet_url": "https://x.com/wceufriend/status/1234567890",
+        "wpcamp_timestamp": "2026-06-04T12:00:00+00:00",
+        "wpcamp_processing_status": "curated"
+      }
+    },
+    {
+      "key": "session",
+      "post_type": "wpcamp_session",
+      "post_title": "Building Community Tools",
+      "post_content": "A session about community tooling.",
+      "meta": {
+        "wpcamp_start_time": "2026-06-05T10:00:00+00:00",
+        "wpcamp_end_time": "2026-06-05T10:45:00+00:00",
+        "wpcamp_source": "official"
+      }
+    },
+    {
+      "key": "meeting_invite",
+      "post_type": "wpcamp_meeting",
+      "post_title": "Coffee chat about contributor onboarding",
+      "post_content": "Open to a short chat during contributor day.",
+      "meta": {
+        "wpcamp_topic": "Contributor onboarding"
+      }
+    }
+  ],
+  "relationships": [
+    ["user", "user:0", "event", "post:event"],
+    ["user", "user:0", "tweet", "post:tweet"],
+    ["user", "user:0", "session", "post:session"],
+    ["tweet", "post:tweet", "event", "post:event"],
+    ["session", "post:session", "event", "post:event"],
+    ["meeting_invite", "post:meeting_invite", "tweet", "post:tweet"],
+    ["meeting_invite", "post:meeting_invite", "user", "user:0"],
+    ["meeting_invite", "post:meeting_invite", "event", "post:event"]
+  ]
+}

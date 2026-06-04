@@ -13,6 +13,8 @@
 
 namespace WPCAMP_HUB;
 
+use WPCAMP_HUB\Data\Data_Structure;
+
 /**
  * The core plugin class.
  *
@@ -29,8 +31,8 @@ namespace WPCAMP_HUB;
 class WPCAMP_HUB {
 
 
-	const PLUGIN_NAME    = 'wpcamp-hub';
-	const PLUGIN_VERSION = '1.0.0';
+	public const string PLUGIN_NAME    = 'wpcamp-hub';
+	public const string PLUGIN_VERSION = '1.0.0';
 
 	/**
 	 * The loader that's responsible for maintaining and registering all hooks that power
@@ -39,6 +41,13 @@ class WPCAMP_HUB {
 	 * @var Loader
 	 */
 	protected Loader $loader;
+
+	/**
+	 * Central data structure registration.
+	 *
+	 * @var Data_Structure
+	 */
+	protected Data_Structure $data_structure;
 
 	/**
 	 * Define the core functionality of the plugin.
@@ -70,7 +79,8 @@ class WPCAMP_HUB {
 	 */
 	private function load_dependencies(): void {
 
-		$this->loader = new Loader();
+		$this->loader         = new Loader();
+		$this->data_structure = new Data_Structure();
 	}
 
 	/**
@@ -96,12 +106,27 @@ class WPCAMP_HUB {
 	 */
 	private function define_admin_hooks(): void {
 
+		$this->loader->add_action( 'add_meta_boxes', $this->data_structure, 'register_meta_boxes', 10, 0 );
+		$this->loader->add_action( 'save_post', $this->data_structure, 'save_post_meta', 10, 2 );
+		$this->loader->add_action( 'enqueue_block_editor_assets', $this, 'add_editor_block_data', 10, 0 );
+
 		add_action(
 			'admin_enqueue_scripts',
 			function () {
 				$this->enqueue_entrypoint( 'wpcamp-hub-admin' );
 			},
 			100
+		);
+	}
+
+	/**
+	 * Add data consumed by editor blocks.
+	 */
+	public function add_editor_block_data(): void {
+		wp_add_inline_script(
+			generate_block_asset_handle( 'wpcamp-hub/post-meta-panel', 'editorScript' ),
+			'window.wpcamp_hub = window.wpcamp_hub || {}; window.wpcamp_hub.postMetaFields = ' . wp_json_encode( $this->data_structure->get_editor_post_meta_fields() ) . ';',
+			'before'
 		);
 	}
 
@@ -113,6 +138,8 @@ class WPCAMP_HUB {
 	 * @access   private
 	 */
 	private function define_public_hooks(): void {
+
+		$this->loader->add_action( 'init', $this->data_structure, 'register' );
 
 		add_action(
 			'wp_enqueue_scripts',
