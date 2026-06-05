@@ -273,37 +273,61 @@ while ( have_posts() ) :
 						</div>
 					<?php endif; ?>
 
-					<?php // ---- Timetable view ---- ?>
+					<?php // ---- Timetable view (multi-track grid: rooms x time) ---- ?>
 					<div class="wpch-sv__view wpch-sv__view--timetable" data-view="timetable">
-						<div class="wpch-tt">
-							<?php
-							// Group sessions by day for the timetable.
-							$by_day = array();
-							foreach ( $session_rows as $row ) {
-								$day_key                = '' !== $row['day'] ? $row['day'] : __( 'Unscheduled', 'wpcamp-hub' );
-								$by_day[ $day_key ][]   = $row;
-							}
-							foreach ( $by_day as $day_label => $rows ) :
-								?>
-								<div class="wpch-tt__day">
-									<div class="wpch-tt__day-label"><?php echo esc_html( $day_label ); ?></div>
-									<div class="wpch-tt__rows">
-										<?php foreach ( $rows as $row ) : ?>
-											<a class="wpch-tt__block" href="<?php echo esc_url( $row['url'] ); ?>" style="--wpch-track:<?php echo esc_attr( $row['color'] ); ?>">
-												<span class="wpch-tt__time"><?php echo esc_html( '' !== $row['time'] ? $row['time'] : '—' ); ?></span>
-												<span class="wpch-tt__title"><?php echo esc_html( $row['title'] ); ?></span>
-												<?php if ( '' !== $row['room'] ) : ?>
-													<span class="wpch-tt__room"><?php echo esc_html( $row['room'] ); ?></span>
-												<?php endif; ?>
-												<?php if ( '' !== $row['track'] ) : ?>
-													<span class="wpch-tt__track"><?php echo esc_html( $row['track'] ); ?></span>
-												<?php endif; ?>
-											</a>
+						<?php
+						// Build the timetable model: per day, rooms as columns and
+						// start times as rows; a session sits in its room/time cell.
+						$tt_days = array();
+						foreach ( $session_rows as $row ) {
+							$day_key = '' !== $row['day'] ? $row['day'] : __( 'Unscheduled', 'wpcamp-hub' );
+							$room    = '' !== $row['room'] ? $row['room'] : __( 'Unassigned', 'wpcamp-hub' );
+							$time    = '' !== $row['time'] ? $row['time'] : '—';
+
+							$tt_days[ $day_key ]['rooms'][ $room ]          = true;
+							$tt_days[ $day_key ]['times'][ $time ]          = true;
+							$tt_days[ $day_key ]['cells'][ $time ][ $room ] = $row;
+						}
+
+						foreach ( $tt_days as $day_label => $day ) :
+							$rooms = array_keys( $day['rooms'] );
+							$times = array_keys( $day['times'] );
+							sort( $times );
+							$cols = count( $rooms );
+							?>
+							<div class="wpch-tt-day">
+								<div class="wpch-tt-day__label"><?php echo esc_html( $day_label ); ?></div>
+								<div class="wpch-tt-wrap">
+									<div class="wpch-tt" style="--tt-cols:<?php echo esc_attr( (string) $cols ); ?>">
+										<div class="wpch-tt__head wpch-tt__corner"></div>
+										<?php foreach ( $rooms as $room ) : ?>
+											<div class="wpch-tt__head wpch-tt__cell-head"><?php echo esc_html( $room ); ?></div>
+										<?php endforeach; ?>
+
+										<?php foreach ( $times as $time ) : ?>
+											<div class="wpch-tt__time"><?php echo esc_html( $time ); ?></div>
+											<?php
+											foreach ( $rooms as $room ) :
+												$cell = $day['cells'][ $time ][ $room ] ?? null;
+												?>
+												<div class="wpch-tt__track">
+													<?php if ( null !== $cell ) : ?>
+														<a class="wpch-tt__block" href="<?php echo esc_url( $cell['url'] ); ?>"
+															style="--wpch-track:<?php echo esc_attr( $cell['color'] ); ?>">
+															<?php if ( '' !== $cell['track'] ) : ?>
+																<span class="wpch-tt__type"><?php echo esc_html( $cell['track'] ); ?></span>
+															<?php endif; ?>
+															<span class="wpch-tt__title"><?php echo esc_html( $cell['title'] ); ?></span>
+															<span class="wpch-tt__meta"><?php echo esc_html( $cell['time'] ); ?></span>
+														</a>
+													<?php endif; ?>
+												</div>
+											<?php endforeach; ?>
 										<?php endforeach; ?>
 									</div>
 								</div>
-							<?php endforeach; ?>
-						</div>
+							</div>
+						<?php endforeach; ?>
 					</div>
 				</section>
 			<?php endif; ?>
