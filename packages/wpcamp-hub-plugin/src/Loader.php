@@ -76,6 +76,7 @@ class Loader {
 		$this->actions            = array();
 		$this->filters            = array();
 		$this->shortcodes         = array();
+		$this->cli                = array();
 		$this->abilities          = array();
 		$this->ability_categories = array();
 	}

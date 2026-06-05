@@ -23,16 +23,28 @@ class User_Profile extends User_Entity {
 	public static function create_attendee( string $identifier, string $name ): self {
 		$slug = sanitize_user( $identifier, true );
 
-		// wp_insert_user creates the profile without triggering WordPress' new-user notification email.
-		$user_id = wp_insert_user(
-			array(
-				'user_login'   => $slug,
-				'user_email'   => $slug . '@localhost.local',
-				'display_name' => $name,
-				'nickname'     => $name,
-				'role'         => 'subscriber',
-			)
-		);
+		// Suppress WordPress' new-user notification emails — these are imported
+		// profiles, not real sign-ups. A random password is supplied so WordPress
+		// does not emit a "user_pass is required" notice; the profiles never
+		// authenticate directly.
+		add_filter( 'wp_send_new_user_notification_to_admin', '__return_false' );
+		add_filter( 'wp_send_new_user_notification_to_user', '__return_false' );
+
+		try {
+			$user_id = wp_insert_user(
+				array(
+					'user_login'   => $slug,
+					'user_email'   => $slug . '@localhost.local',
+					'user_pass'    => wp_generate_password( 24, true, true ),
+					'display_name' => $name,
+					'nickname'     => $name,
+					'role'         => 'subscriber',
+				)
+			);
+		} finally {
+			remove_filter( 'wp_send_new_user_notification_to_admin', '__return_false' );
+			remove_filter( 'wp_send_new_user_notification_to_user', '__return_false' );
+		}
 
 		if ( is_wp_error( $user_id ) ) {
 			throw new \RuntimeException( esc_html( $user_id->get_error_message() ) );

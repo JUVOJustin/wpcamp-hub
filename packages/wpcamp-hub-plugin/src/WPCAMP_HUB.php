@@ -147,6 +147,12 @@ class WPCAMP_HUB {
 
 		$this->loader->add_action( 'init', $this->data_structure, 'register' );
 
+		// WordCamp session/speaker import — Action Scheduler driven, daily.
+		$import_scheduler = new \WPCAMP_HUB\Import\Import_Scheduler();
+		$import_scheduler->register_hooks();
+		$this->loader->add_action( 'action_scheduler_init', $import_scheduler, 'schedule_daily_import', 10, 0 );
+		$this->loader->add_cli( 'wpcamp-hub', new \WPCAMP_HUB\Import\Import_CLI(), array( 'shortdesc' => 'WPCamp Hub commands.' ) );
+
 		add_action(
 			'wp_enqueue_scripts',
 			function () {

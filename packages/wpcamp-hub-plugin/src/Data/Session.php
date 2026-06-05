@@ -52,6 +52,24 @@ class Session extends Post_Entity {
 	}
 
 	/**
+	 * Session end time as a stored ISO 8601 string.
+	 */
+	public function get_end_time(): string {
+		$value = get_post_meta( $this->get_id(), 'wpcamp_end_time', true );
+
+		return is_string( $value ) ? $value : '';
+	}
+
+	/**
+	 * Source identifier for an imported session (empty for curated sessions).
+	 */
+	public function get_source_id(): string {
+		$value = get_post_meta( $this->get_id(), 'wpcamp_source_id', true );
+
+		return is_string( $value ) ? $value : '';
+	}
+
+	/**
 	 * Room/location for this session (free-form meta).
 	 */
 	public function get_room(): string {
