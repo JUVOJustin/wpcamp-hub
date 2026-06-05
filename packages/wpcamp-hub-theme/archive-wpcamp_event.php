@@ -35,10 +35,10 @@ $wpch_sources = array(
 
 	<section class="wpch-intro">
 		<div class="wpch-intro__inner">
-			<div class="wpch-intro__eyebrow"><?php esc_html_e( 'Programme & beyond', 'wpcamp-hub' ); ?></div>
-			<h1 class="wpch-intro__title"><?php esc_html_e( 'Everything happening at WCEU', 'wpcamp-hub' ); ?></h1>
+			<div class="wpch-intro__eyebrow"><?php esc_html_e( 'Across the WordCamps', 'wpcamp-hub' ); ?></div>
+			<h1 class="wpch-intro__title"><?php esc_html_e( 'Everything happening around the community', 'wpcamp-hub' ); ?></h1>
 			<p class="wpch-intro__lead">
-				<?php esc_html_e( 'Official talks and workshops, sponsor evenings, contributor tables, dinners and the meetups people are dreaming up — all in one place.', 'wpcamp-hub' ); ?>
+				<?php esc_html_e( 'Talks and workshops, sponsor evenings, contributor tables, dinners and the meetups people are dreaming up — across WordCamps, all in one place.', 'wpcamp-hub' ); ?>
 			</p>
 		</div>
 	</section>
