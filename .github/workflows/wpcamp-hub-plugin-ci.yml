@@ -98,6 +98,7 @@ jobs:
       - wpcamp-hub-plugin-test-js
     env:
       COMPOSER_AUTH: ${{ secrets.COMPOSER_AUTH }}
+      OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
 
     defaults:
       run:
@@ -127,6 +128,13 @@ jobs:
       - name: Write Composer auth for test dependencies
         if: env.COMPOSER_AUTH != ''
         run: printf '%s' "$COMPOSER_AUTH" > tests/auth.json
+
+      - name: Write wp-env OpenAI override
+        if: env.OPENAI_API_KEY != ''
+        run: |
+          umask 077
+          printf '{\n\t"config": {\n\t\t"OPENAI_API_KEY": "%s"\n\t}\n}\n' "$OPENAI_API_KEY" > .wp-env.override.json
+          chmod 600 .wp-env.override.json
 
       - name: Start wp-env
         run: npm run env:start

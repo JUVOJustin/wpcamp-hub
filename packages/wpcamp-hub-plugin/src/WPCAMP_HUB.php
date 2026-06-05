@@ -14,6 +14,7 @@
 namespace WPCAMP_HUB;
 
 use WPCAMP_HUB\Data\Data_Structure;
+use WPCAMP_HUB\Import\WordCamp_Attendee_Importer;
 
 /**
  * The core plugin class.
@@ -50,6 +51,13 @@ class WPCAMP_HUB {
 	protected Data_Structure $data_structure;
 
 	/**
+	 * WordCamp attendee import orchestration.
+	 *
+	 * @var WordCamp_Attendee_Importer
+	 */
+	protected WordCamp_Attendee_Importer $attendee_importer;
+
+	/**
 	 * Define the core functionality of the plugin.
 	 *
 	 * Set the plugin name and the plugin version that can be used throughout the plugin.
@@ -79,8 +87,9 @@ class WPCAMP_HUB {
 	 */
 	private function load_dependencies(): void {
 
-		$this->loader         = new Loader();
-		$this->data_structure = new Data_Structure();
+		$this->loader            = new Loader();
+		$this->data_structure    = new Data_Structure();
+		$this->attendee_importer = new WordCamp_Attendee_Importer();
 	}
 
 	/**
@@ -140,6 +149,9 @@ class WPCAMP_HUB {
 	private function define_public_hooks(): void {
 
 		$this->loader->add_action( 'init', $this->data_structure, 'register' );
+		$this->loader->add_action( 'action_scheduler_init', $this->attendee_importer, 'schedule_daily_import', 10, 0 );
+		$this->loader->add_action( WordCamp_Attendee_Importer::AS_HOOK, $this->attendee_importer, 'import_scheduled_events', 10, 0 );
+		$this->loader->add_action( WordCamp_Attendee_Importer::AS_EVENT_HOOK, $this->attendee_importer, 'import_event_attendees', 10, 2 );
 
 		add_action(
 			'wp_enqueue_scripts',

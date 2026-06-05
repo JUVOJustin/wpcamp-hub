@@ -43,6 +43,7 @@ define( 'WPCAMP_HUB_URL', plugin_dir_url( __FILE__ ) );
  * Use Composer PSR-4 Autoloading
  */
 require plugin_dir_path( __FILE__ ) . 'vendor/autoload.php';
+require_once plugin_dir_path( __FILE__ ) . 'vendor/woocommerce/action-scheduler/action-scheduler.php';
 
 /**
  * The code that runs during plugin activation.

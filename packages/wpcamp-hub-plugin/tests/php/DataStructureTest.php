@@ -130,11 +130,16 @@ class DataStructureTest extends WP_UnitTestCase {
 			++$mail_attempts;
 			return false;
 		};
+		$new_user_notification = static function ( int $user_id ): void {
+			wp_new_user_notification( $user_id, null, 'both' );
+		};
 
 		add_filter( 'pre_wp_mail', $pre_wp_mail, 10, 2 );
+		add_action( 'user_register', $new_user_notification );
 		try {
 			User_Profile::create_attendee( 'no-invite-attendee', 'No Invite Attendee' );
 		} finally {
+			remove_action( 'user_register', $new_user_notification );
 			remove_filter( 'pre_wp_mail', $pre_wp_mail, 10 );
 		}
 

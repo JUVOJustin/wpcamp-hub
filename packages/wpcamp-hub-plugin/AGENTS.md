@@ -38,6 +38,7 @@ This plugin is a modern WordPress plugin with strict conventions and automated w
 - **Abilities API**: Implement interfaces in `src/Abilities/`, register via Loader. Use the `wp-plugin-bp` skill for ability guidance.
 - **i18n**: Extract with `composer run i18n:extract`, compile with `composer run i18n:compile`. Use the `wp-plugin-bp` skill for translation work.
 - **wp-env**: Start with `npm run env:start`. Use the `wp-plugin-bp` skill when tests are involved.
+- **wp-env secrets**: Keep AI Client keys in ignored `.wp-env.override.json`; CI writes the same file when the `OPENAI_API_KEY` secret is present.
 - **Testing**: Run application tests with `npm run test:php`. Use the `wp-plugin-bp` skill for testing guidance.
 - **Plugin upgrades**: Use the `wp-plugin-bp` skill or ask naturally to sync with upstream project conventions.
 - **Official WordPress skills**: `.agents/skills/wp-*/` contains focused skills for block development, Interactivity API, PHPStan, project triage, and REST API work. Use the `wp-plugin-bp` skill `wp-skills` workflow to refresh or add official WordPress skills.

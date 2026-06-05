@@ -16,6 +16,7 @@ bin/*
 /phpcs-report.xml
 phpunit.xml
 .phpunit.result.cache
+.wp-env.override.json
 
 /lib/
 
