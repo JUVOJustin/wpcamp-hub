@@ -339,15 +339,22 @@ a { color: var(--brand); text-decoration: none; }
 /* attendees */
 .wpch-event__attendees { display: flex; align-items: center; gap: 14px; }
 .wpch-event__stack { display: flex; }
-.wpch-event__avatar {
+.wpch-event__avatar,
+.wpch-event__avatar-img {
   width: 38px; height: 38px; border-radius: 50%; flex: none;
+  border: 2px solid #fff; margin-left: -10px;
+}
+.wpch-event__avatar {
   display: grid; place-items: center;
   background: var(--wp--preset--color--blue-200, #b7c3fb);
   color: var(--wp--preset--color--brand-press, #243596);
   font-size: 13px; font-weight: 700;
-  border: 2px solid #fff; margin-left: -10px;
 }
-.wpch-event__stack .wpch-event__avatar:first-child { margin-left: 0; }
+.wpch-event__avatar-img {
+  display: block; object-fit: cover;
+  background: var(--wp--preset--color--blue-200, #b7c3fb);
+}
+.wpch-event__stack > :first-child { margin-left: 0; }
 .wpch-event__going { font-size: 15px; color: var(--ink-600); }
 
 /* sessions */

@@ -195,14 +195,30 @@ while ( have_posts() ) :
 				<section class="wpch-event__section">
 					<h2 class="wpch-event__section-title"><?php esc_html_e( 'Who’s going', 'wpcamp-hub' ); ?></h2>
 					<div class="wpch-event__attendees">
-						<div class="wpch-event__stack" aria-hidden="true">
+						<div class="wpch-event__stack">
 							<?php
 							foreach ( array_slice( $attendees, 0, 6 ) as $person ) :
-								$name = (string) ( $person->get_wp_entity()->display_name ?? '' );
+								$user_id = $person->get_id();
+								$name    = (string) ( $person->get_wp_entity()->display_name ?? '' );
+								$avatar  = get_avatar(
+									$user_id,
+									76,
+									'',
+									$name,
+									array(
+										'class'         => 'wpch-event__avatar-img',
+										'extra_attr'    => 'title="' . esc_attr( $name ) . '"',
+										'force_display' => true,
+									)
+								);
 								?>
-								<span class="wpch-event__avatar" title="<?php echo esc_attr( $name ); ?>">
-									<?php echo esc_html( wpcamp_hub_initials( $name ) ); ?>
-								</span>
+								<?php if ( '' !== $avatar ) : ?>
+									<?php echo $avatar; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- get_avatar() returns escaped markup. ?>
+								<?php else : ?>
+									<span class="wpch-event__avatar" title="<?php echo esc_attr( $name ); ?>">
+										<?php echo esc_html( wpcamp_hub_initials( $name ) ); ?>
+									</span>
+								<?php endif; ?>
 							<?php endforeach; ?>
 						</div>
 						<span class="wpch-event__going">
