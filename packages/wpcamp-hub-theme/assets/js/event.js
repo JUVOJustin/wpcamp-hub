@@ -55,15 +55,6 @@
 			return false;
 		}
 
-		// Self-hosted marker images.
-		var base =
-			( window.wpcampHubEvent && window.wpcampHubEvent.markerBase ) || '';
-		window.L.Icon.Default.mergeOptions( {
-			iconUrl: base + 'marker-icon.png',
-			iconRetinaUrl: base + 'marker-icon-2x.png',
-			shadowUrl: base + 'marker-shadow.png',
-		} );
-
 		var map = window.L.map( el, { scrollWheelZoom: false } );
 
 		window.L.tileLayer(
@@ -81,8 +72,15 @@
 		var markers = {};
 
 		events.forEach( function ( ev ) {
-			var marker = window.L.marker( [ ev.lat, ev.lng ] ).addTo( map );
-			marker.bindTooltip( ev.title, { direction: 'top' } );
+			var marker = window.L.marker( [ ev.lat, ev.lng ], {
+				icon: pinIcon( ev ),
+				riseOnHover: true,
+			} ).addTo( map );
+			marker.bindTooltip( tooltipHtml( ev ), {
+				direction: 'top',
+				offset: [ 0, -34 ],
+				className: 'wpch-maptip',
+			} );
 			marker.on( 'click', function () {
 				selectEvent( ev, marker );
 			} );
@@ -177,6 +175,61 @@
 		sidebar.innerHTML = html;
 	}
 
+	// Minimal inline icons used inside the teardrop pin.
+	var PIN_ICONS = {
+		'map-pin':
+			'<path d="M20 10c0 4.99-5.54 10.19-7.4 11.8a1 1 0 0 1-1.2 0C9.54 20.19 4 14.99 4 10a8 8 0 0 1 16 0"/><circle cx="12" cy="10" r="3"/>',
+		hash: '<line x1="4" x2="20" y1="9" y2="9"/><line x1="4" x2="20" y1="15" y2="15"/><line x1="10" x2="8" y1="3" y2="21"/><line x1="16" x2="14" y1="3" y2="21"/>',
+	};
+
+	function pinIcon( ev ) {
+		var color = cssColor( ev.color );
+		var icon = PIN_ICONS[ ev.icon ] || PIN_ICONS[ 'map-pin' ];
+		var count =
+			ev.count > 0
+				? '<span class="wpch-pin__count">' + ev.count + '</span>'
+				: '';
+		var html =
+			'<span class="wpch-pin' +
+			( ev.current ? ' is-current' : '' ) +
+			'">' +
+			'<span class="wpch-pin__dot" style="background:' +
+			color +
+			'">' +
+			'<svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.4" ' +
+			'stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">' +
+			icon +
+			'</svg></span>' +
+			count +
+			'</span>';
+
+		return window.L.divIcon( {
+			html: html,
+			className: 'wpch-pin-wrap',
+			iconSize: [ 30, 30 ],
+			iconAnchor: [ 15, 30 ],
+			popupAnchor: [ 0, -32 ],
+			tooltipAnchor: [ 0, 0 ],
+		} );
+	}
+
+	function tooltipHtml( ev ) {
+		var sub =
+			( ev.location ? escapeHtml( ev.location ) : '' ) +
+			( ev.count
+				? ( ev.location ? ' · ' : '' ) +
+				  ev.count +
+				  ' session' +
+				  ( ev.count > 1 ? 's' : '' )
+				: '' );
+		return (
+			'<span class="wpch-maptip__title">' +
+			escapeHtml( ev.title ) +
+			'</span>' +
+			( sub ? '<span class="wpch-maptip__sub">' + sub + '</span>' : '' )
+		);
+	}
+
 	function parseJson( str ) {
 		try {
 			return JSON.parse( str || '[]' );
@@ -186,8 +239,10 @@
 	}
 
 	function cssColor( c ) {
-		// Allow only hex / simple css var values to be inlined.
-		return /^#[0-9a-fA-F]{3,8}$|^var\([\w-]+\)$/.test( c ) ? c : '#3858e9';
+		// Allow hex or a css var( ... ) reference (incl. a fallback value).
+		return /^#[0-9a-fA-F]{3,8}$/.test( c ) || /^var\(--[\w-]+(,[^)]+)?\)$/.test( c )
+			? c
+			: '#3858e9';
 	}
 
 	function escapeHtml( str ) {

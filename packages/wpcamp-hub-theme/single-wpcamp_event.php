@@ -124,13 +124,18 @@ while ( have_posts() ) :
 			);
 		}
 
-		$room_list = array();
+		$room_list      = array();
+		$session_count  = 0;
 		foreach ( $rooms as $room_name => $room_sessions ) {
-			$room_list[] = array(
+			$session_count += count( $room_sessions );
+			$room_list[]    = array(
 				'name'     => $room_name,
 				'sessions' => $room_sessions,
 			);
 		}
+
+		$ev_source       = $ev->get_source();
+		$ev_source_meta  = isset( $wpch_sources[ $ev_source ] ) ? $wpch_sources[ $ev_source ] : $wpch_sources['community'];
 
 		$map_events[] = array(
 			'id'       => $ev_id,
@@ -139,6 +144,10 @@ while ( have_posts() ) :
 			'location' => $ev->get_location(),
 			'lat'      => $ev_geo['latitude'],
 			'lng'      => $ev_geo['longitude'],
+			'color'    => $ev_source_meta['color'],
+			'label'    => $ev_source_meta['label'],
+			'icon'     => 'x' === $ev_source ? 'hash' : 'map-pin',
+			'count'    => $session_count,
 			'rooms'    => $room_list,
 		);
 	}
