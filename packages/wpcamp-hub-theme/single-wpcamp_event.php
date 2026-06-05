@@ -86,6 +86,63 @@ while ( have_posts() ) :
 		$session_rows,
 		static fn( array $a, array $b ): int => $a['ts'] <=> $b['ts']
 	);
+
+	// Map data: every event that has coordinates, with its rooms -> sessions.
+	// Clicking an event marker reveals that event's rooms in the sidebar.
+	$map_events = array();
+	$all_event_posts = get_posts(
+		array(
+			'post_type'      => 'wpcamp_event',
+			'posts_per_page' => -1,
+			'post_status'    => 'publish',
+			'fields'         => 'ids',
+		)
+	);
+	foreach ( $all_event_posts as $ev_id ) {
+		$ev      = Event::from( $ev_id );
+		$ev_geo  = $ev->get_coordinates();
+		if ( null === $ev_geo ) {
+			continue;
+		}
+
+		// Group this event's sessions by room.
+		$rooms = array();
+		foreach ( $ev->get_sessions() as $ev_session ) {
+			$sid       = $ev_session->get_id();
+			$track     = $ev_session->get_track();
+			$ev_time   = $ev_session->get_start_time();
+			$ev_ts     = '' !== $ev_time ? strtotime( $ev_time ) : 0;
+			$room_name = (string) get_post_meta( $sid, 'wpcamp_room', true );
+			$room_name = '' !== $room_name ? $room_name : __( 'Unassigned', 'wpcamp-hub' );
+
+			$rooms[ $room_name ][] = array(
+				'title' => get_the_title( $sid ),
+				'track' => $track ? $track->get_name() : '',
+				'color' => $track ? $track->get_color() : '#3858e9',
+				'time'  => $ev_ts ? wp_date( 'D H:i', $ev_ts ) : '',
+				'url'   => (string) get_permalink( $sid ),
+			);
+		}
+
+		$room_list = array();
+		foreach ( $rooms as $room_name => $room_sessions ) {
+			$room_list[] = array(
+				'name'     => $room_name,
+				'sessions' => $room_sessions,
+			);
+		}
+
+		$map_events[] = array(
+			'id'       => $ev_id,
+			'current'  => $ev_id === get_the_ID(),
+			'title'    => get_the_title( $ev_id ),
+			'location' => $ev->get_location(),
+			'lat'      => $ev_geo['latitude'],
+			'lng'      => $ev_geo['longitude'],
+			'rooms'    => $room_list,
+		);
+	}
+	wp_reset_postdata();
 	?>
 	<main id="content" class="site-content wpch-event" style="--wpch-accent:<?php echo esc_attr( $accent ); ?>">
 
@@ -188,18 +245,21 @@ while ( have_posts() ) :
 						</ul>
 					</div>
 
-					<?php // ---- Map view ---- ?>
+					<?php // ---- Map view (prototype split: map + venue sidebar) ---- ?>
 					<?php if ( null !== $coords ) : ?>
 						<div class="wpch-sv__view wpch-sv__view--map" data-view="map">
-							<div class="wpch-sv__map-wrap">
+							<div class="wpch-sv__split">
 								<div
 									class="wpch-sv__map"
 									id="wpch-event-map"
-									data-sessions="<?php echo esc_attr( (string) wp_json_encode( array_map( static fn( array $r ): array => array( 'title' => $r['title'], 'track' => $r['track'], 'time' => trim( $r['day'] . ' ' . $r['time'] ), 'room' => $r['room'], 'url' => $r['url'] ), $session_rows ) ) ); ?>"
+									data-events="<?php echo esc_attr( (string) wp_json_encode( $map_events ) ); ?>"
+									data-current="<?php echo esc_attr( (string) get_the_ID() ); ?>"
 								></div>
-								<p class="wpch-sv__map-note">
-									<?php echo esc_html( '' !== $location ? $location : __( 'Event location', 'wpcamp-hub' ) ); ?>
-								</p>
+								<aside class="wpch-sv__sidebar" id="wpch-event-sidebar">
+									<div class="wpch-sv__sidebar-empty">
+										<?php esc_html_e( 'Select an event on the map to see its rooms and sessions.', 'wpcamp-hub' ); ?>
+									</div>
+								</aside>
 							</div>
 						</div>
 					<?php endif; ?>
