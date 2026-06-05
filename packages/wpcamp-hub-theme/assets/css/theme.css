@@ -209,9 +209,41 @@ a { color: var(--brand); text-decoration: none; }
 }
 
 /* ============================================================
+   Page intro band (mirrors the page-intro block for archive templates)
+   ============================================================ */
+.wpch-intro {
+  padding: 56px 0 30px;
+  font-family: var(--font-sans);
+}
+.wpch-intro:not(.has-background) { background: var(--bg-subtle); }
+.wpch-intro__inner {
+  max-width: var(--container, 1200px);
+  margin: 0 auto;
+  padding: 0 24px;
+}
+.wpch-intro__eyebrow {
+  font-size: 13px; font-weight: 700; letter-spacing: .08em; text-transform: uppercase;
+  color: var(--brand); margin-bottom: 10px;
+}
+.wpch-intro__title {
+  margin: 0 0 8px;
+  font-family: var(--font-display);
+  font-size: 3.25rem; font-weight: 700; line-height: 1.2; letter-spacing: -.02em;
+  text-wrap: balance; color: var(--ink-900);
+}
+.wpch-intro__lead {
+  margin: 0; max-width: 52ch;
+  font-size: 1.25rem; font-weight: 400; line-height: 1.65; color: var(--ink-600);
+}
+@media (max-width: 860px) {
+  .wpch-intro { padding: 40px 0 24px; }
+  .wpch-intro__title { font-size: 2.2rem; }
+}
+
+/* ============================================================
    Events archive
    ============================================================ */
-.wpch-events { padding: 0 0 64px; }
+.wpch-events { padding: 56px 0 64px; }
 .wpch-events__grid {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
@@ -231,7 +263,9 @@ a { color: var(--brand); text-decoration: none; }
   transition: border-color .15s ease, box-shadow .15s ease;
 }
 .wpch-event-card:hover { box-shadow: var(--shadow-sm); border-color: var(--line-strong); }
-.wpch-event-card__link {
+.wpch-event-card__link,
+.wpch-event-card__link:hover,
+.wpch-event-card__link:focus {
   display: flex; flex-direction: column; flex: 1;
   text-decoration: none; color: inherit;
 }
