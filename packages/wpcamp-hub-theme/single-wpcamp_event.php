@@ -43,16 +43,16 @@ while ( have_posts() ) :
 	$accent       = $source_meta['color'];
 	$type         = $event ? $event->get_type() : null;
 	$type_label   = $type ? $type->get_name() : '';
-	$start        = $event ? $event->get_start() : '';
-	$end          = $event ? $event->get_end() : '';
+	$start        = $event ? $event->get_start() : null;
+	$end          = $event ? $event->get_end() : null;
 	$location     = $event ? $event->get_location() : '';
 	$official_url = $event ? $event->get_official_url() : '';
 
 	$when = '';
-	if ( '' !== $start ) {
-		$when = wp_date( 'l j F · H:i', strtotime( $start ) );
-		if ( '' !== $end ) {
-			$when .= '–' . wp_date( 'H:i', strtotime( $end ) );
+	if ( $start instanceof DateTimeImmutable ) {
+		$when = wp_date( 'l j F · H:i', $start->getTimestamp() );
+		if ( $end instanceof DateTimeImmutable ) {
+			$when .= '–' . wp_date( 'H:i', $end->getTimestamp() );
 		}
 	}
 

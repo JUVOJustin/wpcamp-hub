@@ -20,21 +20,41 @@ class Event extends Post_Entity {
 	}
 
 	/**
-	 * Event start date/time (stored ISO 8601 string).
+	 * Event start date/time.
+	 *
+	 * @return \DateTimeImmutable|null Null when not set or unparseable.
 	 */
-	public function get_start(): string {
-		$value = get_post_meta( $this->get_id(), 'wpcamp_date_start', true );
-
-		return is_string( $value ) ? $value : '';
+	public function get_start(): ?\DateTimeImmutable {
+		return self::parse_datetime( get_post_meta( $this->get_id(), 'wpcamp_date_start', true ) );
 	}
 
 	/**
-	 * Event end date/time (stored ISO 8601 string).
+	 * Event end date/time.
+	 *
+	 * @return \DateTimeImmutable|null Null when not set or unparseable.
 	 */
-	public function get_end(): string {
-		$value = get_post_meta( $this->get_id(), 'wpcamp_date_end', true );
+	public function get_end(): ?\DateTimeImmutable {
+		return self::parse_datetime( get_post_meta( $this->get_id(), 'wpcamp_date_end', true ) );
+	}
 
-		return is_string( $value ) ? $value : '';
+	/**
+	 * Parse a stored date/time meta value into an immutable datetime.
+	 *
+	 * Uses the site timezone so formatting matches WordPress.
+	 *
+	 * @param mixed $value Stored meta value (ISO 8601 string expected).
+	 * @return \DateTimeImmutable|null
+	 */
+	private static function parse_datetime( mixed $value ): ?\DateTimeImmutable {
+		if ( ! is_string( $value ) || '' === $value ) {
+			return null;
+		}
+
+		try {
+			return new \DateTimeImmutable( $value, wp_timezone() );
+		} catch ( \Exception $e ) {
+			return null;
+		}
 	}
 
 	/**
