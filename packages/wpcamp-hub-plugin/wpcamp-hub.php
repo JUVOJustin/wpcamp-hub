@@ -46,21 +46,6 @@ require plugin_dir_path( __FILE__ ) . 'vendor/autoload.php';
 require_once plugin_dir_path( __FILE__ ) . 'vendor/woocommerce/action-scheduler/action-scheduler.php';
 
 /**
- * Load Action Scheduler.
- *
- * Action Scheduler is intentionally excluded from Strauss prefixing: it ships
- * its own version-arbitration loader that lets the newest copy across all
- * active plugins win, so it must remain in the shared global namespace. Its
- * Composer autoloader does not pull in the procedural bootstrap, so require it
- * explicitly here.
- */
-$wpcamp_hub_action_scheduler = plugin_dir_path( __FILE__ ) . 'vendor/woocommerce/action-scheduler/action-scheduler.php';
-if ( is_readable( $wpcamp_hub_action_scheduler ) ) {
-	require_once $wpcamp_hub_action_scheduler;
-}
-unset( $wpcamp_hub_action_scheduler );
-
-/**
  * The code that runs during plugin activation.
  */
 function wpcamp_hub_activate(): void {

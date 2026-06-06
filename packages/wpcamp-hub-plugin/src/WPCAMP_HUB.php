@@ -170,7 +170,31 @@ class WPCAMP_HUB {
 		$this->loader->add_action( 'wp_ajax_' . \WPCAMP_HUB\Frontend\Tweet_Feed::AJAX_ACTION, $tweet_feed, 'ajax_feed', 10, 0 );
 		$this->loader->add_action( 'wp_ajax_nopriv_' . \WPCAMP_HUB\Frontend\Tweet_Feed::AJAX_ACTION, $tweet_feed, 'ajax_feed', 10, 0 );
 
-		// WordCamp session/speaker import — Action Scheduler driven, daily.
+		// Per-event attendees subpage — /event/<slug>/attendees/.
+		$attendees_page = new \WPCAMP_HUB\Frontend\Attendees_Page();
+		$this->loader->add_action( 'init', $attendees_page, 'add_endpoint', 10, 0 );
+		$this->loader->add_filter( 'template_include', $attendees_page, 'template_include', 20, 1 );
+
+		// Per-event speakers subpage — /event/<slug>/speakers/.
+		$speakers_page = new \WPCAMP_HUB\Frontend\Speakers_Page();
+		$this->loader->add_action( 'init', $speakers_page, 'add_endpoint', 10, 0 );
+		$this->loader->add_filter( 'template_include', $speakers_page, 'template_include', 20, 1 );
+
+		// Per-event sessions subpage — /event/<slug>/sessions/.
+		$sessions_page = new \WPCAMP_HUB\Frontend\Sessions_Page();
+		$this->loader->add_action( 'init', $sessions_page, 'add_endpoint', 10, 0 );
+		$this->loader->add_filter( 'template_include', $sessions_page, 'template_include', 20, 1 );
+
+		// Per-event tweets subpage — /event/<slug>/tweets/.
+		$tweets_page = new \WPCAMP_HUB\Frontend\Tweets_Page();
+		$this->loader->add_action( 'init', $tweets_page, 'add_endpoint', 10, 0 );
+		$this->loader->add_filter( 'template_include', $tweets_page, 'template_include', 20, 1 );
+
+		// Serve the imported attendee avatar everywhere (front end + admin).
+		$avatar = new \WPCAMP_HUB\Frontend\Avatar();
+		$this->loader->add_filter( 'get_avatar_url', $avatar, 'filter_url', 10, 3 );
+
+		// WordCamp import — Action Scheduler driven, daily.
 		$import_scheduler = new \WPCAMP_HUB\Import\Import_Scheduler();
 		$import_scheduler->register_hooks();
 		$this->loader->add_action( 'action_scheduler_init', $import_scheduler, 'schedule_daily_import', 10, 0 );
