@@ -58,8 +58,12 @@ if ( have_posts() ) :
 				<div class="wpch-attendees__inner">
 					<?php if ( null !== $wpch_event ) : ?>
 						<div class="wpch-attendees__eyebrow">
-							<a href="<?php echo esc_url( (string) get_permalink( $wpch_event->get_id() ) ); ?>">
-								<?php echo esc_html( get_the_title( $wpch_event->get_id() ) ); ?>
+							<a class="wpch-attendees__back" href="<?php echo esc_url( (string) get_permalink( $wpch_event->get_id() ) ); ?>">
+								<?php echo wpcamp_hub_icon( 'arrow-left', 14 ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- trusted inline SVG from the theme icon set. ?>
+								<?php
+								/* translators: %s: event title. */
+								echo esc_html( sprintf( __( 'Back to %s', 'wpcamp-hub' ), get_the_title( $wpch_event->get_id() ) ) );
+								?>
 							</a>
 						</div>
 					<?php endif; ?>
