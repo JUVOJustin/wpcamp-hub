@@ -104,6 +104,13 @@ class User_Profile extends User_Entity {
 	}
 
 	/**
+	 * Personal website URL (the WordPress `user_url` field), or ''.
+	 */
+	public function get_website(): string {
+		return (string) ( $this->get_wp_entity()->user_url ?? '' );
+	}
+
+	/**
 	 * Events related to this attendee.
 	 *
 	 * @return list<Event>

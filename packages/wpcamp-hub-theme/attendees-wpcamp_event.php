@@ -38,11 +38,19 @@ $wpch_render_card = static function ( User_Profile $person ): void {
 	$role    = $person->get_role();
 	$profile = $person->get_profile_url();
 	$avatar  = $person->get_avatar_url();
+	$website = $person->get_website();
 
 	// Subtitle: "Role · Company", whichever parts exist.
 	$subtitle = trim( implode( ' · ', array_filter( array( $role, $company ) ) ) );
 
-	$haystack = strtolower( trim( $name . ' ' . $role . ' ' . $company ) );
+	// Friendly website label: host without scheme or "www.".
+	$website_label = '';
+	if ( '' !== $website ) {
+		$host          = (string) wp_parse_url( $website, PHP_URL_HOST );
+		$website_label = '' !== $host ? preg_replace( '/^www\./', '', $host ) : $website;
+	}
+
+	$haystack = strtolower( trim( $name . ' ' . $role . ' ' . $company . ' ' . $website_label ) );
 	?>
 	<article class="wpch-att-card" data-search="<?php echo esc_attr( $haystack ); ?>">
 		<?php if ( '' !== $profile ) : ?>
@@ -62,6 +70,12 @@ $wpch_render_card = static function ( User_Profile $person ): void {
 			</div>
 		</div>
 		<?php if ( '' !== $profile ) : ?>
+			</a>
+		<?php endif; ?>
+		<?php if ( '' !== $website ) : ?>
+			<a class="wpch-att-card__website" href="<?php echo esc_url( $website ); ?>" target="_blank" rel="noopener noreferrer nofollow">
+				<?php echo wpcamp_hub_icon( 'globe', 14 ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- trusted inline SVG from the theme icon set. ?>
+				<span><?php echo esc_html( (string) $website_label ); ?></span>
 			</a>
 		<?php endif; ?>
 	</article>
