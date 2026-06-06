@@ -180,6 +180,15 @@ class WPCAMP_HUB {
 		$this->loader->add_action( 'wp_ajax_' . \WPCAMP_HUB\Frontend\Tweet_Feed::AJAX_ACTION, $tweet_feed, 'ajax_feed', 10, 0 );
 		$this->loader->add_action( 'wp_ajax_nopriv_' . \WPCAMP_HUB\Frontend\Tweet_Feed::AJAX_ACTION, $tweet_feed, 'ajax_feed', 10, 0 );
 
+		// Per-event attendees subpage — /event/<slug>/attendees/.
+		$attendees_page = new \WPCAMP_HUB\Frontend\Attendees_Page();
+		$this->loader->add_action( 'init', $attendees_page, 'add_endpoint', 10, 0 );
+		$this->loader->add_filter( 'template_include', $attendees_page, 'template_include', 20, 1 );
+
+		// Serve the imported attendee avatar everywhere (front end + admin).
+		$avatar = new \WPCAMP_HUB\Frontend\Avatar();
+		$this->loader->add_filter( 'get_avatar_url', $avatar, 'filter_url', 10, 3 );
+
 		add_action(
 			'wp_enqueue_scripts',
 			function () {

@@ -49,6 +49,68 @@ class User_Profile extends User_Entity {
 	}
 
 	/**
+	 * Public display name.
+	 */
+	public function get_display_name(): string {
+		return (string) ( $this->get_wp_entity()->display_name ?? '' );
+	}
+
+	/**
+	 * Company or organization.
+	 */
+	public function get_company(): string {
+		$value = get_user_meta( $this->get_id(), 'wpcamp_company', true );
+
+		return is_string( $value ) ? $value : '';
+	}
+
+	/**
+	 * Community role (e.g. Developer, Organiser).
+	 */
+	public function get_role(): string {
+		$value = get_user_meta( $this->get_id(), 'wpcamp_community_role', true );
+
+		return is_string( $value ) ? $value : '';
+	}
+
+	/**
+	 * Public biography.
+	 */
+	public function get_bio(): string {
+		$value = get_user_meta( $this->get_id(), 'wpcamp_bio', true );
+
+		return is_string( $value ) ? $value : '';
+	}
+
+	/**
+	 * Public avatar URL, or '' when none is stored.
+	 *
+	 * Prefers the imported `wpcamp_avatar` URL (WordPress.org / Gravatar);
+	 * callers should fall back to get_avatar()/initials when this is empty.
+	 */
+	public function get_avatar_url(): string {
+		$value = get_user_meta( $this->get_id(), 'wpcamp_avatar', true );
+
+		return is_string( $value ) ? $value : '';
+	}
+
+	/**
+	 * Canonical public profile URL (WordPress.org profile), or ''.
+	 */
+	public function get_profile_url(): string {
+		$value = get_user_meta( $this->get_id(), 'wpcamp_wporg_profile_url', true );
+
+		return is_string( $value ) ? $value : '';
+	}
+
+	/**
+	 * Personal website URL (the WordPress `user_url` field), or ''.
+	 */
+	public function get_website(): string {
+		return (string) ( $this->get_wp_entity()->user_url ?? '' );
+	}
+
+	/**
 	 * Events related to this attendee.
 	 *
 	 * @return list<Event>
