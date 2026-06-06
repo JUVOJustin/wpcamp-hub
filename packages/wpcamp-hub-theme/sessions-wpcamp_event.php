@@ -117,11 +117,11 @@ usort( $wpch_rows, static fn( array $a, array $b ): int => $a['ts'] <=> $b['ts']
 						</p>
 					</div>
 
-					<?php // ---- Timetable view (rooms × times grid per day) ---- ?>
+					<?php // ---- Timetable view (rooms × times grid, one day at a time) ---- ?>
 					<div class="wpch-sv__view wpch-sv__view--timetable" data-view="timetable">
 						<?php
-						// Build the timetable model: per day, rooms as columns and
-						// start times as rows; a session sits in its room/time cell.
+						// Build the timetable model grouped by day. Rows are already
+						// sorted by start time, so day insertion order is chronological.
 						$tt_days = array();
 						foreach ( $wpch_rows as $row ) {
 							$day_key = '' !== $row['day'] ? $row['day'] : __( 'Unscheduled', 'wpcamp-hub' );
@@ -132,15 +132,31 @@ usort( $wpch_rows, static fn( array $a, array $b ): int => $a['ts'] <=> $b['ts']
 							$tt_days[ $day_key ]['times'][ $time ]          = true;
 							$tt_days[ $day_key ]['cells'][ $time ][ $room ] = $row;
 						}
+						$tt_day_labels = array_keys( $tt_days );
+						?>
 
-						foreach ( $tt_days as $day_label => $day ) :
+						<?php if ( count( $tt_day_labels ) > 1 ) : ?>
+							<div class="wpch-tt-tabs seg" role="tablist">
+								<?php foreach ( $tt_day_labels as $i => $day_label ) : ?>
+									<button
+										type="button"
+										class="wpch-tt-tab<?php echo 0 === $i ? ' is-active' : ''; ?>"
+										data-tt-day="<?php echo esc_attr( (string) $i ); ?>"
+										aria-selected="<?php echo 0 === $i ? 'true' : 'false'; ?>"
+									><?php echo esc_html( $day_label ); ?></button>
+								<?php endforeach; ?>
+							</div>
+						<?php endif; ?>
+
+						<?php
+						foreach ( $tt_day_labels as $i => $day_label ) :
+							$day   = $tt_days[ $day_label ];
 							$rooms = array_keys( $day['rooms'] );
 							$times = array_keys( $day['times'] );
 							sort( $times );
 							$cols = count( $rooms );
 							?>
-							<div class="wpch-tt-day">
-								<div class="wpch-tt-day__label"><?php echo esc_html( $day_label ); ?></div>
+							<div class="wpch-tt-day<?php echo 0 === $i ? ' is-active' : ''; ?>" data-tt-day-panel="<?php echo esc_attr( (string) $i ); ?>">
 								<div class="wpch-tt-wrap">
 									<div class="wpch-tt" style="--tt-cols:<?php echo esc_attr( (string) $cols ); ?>">
 										<div class="wpch-tt__head wpch-tt__corner"></div>
@@ -190,25 +206,55 @@ usort( $wpch_rows, static fn( array $a, array $b ): int => $a['ts'] <=> $b['ts']
 	if ( ! root ) {
 		return;
 	}
+
+	// List-view search.
 	var input = root.querySelector( '.wpch-attendees__search-input' );
-	var items = Array.prototype.slice.call( root.querySelectorAll( '.wpch-event__session' ) );
-	var empty = root.querySelector( '.wpch-attendees__empty[hidden]' );
-	if ( ! input ) {
-		return;
-	}
-	input.addEventListener( 'input', function () {
-		var q = input.value.trim().toLowerCase();
-		var shown = 0;
-		items.forEach( function ( item ) {
-			var match = '' === q || ( item.getAttribute( 'data-search' ) || '' ).indexOf( q ) !== -1;
-			item.hidden = ! match;
-			if ( match ) {
-				shown++;
+	if ( input ) {
+		var items = Array.prototype.slice.call(
+			root.querySelectorAll( '.wpch-event__session' )
+		);
+		var empty = root.querySelector( '.wpch-attendees__empty[hidden]' );
+		input.addEventListener( 'input', function () {
+			var q = input.value.trim().toLowerCase();
+			var shown = 0;
+			items.forEach( function ( item ) {
+				var match =
+					'' === q ||
+					( item.getAttribute( 'data-search' ) || '' ).indexOf( q ) !==
+						-1;
+				item.hidden = ! match;
+				if ( match ) {
+					shown++;
+				}
+			} );
+			if ( empty ) {
+				empty.hidden = shown !== 0;
 			}
 		} );
-		if ( empty ) {
-			empty.hidden = shown !== 0;
-		}
+	}
+
+	// Timetable day tabs — show one day's grid at a time.
+	var tabs = Array.prototype.slice.call(
+		root.querySelectorAll( '.wpch-tt-tab' )
+	);
+	var panels = Array.prototype.slice.call(
+		root.querySelectorAll( '[data-tt-day-panel]' )
+	);
+	tabs.forEach( function ( tab ) {
+		tab.addEventListener( 'click', function () {
+			var day = tab.getAttribute( 'data-tt-day' );
+			tabs.forEach( function ( t ) {
+				var on = t.getAttribute( 'data-tt-day' ) === day;
+				t.classList.toggle( 'is-active', on );
+				t.setAttribute( 'aria-selected', on ? 'true' : 'false' );
+			} );
+			panels.forEach( function ( p ) {
+				p.classList.toggle(
+					'is-active',
+					p.getAttribute( 'data-tt-day-panel' ) === day
+				);
+			} );
+		} );
 	} );
 }() );
 </script>

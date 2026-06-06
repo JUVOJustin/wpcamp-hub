@@ -466,13 +466,30 @@ a { color: var(--brand); text-decoration: none; }
 .wpch-sv__room-title { font-weight: 600; font-size: 14px; }
 .wpch-sv__room-time { margin-left: auto; font: 500 11.5px var(--font-mono); color: var(--ink-500); white-space: nowrap; }
 
+/* single-event: "view all sessions" link under the short list preview */
+.wpch-event__sessions-more { display: inline-block; margin-top: 14px; }
+
 /* timetable view — multi-track grid (rooms x time), prototype style */
 .wpch-sv__view--timetable { display: none; }
-.wpch-sv__view--timetable.is-active { display: flex; flex-direction: column; gap: 28px; }
-.wpch-tt-day__label {
-  font: 700 13px var(--font-mono); color: var(--ink-500);
-  text-transform: uppercase; letter-spacing: .06em; margin-bottom: 10px;
+.wpch-sv__view--timetable.is-active { display: flex; flex-direction: column; gap: 20px; }
+
+/* day tabs (prototype .seg) — switch which day's grid is shown */
+.wpch-tt-tabs {
+  display: inline-flex; gap: 4px; background: var(--bg-subtle, #f6f7f7);
+  padding: 4px; border-radius: 6px; flex-wrap: wrap; align-self: flex-start;
 }
+.wpch-tt-tab {
+  border: none; cursor: pointer; border-radius: 4px; padding: 9px 16px;
+  background: transparent; font-weight: 600; font-size: 14.5px; color: var(--ink-600);
+  transition: background .15s ease, color .15s ease;
+}
+.wpch-tt-tab:hover { color: var(--ink-900); }
+.wpch-tt-tab.is-active { background: #fff; box-shadow: var(--shadow-xs); color: var(--ink-900); }
+
+/* one day panel visible at a time */
+.wpch-tt-day { display: none; }
+.wpch-tt-day.is-active { display: block; }
+
 .wpch-tt-wrap { overflow-x: auto; border: 1px solid var(--line); border-radius: 12px; background: #fff; }
 .wpch-tt {
   display: grid; min-width: 640px;
