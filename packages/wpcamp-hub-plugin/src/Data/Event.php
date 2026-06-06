@@ -28,16 +28,14 @@ class Event extends Post_Entity {
 	}
 
 	/**
-	 * Base WordCamp REST API URL configured for this event.
+	 * Base WordCamp REST API URL derived from the official event URL.
 	 */
 	public function get_wordcamp_api_url(): string {
-		$value = get_post_meta( $this->get_id(), 'wpcamp_wordcamp_api_url', true );
-
-		return is_string( $value ) ? trim( $value ) : '';
+		return $this->get_official_url();
 	}
 
 	/**
-	 * All events flagged as major WordCamps with a configured API URL.
+	 * All events flagged as major WordCamps with an official event URL.
 	 *
 	 * @return list<self>
 	 */
@@ -61,7 +59,7 @@ class Event extends Post_Entity {
 		$events = array();
 		foreach ( array_map( 'intval', $post_ids ) as $post_id ) {
 			$event = self::from( $post_id );
-			if ( '' !== $event->get_wordcamp_api_url() ) {
+			if ( '' !== $event->get_official_url() ) {
 				$events[] = $event;
 			}
 		}

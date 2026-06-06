@@ -179,7 +179,7 @@ class Import_Scheduler {
 		}
 
 		$event = Event::from( $event_id );
-		if ( ! $event->is_major_wordcamp() || '' === $event->get_wordcamp_api_url() ) {
+		if ( ! $event->is_major_wordcamp() || '' === $event->get_official_url() ) {
 			return null;
 		}
 

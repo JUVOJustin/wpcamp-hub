@@ -389,7 +389,7 @@ class WordCampImportTest extends WP_UnitTestCase {
 	public function test_import_meta_fields_are_registered(): void {
 		$event_meta = get_registered_meta_keys( 'post', Data_Structure::POST_TYPE_EVENT );
 		$this->assertArrayHasKey( 'wpcamp_is_major_wordcamp', $event_meta );
-		$this->assertArrayHasKey( 'wpcamp_wordcamp_api_url', $event_meta );
+		$this->assertArrayNotHasKey( 'wpcamp_wordcamp_api_url', $event_meta );
 
 		$session_meta = get_registered_meta_keys( 'post', Data_Structure::POST_TYPE_SESSION );
 		$this->assertArrayHasKey( 'wpcamp_source_id', $session_meta );
@@ -425,7 +425,7 @@ class WordCampImportTest extends WP_UnitTestCase {
 	}
 
 	/**
-	 * Create a flagged, API-configured WordCamp event.
+	 * Create a flagged WordCamp event with an official URL.
 	 */
 	private function make_major_wordcamp(): Event {
 		$post_id = self::factory()->post->create(
@@ -436,7 +436,7 @@ class WordCampImportTest extends WP_UnitTestCase {
 		);
 
 		update_post_meta( $post_id, 'wpcamp_is_major_wordcamp', true );
-		update_post_meta( $post_id, 'wpcamp_wordcamp_api_url', self::API_URL );
+		update_post_meta( $post_id, 'wpcamp_official_url', 'https://' . self::HOST . '/2026/' );
 
 		return Event::from( $post_id );
 	}

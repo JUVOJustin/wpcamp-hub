@@ -19,18 +19,16 @@ and needs no UI to operate.
 
 ## Flagging an event for import
 
-Set two meta fields on a `wpcamp_event`:
+Set the WordCamp flag on a `wpcamp_event` and provide the event's official URL:
 
 | Meta key | Type | Purpose |
 | --- | --- | --- |
 | `wpcamp_is_major_wordcamp` | boolean | Marks the event as a native-stack WordCamp eligible for import. |
-| `wpcamp_wordcamp_api_url` | URL | The WordCamp site/API URL. Any of the site root, `…/wp-json`, `…/wp-json/wp/v2/`, or a full collection URL is accepted — it is normalized to the `wp/v2` REST root. |
+| `wpcamp_official_url` | URL | Official event URL. The importer derives the WordCamp REST root from this URL and normalizes it to `…/wp-json/wp/v2/`. |
 
-Example API URL: `https://europe.wordcamp.org/2026/wp-json/wp/v2/`
+Example official URL: `https://europe.wordcamp.org/2026/`
 
-`Event::major_wordcamps()` returns every flagged event that also has an API URL.
-The accessors `Event::is_major_wordcamp()` and `Event::get_wordcamp_api_url()`
-expose the per-event values.
+`Event::major_wordcamps()` returns every flagged event that also has an official URL.
 
 ## How the schedule works
 
@@ -90,7 +88,7 @@ lunches, and other custom items are skipped.
 | `meta._wcpt_session_time` | `wpcamp_start_time` (ISO 8601) |
 | `meta._wcpt_session_time` + `_wcpt_session_duration` | `wpcamp_end_time` (ISO 8601) |
 | `id` | `wpcamp_source_id` meta (`<host>:<id>`) |
-| embedded `wcb_track` term | `wpcamp_track` taxonomy term (created if missing) |
+| embedded `wcb_track` / `session_track` term | `wpcamp_track` taxonomy term (created if missing), such as Track 1, Track 2, Workshop 1, or Workshop 2 |
 | `session_speakers[].id` | related attendee profiles (`session → user`) |
 
 Each session is related to its event via `Relationships` (`session → event`) and

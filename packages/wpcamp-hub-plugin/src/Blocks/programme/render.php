@@ -71,8 +71,7 @@ $render_session_card = static function ( Session $session ): string {
 
 	$start = $session->get_start_time();
 	$time  = '' !== $start ? wp_date( 'H:i', strtotime( $start ) ) : '';
-	$room  = $session->get_room();
-	$meta  = trim( $time . ( '' !== $room ? ' · ' . $room : '' ), ' ·' );
+	$meta  = $time;
 
 	$speakers = $session->get_speaker_names();
 	$speaker  = array() !== $speakers ? implode( ', ', $speakers ) : '';

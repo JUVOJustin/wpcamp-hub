@@ -70,15 +70,6 @@ class Session extends Post_Entity {
 	}
 
 	/**
-	 * Room/location for this session (free-form meta).
-	 */
-	public function get_room(): string {
-		$value = get_post_meta( $this->get_id(), 'wpcamp_room', true );
-
-		return is_string( $value ) ? $value : '';
-	}
-
-	/**
 	 * Display names of the session speakers.
 	 *
 	 * @return list<string>

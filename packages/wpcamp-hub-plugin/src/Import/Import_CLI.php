@@ -69,8 +69,8 @@ class Import_CLI {
 		}
 
 		$event = Event::from( $event_id );
-		if ( ! $event->is_major_wordcamp() || '' === $event->get_wordcamp_api_url() ) {
-			\WP_CLI::warning( sprintf( '#%d is not a major WordCamp with an API URL.', $event_id ) );
+		if ( ! $event->is_major_wordcamp() || '' === $event->get_official_url() ) {
+			\WP_CLI::warning( sprintf( '#%d is not a major WordCamp with an official URL.', $event_id ) );
 			return null;
 		}
 
