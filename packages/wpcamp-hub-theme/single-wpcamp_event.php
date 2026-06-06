@@ -247,8 +247,14 @@ while ( have_posts() ) :
 						data-label="<?php echo esc_attr( get_the_title() . ( '' !== $location ? ' — ' . $location : '' ) ); ?>"
 					<?php endif; ?>
 				>
+					<?php $wpch_speakers_url = class_exists( \WPCAMP_HUB\Frontend\Speakers_Page::class ) ? \WPCAMP_HUB\Frontend\Speakers_Page::url_for( get_the_ID() ) : ''; ?>
 					<div class="wpch-sv__head">
 						<h2 class="wpch-event__section-title"><?php esc_html_e( 'Sessions', 'wpcamp-hub' ); ?></h2>
+						<?php if ( '' !== $wpch_speakers_url ) : ?>
+							<a class="wpch-event__section-link" href="<?php echo esc_url( $wpch_speakers_url ); ?>">
+								<?php esc_html_e( 'View all speakers', 'wpcamp-hub' ); ?>
+							</a>
+						<?php endif; ?>
 						<div class="wpch-sv__switch" role="tablist">
 							<button type="button" class="wpch-sv__btn is-active" data-view="list" aria-selected="true"><?php esc_html_e( 'List', 'wpcamp-hub' ); ?></button>
 							<?php if ( null !== $coords ) : ?>

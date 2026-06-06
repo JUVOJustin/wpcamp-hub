@@ -698,13 +698,19 @@ a { color: var(--brand); text-decoration: none; }
 .wpch-att-card__person { min-width: 0; }
 .wpch-att-card__name { margin: 0 0 2px; font-size: 17px; font-weight: 700; }
 .wpch-att-card__meta { font-size: 14px; color: var(--ink-600); }
-.wpch-att-card__website {
+.wpch-att-card__website,
+.wpch-att-card__session {
   display: inline-flex; align-items: center; gap: 6px; margin-top: 14px;
   font-size: 13px; color: var(--ink-500); text-decoration: none; max-width: 100%;
 }
-.wpch-att-card__website span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.wpch-att-card__website svg { flex: none; }
+.wpch-att-card__website span,
+.wpch-att-card__session span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.wpch-att-card__website svg,
+.wpch-att-card__session svg { flex: none; }
 .wpch-att-card__website:hover { color: var(--brand); }
+/* The session link is the speaker card's primary call to action. */
+.wpch-att-card__session { color: var(--brand); font-weight: 600; }
+.wpch-att-card__session:hover { text-decoration: underline; }
 
 .wpch-attendees__empty {
   text-align: center; color: var(--ink-500); padding: 40px 0;

@@ -9,6 +9,7 @@ namespace WPCAMP_HUB;
 
 use WPCAMP_HUB\Data\Data_Structure;
 use WPCAMP_HUB\Frontend\Attendees_Page;
+use WPCAMP_HUB\Frontend\Speakers_Page;
 
 /**
  * Fired during plugin activation.
@@ -31,10 +32,12 @@ class Activator {
 		// recreated on each request.
 		( new Data_Structure() )->seed_terms();
 
-		// Register CPTs and the attendees endpoint, then flush rewrite rules so
-		// /event/<slug>/attendees/ resolves without a manual permalinks re-save.
+		// Register CPTs and the per-event endpoints, then flush rewrite rules so
+		// /event/<slug>/attendees/ and /speakers/ resolve without a manual
+		// permalinks re-save.
 		( new Data_Structure() )->register();
 		( new Attendees_Page() )->add_endpoint();
+		( new Speakers_Page() )->add_endpoint();
 		flush_rewrite_rules();
 	}
 

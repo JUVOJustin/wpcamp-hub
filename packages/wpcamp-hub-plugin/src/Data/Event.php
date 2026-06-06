@@ -161,6 +161,26 @@ class Event extends Post_Entity {
 	}
 
 	/**
+	 * Speakers presenting at this event.
+	 *
+	 * Collected across the event's sessions (event → session → speakers) and
+	 * de-duplicated, since a speaker may present more than one session.
+	 *
+	 * @return list<User_Profile>
+	 */
+	public function get_speakers(): array {
+		$speakers = array();
+
+		foreach ( $this->get_sessions() as $session ) {
+			foreach ( $session->get_attendees() as $speaker ) {
+				$speakers[ $speaker->get_id() ] = $speaker;
+			}
+		}
+
+		return array_values( $speakers );
+	}
+
+	/**
 	 * Meeting invites related to this event.
 	 *
 	 * @return list<Meeting_Invite>
