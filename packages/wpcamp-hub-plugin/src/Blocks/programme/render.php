@@ -219,12 +219,27 @@ if ( 'sessions' === $content_source ) {
 	$grid_inner = $content;
 }
 
-// Auto-fill the section link to the event's subpage when not set manually.
-if ( '' === $link_url && $event instanceof Event ) {
+// Auto-fill the section link (URL + label) to the event's subpage when not set
+// manually. The label only auto-adapts while it is empty or still the default
+// "All events", so an author-chosen label is preserved.
+if ( $event instanceof Event ) {
+	$default_label  = __( 'All events', 'wpcamp-hub' );
+	$label_is_blank = '' === trim( (string) $link_label ) || $default_label === $link_label;
+
 	if ( 'tweets' === $content_source && class_exists( Tweets_Page::class ) ) {
-		$link_url = Tweets_Page::url_for( $event->get_id() );
+		if ( '' === $link_url ) {
+			$link_url = Tweets_Page::url_for( $event->get_id() );
+		}
+		if ( $label_is_blank ) {
+			$link_label = __( 'All posts', 'wpcamp-hub' );
+		}
 	} elseif ( 'sessions' === $content_source && class_exists( Sessions_Page::class ) ) {
-		$link_url = Sessions_Page::url_for( $event->get_id() );
+		if ( '' === $link_url ) {
+			$link_url = Sessions_Page::url_for( $event->get_id() );
+		}
+		if ( $label_is_blank ) {
+			$link_label = __( 'All sessions', 'wpcamp-hub' );
+		}
 	}
 }
 
