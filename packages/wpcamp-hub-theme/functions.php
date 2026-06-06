@@ -17,6 +17,16 @@ function wpcamp_hub_setup() {
 	add_theme_support( 'post-thumbnails' );
 	add_theme_support( 'automatic-feed-links' );
 	add_theme_support( 'customize-selective-refresh-widgets' );
+
+	// Block alignment + layout support. `align-wide` exposes the Wide/Full
+	// width controls; `wp-block-styles` and `editor-styles` align the front
+	// end and editor with core block defaults. Combined with the theme.json
+	// layout (contentSize/wideSize) this lets full/wide blocks break out of
+	// the constrained content container (see the `is-layout-constrained`
+	// wrapper around the_content()).
+	add_theme_support( 'align-wide' );
+	add_theme_support( 'wp-block-styles' );
+	add_theme_support( 'editor-styles' );
 	add_theme_support(
 		'html5',
 		array( 'search-form', 'comment-form', 'comment-list', 'gallery', 'caption', 'style', 'script', 'navigation-widgets' )
