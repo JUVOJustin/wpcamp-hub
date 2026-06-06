@@ -321,6 +321,25 @@ function wpcamp_hub_customize_register( $wp_customize ) {
 			'type'        => 'url',
 		)
 	);
+
+	$wp_customize->add_setting(
+		'wpcamp_hub_schedule_enabled',
+		array(
+			'default'           => false,
+			'sanitize_callback' => 'wp_validate_boolean',
+			'transport'         => 'refresh',
+		)
+	);
+
+	$wp_customize->add_control(
+		'wpcamp_hub_schedule_enabled',
+		array(
+			'label'       => __( 'Show “My schedule” button', 'wpcamp-hub' ),
+			'description' => __( 'Display the "My schedule" button in the header. Off until the schedule feature is ready.', 'wpcamp-hub' ),
+			'section'     => 'wpcamp_hub_header',
+			'type'        => 'checkbox',
+		)
+	);
 }
 add_action( 'customize_register', 'wpcamp_hub_customize_register' );
 
@@ -334,6 +353,18 @@ add_action( 'customize_register', 'wpcamp_hub_customize_register' );
  */
 function wpcamp_hub_tickets_url() {
 	return trim( (string) get_theme_mod( 'wpcamp_hub_tickets_url', '' ) );
+}
+
+/**
+ * Whether the header "My schedule" button is enabled.
+ *
+ * Off by default — the button stays hidden until the schedule feature is
+ * turned on under Appearance → Customize → Header.
+ *
+ * @return bool
+ */
+function wpcamp_hub_schedule_enabled() {
+	return (bool) get_theme_mod( 'wpcamp_hub_schedule_enabled', false );
 }
 
 /**

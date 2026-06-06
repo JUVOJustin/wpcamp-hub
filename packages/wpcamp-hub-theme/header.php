@@ -49,10 +49,12 @@ if ( ! defined( 'ABSPATH' ) ) {
 				</div>
 			</div>
 
-			<a class="btn btn-ghost btn-sm" href="<?php echo esc_url( home_url( '/schedule/' ) ); ?>">
-				<?php echo wpcamp_hub_icon( 'bookmark', 17 ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped ?>
-				<span><span class="hide-sm"><?php esc_html_e( 'My', 'wpcamp-hub' ); ?> </span><?php esc_html_e( 'schedule', 'wpcamp-hub' ); ?></span>
-			</a>
+			<?php if ( wpcamp_hub_schedule_enabled() ) : ?>
+				<a class="btn btn-ghost btn-sm" href="<?php echo esc_url( home_url( '/schedule/' ) ); ?>">
+					<?php echo wpcamp_hub_icon( 'bookmark', 17 ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped ?>
+					<span><span class="hide-sm"><?php esc_html_e( 'My', 'wpcamp-hub' ); ?> </span><?php esc_html_e( 'schedule', 'wpcamp-hub' ); ?></span>
+				</a>
+			<?php endif; ?>
 
 			<?php $wpcamp_hub_tickets = wpcamp_hub_tickets_url(); ?>
 			<?php if ( '' !== $wpcamp_hub_tickets ) : ?>
