@@ -192,8 +192,16 @@ while ( have_posts() ) :
 			</div>
 
 			<?php if ( array() !== $attendees ) : ?>
+				<?php $wpch_attendees_url = class_exists( \WPCAMP_HUB\Frontend\Attendees_Page::class ) ? \WPCAMP_HUB\Frontend\Attendees_Page::url_for( get_the_ID() ) : ''; ?>
 				<section class="wpch-event__section">
-					<h2 class="wpch-event__section-title"><?php esc_html_e( 'Who’s going', 'wpcamp-hub' ); ?></h2>
+					<div class="wpch-event__section-head">
+						<h2 class="wpch-event__section-title"><?php esc_html_e( 'Who’s going', 'wpcamp-hub' ); ?></h2>
+						<?php if ( '' !== $wpch_attendees_url ) : ?>
+							<a class="wpch-event__section-link" href="<?php echo esc_url( $wpch_attendees_url ); ?>">
+								<?php esc_html_e( 'View all attendees', 'wpcamp-hub' ); ?>
+							</a>
+						<?php endif; ?>
+					</div>
 					<div class="wpch-event__attendees">
 						<div class="wpch-event__stack">
 							<?php

@@ -8,6 +8,7 @@
 namespace WPCAMP_HUB;
 
 use WPCAMP_HUB\Data\Data_Structure;
+use WPCAMP_HUB\Frontend\Attendees_Page;
 
 /**
  * Fired during plugin activation.
@@ -29,6 +30,12 @@ class Activator {
 		// every init) means terms the user later renames or deletes are not
 		// recreated on each request.
 		( new Data_Structure() )->seed_terms();
+
+		// Register CPTs and the attendees endpoint, then flush rewrite rules so
+		// /event/<slug>/attendees/ resolves without a manual permalinks re-save.
+		( new Data_Structure() )->register();
+		( new Attendees_Page() )->add_endpoint();
+		flush_rewrite_rules();
 	}
 
 	/**
