@@ -6,8 +6,8 @@
 	"title": "Hero Section",
 	"category": "design",
 	"icon": "megaphone",
-	"description": "WPCAMP-HUB festival hero — eyebrow, headline, lead, calls to action and a decorative collage.",
-	"keywords": [ "hero", "header", "festival", "wceu" ],
+	"description": "WPCAMP-HUB festival hero — link an event to pull its date, location, attendees and ticket link, or set the fields manually.",
+	"keywords": [ "hero", "header", "festival", "wceu", "event" ],
 	"textdomain": "wpcamp-hub",
 	"supports": {
 		"html": false,
@@ -19,100 +19,58 @@
 		}
 	},
 	"attributes": {
+		"eventId": {
+			"type": "number"
+		},
 		"eyebrow": {
 			"type": "string",
-			"source": "html",
-			"selector": ".wpch-hero__eyebrow",
-			"default": "WordCamp Europe 2026"
+			"default": ""
 		},
 		"location": {
 			"type": "string",
-			"source": "html",
-			"selector": ".wpch-hero__pill-label",
-			"default": "Lisbon"
+			"default": ""
 		},
 		"heading": {
 			"type": "string",
-			"source": "html",
-			"selector": ".wpch-hero__title",
 			"default": "The community gets together."
 		},
 		"lead": {
 			"type": "string",
-			"source": "html",
-			"selector": ".wpch-hero__lead",
 			"default": "Three days of talks, workshops, late-night meetups and the people who make the open web. Everyone's welcome — from your first site to core."
-		},
-		"whenText": {
-			"type": "string",
-			"source": "html",
-			"selector": ".wpch-hero__when",
-			"default": "12–14 June 2026"
 		},
 		"dateLabel": {
 			"type": "string",
-			"source": "html",
-			"selector": ".wpch-hero__date",
-			"default": "12–14 June 2026"
+			"default": ""
 		},
 		"showBadge": {
 			"type": "boolean",
 			"default": true
 		},
-		"goingText": {
-			"type": "string",
-			"source": "html",
-			"selector": ".wpch-hero__going-count",
-			"default": "+2,500 going"
-		},
 		"goingSubtext": {
 			"type": "string",
-			"source": "html",
-			"selector": ".wpch-hero__going-sub",
 			"default": "Join your people"
+		},
+		"ticketsLabel": {
+			"type": "string",
+			"default": "Get tickets"
+		},
+		"exploreLabel": {
+			"type": "string",
+			"default": "Explore events"
 		},
 		"imageId": {
 			"type": "number"
 		},
 		"imageUrl": {
-			"type": "string",
-			"source": "attribute",
-			"selector": ".wpch-hero__img",
-			"attribute": "src"
+			"type": "string"
 		},
 		"imageAlt": {
 			"type": "string",
-			"source": "attribute",
-			"selector": ".wpch-hero__img",
-			"attribute": "alt",
 			"default": ""
-		},
-		"avatars": {
-			"type": "array",
-			"default": [],
-			"source": "query",
-			"selector": ".wpch-hero__avatar-img",
-			"query": {
-				"url": {
-					"type": "string",
-					"source": "attribute",
-					"attribute": "src"
-				},
-				"alt": {
-					"type": "string",
-					"source": "attribute",
-					"attribute": "alt",
-					"default": ""
-				},
-				"id": {
-					"type": "number",
-					"source": "attribute",
-					"attribute": "data-id"
-				}
-			}
 		}
 	},
 	"editorScript": "file:./index.js",
 	"editorStyle": "file:./index.css",
-	"style": "file:./style-index.css"
+	"style": "file:./style-index.css",
+	"render": "file:./render.php"
 }
