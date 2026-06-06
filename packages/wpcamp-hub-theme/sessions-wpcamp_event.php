@@ -83,50 +83,10 @@ usort( $wpch_rows, static fn( array $a, array $b ): int => $a['ts'] <=> $b['ts']
 				<div class="wpch-sv">
 					<div class="wpch-sv__head">
 						<h2 class="wpch-attendees__subtitle"><?php esc_html_e( 'Full programme', 'wpcamp-hub' ); ?></h2>
-						<div class="wpch-sv__switch" role="tablist">
-							<button type="button" class="wpch-sv__btn is-active" data-view="list" aria-selected="true"><?php esc_html_e( 'List', 'wpcamp-hub' ); ?></button>
-							<button type="button" class="wpch-sv__btn" data-view="timetable" aria-selected="false"><?php esc_html_e( 'Timetable', 'wpcamp-hub' ); ?></button>
-						</div>
 					</div>
 
-					<?php // ---- List view (with search) ---- ?>
-					<div class="wpch-sv__view wpch-sv__view--list is-active" data-view="list">
-						<div class="wpch-attendees__search wpch-event-sessions__search">
-							<?php echo wpcamp_hub_icon( 'search', 18 ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- trusted inline SVG from the theme icon set. ?>
-							<input
-								type="search"
-								class="wpch-attendees__search-input"
-								placeholder="<?php esc_attr_e( 'Search by title, track or speaker', 'wpcamp-hub' ); ?>"
-								aria-label="<?php esc_attr_e( 'Search sessions', 'wpcamp-hub' ); ?>"
-							/>
-						</div>
-						<ul class="wpch-event__sessions">
-							<?php foreach ( $wpch_rows as $row ) : ?>
-								<li
-									class="wpch-event__session"
-									style="--wpch-track:<?php echo esc_attr( $row['color'] ); ?>"
-									data-search="<?php echo esc_attr( strtolower( trim( $row['title'] . ' ' . $row['track'] . ' ' . $row['speakers'] ) ) ); ?>"
-								>
-									<a href="<?php echo esc_url( $row['url'] ); ?>">
-										<span class="wpch-event__session-dot" aria-hidden="true"></span>
-										<span class="wpch-event__session-title"><?php echo esc_html( $row['title'] ); ?></span>
-										<?php if ( '' !== $row['track'] ) : ?>
-											<span class="wpch-event__session-track"><?php echo esc_html( $row['track'] ); ?></span>
-										<?php endif; ?>
-										<?php if ( '' !== $row['day'] || '' !== $row['time'] ) : ?>
-											<span class="wpch-event__session-time"><?php echo esc_html( trim( $row['day'] . ' ' . $row['time'] ) ); ?></span>
-										<?php endif; ?>
-									</a>
-								</li>
-							<?php endforeach; ?>
-						</ul>
-						<p class="wpch-attendees__empty" hidden>
-							<?php esc_html_e( 'No sessions match your search.', 'wpcamp-hub' ); ?>
-						</p>
-					</div>
-
-					<?php // ---- Timetable view (true time grid: blocks span their duration) ---- ?>
-					<div class="wpch-sv__view wpch-sv__view--timetable" data-view="timetable">
+					<?php // ---- Timetable (the only layout: true time grid, blocks span their duration) ---- ?>
+					<div class="wpch-sv__view wpch-sv__view--timetable is-active" data-view="timetable">
 						<?php
 						// Group sessions by day. $wpch_rows is sorted by start time, so
 						// day insertion order is chronological. Each Track (taxonomy term)
@@ -277,32 +237,6 @@ usort( $wpch_rows, static fn( array $a, array $b ): int => $a['ts'] <=> $b['ts']
 	var root = document.querySelector( '.wpch-event-sessions' );
 	if ( ! root ) {
 		return;
-	}
-
-	// List-view search.
-	var input = root.querySelector( '.wpch-attendees__search-input' );
-	if ( input ) {
-		var items = Array.prototype.slice.call(
-			root.querySelectorAll( '.wpch-event__session' )
-		);
-		var empty = root.querySelector( '.wpch-attendees__empty[hidden]' );
-		input.addEventListener( 'input', function () {
-			var q = input.value.trim().toLowerCase();
-			var shown = 0;
-			items.forEach( function ( item ) {
-				var match =
-					'' === q ||
-					( item.getAttribute( 'data-search' ) || '' ).indexOf( q ) !==
-						-1;
-				item.hidden = ! match;
-				if ( match ) {
-					shown++;
-				}
-			} );
-			if ( empty ) {
-				empty.hidden = shown !== 0;
-			}
-		} );
 	}
 
 	// Timetable day tabs — show one day's grid at a time.
