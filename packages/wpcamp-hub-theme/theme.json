@@ -44,8 +44,8 @@
 				},
 				{
 					"slug": "display",
-					"name": "EB Garamond",
-					"fontFamily": "'EB Garamond', Georgia, 'Times New Roman', serif"
+					"name": "Hanken Grotesk",
+					"fontFamily": "'Hanken Grotesk', -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif"
 				},
 				{
 					"slug": "mono",

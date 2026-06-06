@@ -4,23 +4,7 @@
    ../fonts/. Weight ranges cover the variable axis.
    ============================================================ */
 
-/* EB Garamond — display (serif) */
-@font-face {
-  font-family: 'EB Garamond';
-  font-style: normal;
-  font-weight: 400 800;
-  font-display: swap;
-  src: url('../fonts/eb-garamond-latin.woff2') format('woff2');
-}
-@font-face {
-  font-family: 'EB Garamond';
-  font-style: italic;
-  font-weight: 400 800;
-  font-display: swap;
-  src: url('../fonts/eb-garamond-latin-italic.woff2') format('woff2');
-}
-
-/* Hanken Grotesk — body (sans) */
+/* Hanken Grotesk — body + display (sans) */
 @font-face {
   font-family: 'Hanken Grotesk';
   font-style: normal;
