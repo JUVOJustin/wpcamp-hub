@@ -14,12 +14,17 @@ import {
 	ToggleControl,
 	TextControl,
 	SelectControl,
+	ComboboxControl,
 	Notice,
 	Button,
 	Flex,
 	FlexItem,
 	FlexBlock,
 } from '@wordpress/components';
+import { useSelect } from '@wordpress/data';
+import { store as coreStore } from '@wordpress/core-data';
+import { useState } from '@wordpress/element';
+import { decodeEntities } from '@wordpress/html-entities';
 
 import Legend from './legend';
 
@@ -85,10 +90,36 @@ export default function Edit( { attributes, setAttributes } ) {
 		columns,
 		contentSource,
 		sessionsCount,
+		eventId,
 	} = attributes;
 
-	const isDynamicCards = contentSource === 'sessions';
+	const isDynamicCards =
+		contentSource === 'sessions' || contentSource === 'tweets';
 	const isDynamicLegend = legendSource === 'tracks';
+
+	const [ eventSearch, setEventSearch ] = useState( '' );
+	const eventOptions = useSelect(
+		( select ) => {
+			const events =
+				select( coreStore ).getEntityRecords(
+					'postType',
+					'wpcamp_event',
+					{
+						per_page: 20,
+						orderby: 'date',
+						order: 'desc',
+						...( eventSearch ? { search: eventSearch } : {} ),
+					}
+				) || [];
+			return events.map( ( e ) => ( {
+				value: e.id,
+				label: decodeEntities(
+					e.title?.rendered || __( '(no title)', 'wpcamp-hub' )
+				),
+			} ) );
+		},
+		[ eventSearch ]
+	);
 
 	const blockProps = useBlockProps( { className: 'wpch-programme' } );
 
@@ -137,28 +168,52 @@ export default function Edit( { attributes, setAttributes } ) {
 								value: 'manual',
 							},
 							{
-								label: __( 'Sessions (CPT)', 'wpcamp-hub' ),
+								label: __( 'Sessions', 'wpcamp-hub' ),
 								value: 'sessions',
+							},
+							{
+								label: __( 'Tweets', 'wpcamp-hub' ),
+								value: 'tweets',
 							},
 						] }
 						onChange={ ( v ) =>
 							setAttributes( { contentSource: v } )
 						}
 						help={ __(
-							'Manual: place cards yourself. Sessions: pull the latest sessions automatically.',
+							'Manual: place cards yourself. Sessions / Tweets: pull them from a linked event (or the latest site-wide when no event is selected).',
 							'wpcamp-hub'
 						) }
 					/>
 					{ isDynamicCards && (
-						<RangeControl
-							label={ __( 'Number of sessions', 'wpcamp-hub' ) }
-							value={ sessionsCount }
-							min={ 1 }
-							max={ 12 }
-							onChange={ ( v ) =>
-								setAttributes( { sessionsCount: v || 1 } )
-							}
-						/>
+						<>
+							<ComboboxControl
+								label={ __( 'Event', 'wpcamp-hub' ) }
+								help={ __(
+									'Limit the cards to one event. Leave empty for the latest site-wide.',
+									'wpcamp-hub'
+								) }
+								value={ eventId || null }
+								options={ eventOptions }
+								onFilterValueChange={ ( v ) =>
+									setEventSearch( v )
+								}
+								onChange={ ( v ) =>
+									setAttributes( {
+										eventId: v || undefined,
+									} )
+								}
+								allowReset
+							/>
+							<RangeControl
+								label={ __( 'Number of cards', 'wpcamp-hub' ) }
+								value={ sessionsCount }
+								min={ 1 }
+								max={ 12 }
+								onChange={ ( v ) =>
+									setAttributes( { sessionsCount: v || 1 } )
+								}
+							/>
+						</>
 					) }
 				</PanelBody>
 				<PanelBody title={ __( 'Section', 'wpcamp-hub' ) }>
@@ -211,59 +266,58 @@ export default function Edit( { attributes, setAttributes } ) {
 							}
 						/>
 					) }
-					{ showLegend &&
-						isDynamicLegend && (
-							<Notice status="info" isDismissible={ false }>
-								{ __(
-									'The legend is built from the Tracks taxonomy (name + colour).',
-									'wpcamp-hub'
-								) }
-							</Notice>
-						) }
+					{ showLegend && isDynamicLegend && (
+						<Notice status="info" isDismissible={ false }>
+							{ __(
+								'The legend is built from the Tracks taxonomy (name + colour).',
+								'wpcamp-hub'
+							) }
+						</Notice>
+					) }
 					{ showLegend &&
 						! isDynamicLegend &&
 						legend.map( ( t, i ) => (
-						<Flex
-							key={ i }
-							align="flex-end"
-							style={ { marginBottom: 8 } }
-						>
-							<FlexItem>
-								<input
-									type="color"
-									value={ t.color }
-									aria-label={ __(
-										'Track colour',
-										'wpcamp-hub'
-									) }
-									onChange={ ( e ) =>
-										updateTrack(
-											i,
-											'color',
-											e.target.value
-										)
-									}
-								/>
-							</FlexItem>
-							<FlexBlock>
-								<TextControl
-									value={ t.name }
-									onChange={ ( v ) =>
-										updateTrack( i, 'name', v )
-									}
-								/>
-							</FlexBlock>
-							<FlexItem>
-								<Button
-									isDestructive
-									variant="tertiary"
-									onClick={ () => removeTrack( i ) }
-								>
-									{ __( 'Remove', 'wpcamp-hub' ) }
-								</Button>
-							</FlexItem>
-						</Flex>
-					) ) }
+							<Flex
+								key={ i }
+								align="flex-end"
+								style={ { marginBottom: 8 } }
+							>
+								<FlexItem>
+									<input
+										type="color"
+										value={ t.color }
+										aria-label={ __(
+											'Track colour',
+											'wpcamp-hub'
+										) }
+										onChange={ ( e ) =>
+											updateTrack(
+												i,
+												'color',
+												e.target.value
+											)
+										}
+									/>
+								</FlexItem>
+								<FlexBlock>
+									<TextControl
+										value={ t.name }
+										onChange={ ( v ) =>
+											updateTrack( i, 'name', v )
+										}
+									/>
+								</FlexBlock>
+								<FlexItem>
+									<Button
+										isDestructive
+										variant="tertiary"
+										onClick={ () => removeTrack( i ) }
+									>
+										{ __( 'Remove', 'wpcamp-hub' ) }
+									</Button>
+								</FlexItem>
+							</Flex>
+						) ) }
 					{ showLegend && ! isDynamicLegend && (
 						<Button variant="secondary" onClick={ addTrack }>
 							{ __( 'Add track', 'wpcamp-hub' ) }
@@ -318,10 +372,15 @@ export default function Edit( { attributes, setAttributes } ) {
 
 					{ isDynamicCards ? (
 						<div className="wpch-programme__placeholder">
-							{ __(
-								'Session cards are pulled from the Sessions CPT and render on the front end.',
-								'wpcamp-hub'
-							) }
+							{ contentSource === 'tweets'
+								? __(
+										'Tweet cards are pulled from the linked event (or the latest tweets) and render on the front end.',
+										'wpcamp-hub'
+								  )
+								: __(
+										'Session cards are pulled from the linked event (or the latest sessions) and render on the front end.',
+										'wpcamp-hub'
+								  ) }
 						</div>
 					) : (
 						<div { ...innerBlocksProps } />

@@ -16,7 +16,12 @@
 
 use WPCAMP_HUB\Data\Track;
 use WPCAMP_HUB\Data\Session;
+use WPCAMP_HUB\Data\Tweet;
+use WPCAMP_HUB\Data\Event;
 use WPCAMP_HUB\Data\Data_Structure;
+use WPCAMP_HUB\Frontend\Tweet_Feed;
+use WPCAMP_HUB\Frontend\Sessions_Page;
+use WPCAMP_HUB\Frontend\Tweets_Page;
 
 if ( ! defined( 'ABSPATH' ) ) {
 	exit;
@@ -32,6 +37,13 @@ $content_source = isset( $attributes['contentSource'] ) ? $attributes['contentSo
 $columns        = isset( $attributes['columns'] ) ? (int) $attributes['columns'] : 3;
 $sessions_count = isset( $attributes['sessionsCount'] ) ? (int) $attributes['sessionsCount'] : 3;
 $legend_attr    = isset( $attributes['legend'] ) && is_array( $attributes['legend'] ) ? $attributes['legend'] : array();
+$event_id       = isset( $attributes['eventId'] ) ? (int) $attributes['eventId'] : 0;
+
+// Resolve the linked event, when set and valid.
+$event = null;
+if ( $event_id > 0 && class_exists( Event::class ) && Event::get_post_type() === get_post_type( $event_id ) ) {
+	$event = Event::from( $event_id );
+}
 
 /**
  * Build the legend item list, from either the manual attribute or the tracks.
@@ -115,30 +127,75 @@ $render_session_card = static function ( Session $session ): string {
 	return (string) ob_get_clean();
 };
 
+$limit = $sessions_count > 0 ? $sessions_count : 3;
+
 // ---- cards markup ----------------------------------------------------------
 if ( 'sessions' === $content_source ) {
-	$query = new WP_Query(
-		array(
-			'post_type'           => Data_Structure::POST_TYPE_SESSION,
-			'posts_per_page'      => $sessions_count > 0 ? $sessions_count : 3,
-			'post_status'         => 'publish',
-			'orderby'             => 'meta_value',
-			'meta_key'            => 'wpcamp_start_time', // phpcs:ignore WordPress.DB.SlowDBQuery.slow_db_query_meta_key
-			'order'               => 'ASC',
-			'ignore_sticky_posts' => true,
-		)
-	);
+	// Sessions: scoped to the linked event when set, otherwise the latest
+	// sessions site-wide.
+	if ( $event instanceof Event ) {
+		$sessions = $event->get_sessions();
+		usort(
+			$sessions,
+			static fn( Session $a, Session $b ): int => strcmp( $a->get_start_time(), $b->get_start_time() )
+		);
+		$sessions = array_slice( $sessions, 0, $limit );
+	} else {
+		$query    = new WP_Query(
+			array(
+				'post_type'           => Data_Structure::POST_TYPE_SESSION,
+				'posts_per_page'      => $limit,
+				'post_status'         => 'publish',
+				'orderby'             => 'meta_value',
+				'meta_key'            => 'wpcamp_start_time', // phpcs:ignore WordPress.DB.SlowDBQuery.slow_db_query_meta_key
+				'order'               => 'ASC',
+				'ignore_sticky_posts' => true,
+			)
+		);
+		$sessions = array_map( static fn( $p ): Session => Session::from( $p ), $query->posts );
+		wp_reset_postdata();
+	}
 
 	$cards = '';
-	foreach ( $query->posts as $session_post ) {
-		$cards .= $render_session_card( Session::from( $session_post ) );
+	foreach ( $sessions as $session ) {
+		$cards .= $render_session_card( $session );
 	}
-	wp_reset_postdata();
+	$grid_inner = $cards;
+} elseif ( 'tweets' === $content_source && class_exists( Tweet_Feed::class ) ) {
+	// Tweets: scoped to the linked event when set, otherwise the latest tweets
+	// site-wide.
+	if ( $event instanceof Event ) {
+		$tweets = array_slice( $event->get_tweets(), 0, $limit );
+	} else {
+		$query  = new WP_Query(
+			array(
+				'post_type'           => Data_Structure::POST_TYPE_TWEET,
+				'posts_per_page'      => $limit,
+				'post_status'         => 'publish',
+				'ignore_sticky_posts' => true,
+			)
+		);
+		$tweets = array_map( static fn( $p ): Tweet => Tweet::from( $p ), $query->posts );
+		wp_reset_postdata();
+	}
 
+	$cards = '';
+	foreach ( $tweets as $tweet ) {
+		$cards .= Tweet_Feed::render_card( $tweet );
+	}
 	$grid_inner = $cards;
 } else {
 	// Manual mode: use the InnerBlocks output.
 	$grid_inner = $content;
+}
+
+// Auto-fill the section link to the event's subpage when not set manually.
+if ( '' === $link_url && $event instanceof Event ) {
+	if ( 'tweets' === $content_source && class_exists( Tweets_Page::class ) ) {
+		$link_url = Tweets_Page::url_for( $event->get_id() );
+	} elseif ( 'sessions' === $content_source && class_exists( Sessions_Page::class ) ) {
+		$link_url = Sessions_Page::url_for( $event->get_id() );
+	}
 }
 
 $wrapper_attributes = get_block_wrapper_attributes( array( 'class' => 'wpch-programme' ) );
