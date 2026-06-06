@@ -263,19 +263,25 @@ while ( have_posts() ) :
 								<?php esc_html_e( 'View all speakers', 'wpcamp-hub' ); ?>
 							</a>
 						<?php endif; ?>
-						<div class="wpch-sv__switch" role="tablist">
-							<button type="button" class="wpch-sv__btn is-active" data-view="list" aria-selected="true"><?php esc_html_e( 'List', 'wpcamp-hub' ); ?></button>
-							<?php if ( null !== $coords ) : ?>
+						<?php if ( null !== $coords ) : ?>
+							<div class="wpch-sv__switch" role="tablist">
+								<button type="button" class="wpch-sv__btn is-active" data-view="list" aria-selected="true"><?php esc_html_e( 'List', 'wpcamp-hub' ); ?></button>
 								<button type="button" class="wpch-sv__btn" data-view="map" aria-selected="false"><?php esc_html_e( 'Map', 'wpcamp-hub' ); ?></button>
-							<?php endif; ?>
-							<button type="button" class="wpch-sv__btn" data-view="timetable" aria-selected="false"><?php esc_html_e( 'Timetable', 'wpcamp-hub' ); ?></button>
-						</div>
+							</div>
+						<?php endif; ?>
 					</div>
 
-					<?php // ---- List view ---- ?>
+					<?php
+					// The single-event page shows only a short preview of the
+					// programme — the full schedule + timetable live on the
+					// /sessions/ subpage. Cap the list and link out.
+					$wpch_preview_count = 5;
+					$wpch_preview_rows  = array_slice( $session_rows, 0, $wpch_preview_count );
+					?>
+					<?php // ---- List view (preview) ---- ?>
 					<div class="wpch-sv__view wpch-sv__view--list is-active" data-view="list">
 						<ul class="wpch-event__sessions">
-							<?php foreach ( $session_rows as $row ) : ?>
+							<?php foreach ( $wpch_preview_rows as $row ) : ?>
 								<li class="wpch-event__session" style="--wpch-track:<?php echo esc_attr( $row['color'] ); ?>">
 									<a href="<?php echo esc_url( $row['url'] ); ?>">
 										<span class="wpch-event__session-dot" aria-hidden="true"></span>
@@ -290,6 +296,14 @@ while ( have_posts() ) :
 								</li>
 							<?php endforeach; ?>
 						</ul>
+						<?php if ( '' !== $wpch_sessions_url && count( $session_rows ) > $wpch_preview_count ) : ?>
+							<a class="wpch-event__section-link wpch-event__sessions-more" href="<?php echo esc_url( $wpch_sessions_url ); ?>">
+								<?php
+								/* translators: %d: total number of sessions. */
+								echo esc_html( sprintf( __( 'View all %d sessions', 'wpcamp-hub' ), count( $session_rows ) ) );
+								?>
+							</a>
+						<?php endif; ?>
 					</div>
 
 					<?php // ---- Map view (prototype split: map + venue sidebar) ---- ?>
@@ -310,63 +324,6 @@ while ( have_posts() ) :
 							</div>
 						</div>
 					<?php endif; ?>
-
-					<?php // ---- Timetable view (multi-track grid: rooms x time) ---- ?>
-					<div class="wpch-sv__view wpch-sv__view--timetable" data-view="timetable">
-						<?php
-						// Build the timetable model: per day, rooms as columns and
-						// start times as rows; a session sits in its room/time cell.
-						$tt_days = array();
-						foreach ( $session_rows as $row ) {
-							$day_key = '' !== $row['day'] ? $row['day'] : __( 'Unscheduled', 'wpcamp-hub' );
-							$room    = '' !== $row['room'] ? $row['room'] : __( 'Unassigned', 'wpcamp-hub' );
-							$time    = '' !== $row['time'] ? $row['time'] : '—';
-
-							$tt_days[ $day_key ]['rooms'][ $room ]          = true;
-							$tt_days[ $day_key ]['times'][ $time ]          = true;
-							$tt_days[ $day_key ]['cells'][ $time ][ $room ] = $row;
-						}
-
-						foreach ( $tt_days as $day_label => $day ) :
-							$rooms = array_keys( $day['rooms'] );
-							$times = array_keys( $day['times'] );
-							sort( $times );
-							$cols = count( $rooms );
-							?>
-							<div class="wpch-tt-day">
-								<div class="wpch-tt-day__label"><?php echo esc_html( $day_label ); ?></div>
-								<div class="wpch-tt-wrap">
-									<div class="wpch-tt" style="--tt-cols:<?php echo esc_attr( (string) $cols ); ?>">
-										<div class="wpch-tt__head wpch-tt__corner"></div>
-										<?php foreach ( $rooms as $room ) : ?>
-											<div class="wpch-tt__head wpch-tt__cell-head"><?php echo esc_html( $room ); ?></div>
-										<?php endforeach; ?>
-
-										<?php foreach ( $times as $time ) : ?>
-											<div class="wpch-tt__time"><?php echo esc_html( $time ); ?></div>
-											<?php
-											foreach ( $rooms as $room ) :
-												$cell = $day['cells'][ $time ][ $room ] ?? null;
-												?>
-												<div class="wpch-tt__track">
-													<?php if ( null !== $cell ) : ?>
-														<a class="wpch-tt__block" href="<?php echo esc_url( $cell['url'] ); ?>"
-															style="--wpch-track:<?php echo esc_attr( $cell['color'] ); ?>">
-															<?php if ( '' !== $cell['track'] ) : ?>
-																<span class="wpch-tt__type"><?php echo esc_html( $cell['track'] ); ?></span>
-															<?php endif; ?>
-															<span class="wpch-tt__title"><?php echo esc_html( $cell['title'] ); ?></span>
-															<span class="wpch-tt__meta"><?php echo esc_html( $cell['time'] ); ?></span>
-														</a>
-													<?php endif; ?>
-												</div>
-											<?php endforeach; ?>
-										<?php endforeach; ?>
-									</div>
-								</div>
-							</div>
-						<?php endforeach; ?>
-					</div>
 				</section>
 			<?php endif; ?>
 
