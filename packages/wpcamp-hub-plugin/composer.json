@@ -91,6 +91,7 @@
         }
     },
     "require": {
-        "php": ">=8.4"
+        "php": ">=8.4",
+        "woocommerce/action-scheduler": "^3.9"
     }
 }

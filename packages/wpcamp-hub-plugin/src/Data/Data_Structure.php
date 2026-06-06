@@ -184,6 +184,7 @@ class Data_Structure {
 					)
 				),
 				'wpcamp_official_url'      => self::field( 'string', 'Official event URL.', true, null, 'uri' ),
+				'wpcamp_attendees_url'     => self::field( 'string', 'Official WordCamp attendees page URL.', true, null, 'uri' ),
 				'wpcamp_source'            => self::field( 'string', 'Event source such as curated, WordCamp, or Twitter/X.' ),
 				'wpcamp_related_tweets'    => self::field( 'array', 'Related tweet IDs.' ),
 				'wpcamp_related_attendees' => self::field( 'array', 'Related attendee user IDs.' ),
@@ -224,18 +225,21 @@ class Data_Structure {
 	 */
 	public static function get_user_meta_fields(): array {
 		return array(
-			'wpcamp_wporg_profile_url' => self::field( 'string', 'WordPress.org profile URL.', false, null, 'uri' ),
-			'wpcamp_wporg_username'    => self::field( 'string', 'WordPress.org username or slug.', false ),
-			'wpcamp_gravatar_hash'     => self::field( 'string', 'Gravatar hash identifier.', false ),
-			'wpcamp_gravatar_profile'  => self::field( 'object', 'Raw Gravatar profile data.', false ),
-			'wpcamp_bio'               => self::field( 'string', 'Public attendee biography.' ),
-			'wpcamp_avatar'            => self::field( 'string', 'Public avatar URL.', true, null, 'uri' ),
-			'wpcamp_social_links'      => self::field( 'array', 'Public social profile URLs.' ),
-			'wpcamp_company'           => self::field( 'string', 'Company or organization.' ),
-			'wpcamp_community_role'    => self::field( 'string', 'Community role.' ),
-			'wpcamp_related_tweets'    => self::field( 'array', 'Related tweet IDs.', false ),
-			'wpcamp_related_events'    => self::field( 'array', 'Related event IDs.' ),
-			'wpcamp_meeting_available' => self::field( 'boolean', 'Whether the attendee is open to meetings.' ),
+			'wpcamp_wporg_profile_url'   => self::field( 'string', 'WordPress.org profile URL.', false, null, 'uri' ),
+			'wpcamp_wporg_username'      => self::field( 'string', 'WordPress.org username or slug.', false ),
+			'wpcamp_wporg_profile'       => self::field( 'object', 'Raw WordPress.org profile API data.', false ),
+			'wpcamp_gravatar_hash'       => self::field( 'string', 'Gravatar hash identifier.', false ),
+			'wpcamp_gravatar_profile'    => self::field( 'object', 'Raw Gravatar profile data.', false ),
+			'wpcamp_attendee_source_url' => self::field( 'string', 'Attendees page URL that last imported this attendee.', false, null, 'uri' ),
+			'wpcamp_last_imported_at'    => self::field( 'string', 'Last attendee import timestamp in ISO 8601 format.', false ),
+			'wpcamp_bio'                 => self::field( 'string', 'Public attendee biography.' ),
+			'wpcamp_avatar'              => self::field( 'string', 'Public avatar URL.', true, null, 'uri' ),
+			'wpcamp_social_links'        => self::field( 'array', 'Public social profile URLs.' ),
+			'wpcamp_company'             => self::field( 'string', 'Company or organization.' ),
+			'wpcamp_community_role'      => self::field( 'string', 'Community role.' ),
+			'wpcamp_related_tweets'      => self::field( 'array', 'Related tweet IDs.', false ),
+			'wpcamp_related_events'      => self::field( 'array', 'Related event IDs.' ),
+			'wpcamp_meeting_available'   => self::field( 'boolean', 'Whether the attendee is open to meetings.' ),
 		);
 	}
 
