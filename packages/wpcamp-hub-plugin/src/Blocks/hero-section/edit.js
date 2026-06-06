@@ -251,10 +251,25 @@ export default function Edit( { attributes, setAttributes } ) {
 				<div className="wpch-hero__inner">
 					<div className="wpch-hero__content">
 						<div className="wpch-hero__eyebrow-row">
-							<span className="wpch-hero__eyebrow">
-								{ shownEyebrow ||
-									__( 'Eyebrow…', 'wpcamp-hub' ) }
-							</span>
+							{ linkedEvent ? (
+								<span className="wpch-hero__eyebrow">
+									{ shownEyebrow }
+								</span>
+							) : (
+								<RichText
+									tagName="span"
+									className="wpch-hero__eyebrow"
+									value={ eyebrow }
+									allowedFormats={ [] }
+									onChange={ ( v ) =>
+										setAttributes( { eyebrow: v } )
+									}
+									placeholder={ __(
+										'Eyebrow…',
+										'wpcamp-hub'
+									) }
+								/>
+							) }
 							{ shownLocation && (
 								<span className="wpch-hero__pill wpch-hero__pill--location">
 									<LocationPin />
@@ -286,19 +301,38 @@ export default function Edit( { attributes, setAttributes } ) {
 						<div className="wpch-hero__actions-row">
 							<div className="wpch-hero__actions wp-block-buttons is-layout-flex wp-block-buttons-is-layout-flex">
 								<div className="wp-block-button">
-									<span className="wp-block-button__link wp-element-button">
-										{ ticketsLabel ||
-											__( 'Get tickets', 'wpcamp-hub' ) }
-									</span>
+									<RichText
+										tagName="span"
+										className="wp-block-button__link wp-element-button"
+										value={ ticketsLabel }
+										allowedFormats={ [] }
+										onChange={ ( v ) =>
+											setAttributes( {
+												ticketsLabel: v,
+											} )
+										}
+										placeholder={ __(
+											'Get tickets',
+											'wpcamp-hub'
+										) }
+									/>
 								</div>
 								<div className="wp-block-button is-style-outline">
-									<span className="wp-block-button__link wp-element-button">
-										{ exploreLabel ||
-											__(
-												'Explore events',
-												'wpcamp-hub'
-											) }
-									</span>
+									<RichText
+										tagName="span"
+										className="wp-block-button__link wp-element-button"
+										value={ exploreLabel }
+										allowedFormats={ [] }
+										onChange={ ( v ) =>
+											setAttributes( {
+												exploreLabel: v,
+											} )
+										}
+										placeholder={ __(
+											'Explore events',
+											'wpcamp-hub'
+										) }
+									/>
 								</div>
 							</div>
 							{ shownDate && (
