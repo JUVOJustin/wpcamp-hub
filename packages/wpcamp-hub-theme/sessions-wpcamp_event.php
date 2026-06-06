@@ -38,6 +38,7 @@ foreach ( $wpch_sessions as $wpch_session ) {
 		'title'    => get_the_title( $s_id ),
 		'track'    => $s_track ? $s_track->get_name() : '',
 		'color'    => $s_track ? $s_track->get_color() : '#3858e9',
+		'room'     => (string) get_post_meta( $s_id, 'wpcamp_room', true ),
 		'speakers' => implode( ', ', $wpch_session->get_speaker_names() ),
 		'ts'       => $s_ts,
 		'time'     => $s_ts ? wp_date( 'H:i', $s_ts ) : '',
@@ -70,43 +71,109 @@ usort( $wpch_rows, static fn( array $a, array $b ): int => $a['ts'] <=> $b['ts']
 
 	<section class="wpch-attendees__body">
 		<div class="wpch-attendees__inner">
-			<div class="wpch-attendees__toolbar">
-				<h2 class="wpch-attendees__subtitle"><?php esc_html_e( 'Full programme', 'wpcamp-hub' ); ?></h2>
-				<div class="wpch-attendees__search">
-					<?php echo wpcamp_hub_icon( 'search', 18 ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- trusted inline SVG from the theme icon set. ?>
-					<input
-						type="search"
-						class="wpch-attendees__search-input"
-						placeholder="<?php esc_attr_e( 'Search by title, track or speaker', 'wpcamp-hub' ); ?>"
-						aria-label="<?php esc_attr_e( 'Search sessions', 'wpcamp-hub' ); ?>"
-					/>
-				</div>
-			</div>
-
 			<?php if ( array() !== $wpch_rows ) : ?>
-				<ul class="wpch-event__sessions">
-					<?php foreach ( $wpch_rows as $row ) : ?>
-						<li
-							class="wpch-event__session"
-							style="--wpch-track:<?php echo esc_attr( $row['color'] ); ?>"
-							data-search="<?php echo esc_attr( strtolower( trim( $row['title'] . ' ' . $row['track'] . ' ' . $row['speakers'] ) ) ); ?>"
-						>
-							<a href="<?php echo esc_url( $row['url'] ); ?>">
-								<span class="wpch-event__session-dot" aria-hidden="true"></span>
-								<span class="wpch-event__session-title"><?php echo esc_html( $row['title'] ); ?></span>
-								<?php if ( '' !== $row['track'] ) : ?>
-									<span class="wpch-event__session-track"><?php echo esc_html( $row['track'] ); ?></span>
-								<?php endif; ?>
-								<?php if ( '' !== $row['day'] || '' !== $row['time'] ) : ?>
-									<span class="wpch-event__session-time"><?php echo esc_html( trim( $row['day'] . ' ' . $row['time'] ) ); ?></span>
-								<?php endif; ?>
-							</a>
-						</li>
-					<?php endforeach; ?>
-				</ul>
-				<p class="wpch-attendees__empty" hidden>
-					<?php esc_html_e( 'No sessions match your search.', 'wpcamp-hub' ); ?>
-				</p>
+				<div class="wpch-sv">
+					<div class="wpch-sv__head">
+						<h2 class="wpch-attendees__subtitle"><?php esc_html_e( 'Full programme', 'wpcamp-hub' ); ?></h2>
+						<div class="wpch-sv__switch" role="tablist">
+							<button type="button" class="wpch-sv__btn is-active" data-view="list" aria-selected="true"><?php esc_html_e( 'List', 'wpcamp-hub' ); ?></button>
+							<button type="button" class="wpch-sv__btn" data-view="timetable" aria-selected="false"><?php esc_html_e( 'Timetable', 'wpcamp-hub' ); ?></button>
+						</div>
+					</div>
+
+					<?php // ---- List view (with search) ---- ?>
+					<div class="wpch-sv__view wpch-sv__view--list is-active" data-view="list">
+						<div class="wpch-attendees__search wpch-event-sessions__search">
+							<?php echo wpcamp_hub_icon( 'search', 18 ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- trusted inline SVG from the theme icon set. ?>
+							<input
+								type="search"
+								class="wpch-attendees__search-input"
+								placeholder="<?php esc_attr_e( 'Search by title, track or speaker', 'wpcamp-hub' ); ?>"
+								aria-label="<?php esc_attr_e( 'Search sessions', 'wpcamp-hub' ); ?>"
+							/>
+						</div>
+						<ul class="wpch-event__sessions">
+							<?php foreach ( $wpch_rows as $row ) : ?>
+								<li
+									class="wpch-event__session"
+									style="--wpch-track:<?php echo esc_attr( $row['color'] ); ?>"
+									data-search="<?php echo esc_attr( strtolower( trim( $row['title'] . ' ' . $row['track'] . ' ' . $row['speakers'] ) ) ); ?>"
+								>
+									<a href="<?php echo esc_url( $row['url'] ); ?>">
+										<span class="wpch-event__session-dot" aria-hidden="true"></span>
+										<span class="wpch-event__session-title"><?php echo esc_html( $row['title'] ); ?></span>
+										<?php if ( '' !== $row['track'] ) : ?>
+											<span class="wpch-event__session-track"><?php echo esc_html( $row['track'] ); ?></span>
+										<?php endif; ?>
+										<?php if ( '' !== $row['day'] || '' !== $row['time'] ) : ?>
+											<span class="wpch-event__session-time"><?php echo esc_html( trim( $row['day'] . ' ' . $row['time'] ) ); ?></span>
+										<?php endif; ?>
+									</a>
+								</li>
+							<?php endforeach; ?>
+						</ul>
+						<p class="wpch-attendees__empty" hidden>
+							<?php esc_html_e( 'No sessions match your search.', 'wpcamp-hub' ); ?>
+						</p>
+					</div>
+
+					<?php // ---- Timetable view (rooms × times grid per day) ---- ?>
+					<div class="wpch-sv__view wpch-sv__view--timetable" data-view="timetable">
+						<?php
+						// Build the timetable model: per day, rooms as columns and
+						// start times as rows; a session sits in its room/time cell.
+						$tt_days = array();
+						foreach ( $wpch_rows as $row ) {
+							$day_key = '' !== $row['day'] ? $row['day'] : __( 'Unscheduled', 'wpcamp-hub' );
+							$room    = '' !== $row['room'] ? $row['room'] : __( 'Unassigned', 'wpcamp-hub' );
+							$time    = '' !== $row['time'] ? $row['time'] : '—';
+
+							$tt_days[ $day_key ]['rooms'][ $room ]          = true;
+							$tt_days[ $day_key ]['times'][ $time ]          = true;
+							$tt_days[ $day_key ]['cells'][ $time ][ $room ] = $row;
+						}
+
+						foreach ( $tt_days as $day_label => $day ) :
+							$rooms = array_keys( $day['rooms'] );
+							$times = array_keys( $day['times'] );
+							sort( $times );
+							$cols = count( $rooms );
+							?>
+							<div class="wpch-tt-day">
+								<div class="wpch-tt-day__label"><?php echo esc_html( $day_label ); ?></div>
+								<div class="wpch-tt-wrap">
+									<div class="wpch-tt" style="--tt-cols:<?php echo esc_attr( (string) $cols ); ?>">
+										<div class="wpch-tt__head wpch-tt__corner"></div>
+										<?php foreach ( $rooms as $room ) : ?>
+											<div class="wpch-tt__head wpch-tt__cell-head"><?php echo esc_html( $room ); ?></div>
+										<?php endforeach; ?>
+
+										<?php foreach ( $times as $time ) : ?>
+											<div class="wpch-tt__time"><?php echo esc_html( $time ); ?></div>
+											<?php
+											foreach ( $rooms as $room ) :
+												$cell = $day['cells'][ $time ][ $room ] ?? null;
+												?>
+												<div class="wpch-tt__track">
+													<?php if ( null !== $cell ) : ?>
+														<a class="wpch-tt__block" href="<?php echo esc_url( $cell['url'] ); ?>"
+															style="--wpch-track:<?php echo esc_attr( $cell['color'] ); ?>">
+															<?php if ( '' !== $cell['track'] ) : ?>
+																<span class="wpch-tt__type"><?php echo esc_html( $cell['track'] ); ?></span>
+															<?php endif; ?>
+															<span class="wpch-tt__title"><?php echo esc_html( $cell['title'] ); ?></span>
+															<span class="wpch-tt__meta"><?php echo esc_html( $cell['time'] ); ?></span>
+														</a>
+													<?php endif; ?>
+												</div>
+											<?php endforeach; ?>
+										<?php endforeach; ?>
+									</div>
+								</div>
+							</div>
+						<?php endforeach; ?>
+					</div>
+				</div>
 			<?php else : ?>
 				<div class="wpch-attendees__empty">
 					<?php echo wpcamp_hub_icon( 'calendar', 32 ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- trusted inline SVG from the theme icon set. ?>
