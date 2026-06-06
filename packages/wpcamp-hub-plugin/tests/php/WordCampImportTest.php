@@ -139,6 +139,57 @@ class WordCampImportTest extends WP_UnitTestCase {
 	}
 
 	/**
+	 * The importer works end-to-end against a real WordCamp REST API.
+	 *
+	 * @group external-http
+	 */
+	public function test_real_wordcamp_api_imports_sessions_speakers_and_tracks(): void {
+		if ( '1' !== getenv( 'WPCAMP_HUB_RUN_EXTERNAL_HTTP' ) ) {
+			$this->markTestSkipped( 'Set WPCAMP_HUB_RUN_EXTERNAL_HTTP=1 to run the real WordCamp API import test.' );
+		}
+
+		remove_filter( 'pre_http_request', array( $this, 'serve_response' ), 10 );
+
+		$event    = $this->make_major_wordcamp();
+		$importer = new WordCamp_Importer( $event );
+
+		$this->walk( array( $importer, 'import_speakers_page' ) );
+		$this->walk( array( $importer, 'import_sessions_page' ) );
+
+		$sessions = $event->get_sessions();
+		$this->assertNotEmpty( $sessions, 'real API should import sessions' );
+
+		$speaker_users = get_users( array( 'meta_key' => 'wpcamp_wordcamp_speaker' ) ); // phpcs:ignore WordPress.DB.SlowDBQuery.slow_db_query_meta_key
+		$this->assertNotEmpty( $speaker_users, 'real API should import speaker profiles' );
+
+		$session_speaker_counts = array_map(
+			static fn( Session $session ): int => count( $session->get_attendees() ),
+			$sessions
+		);
+		$this->assertGreaterThan( 0, max( $session_speaker_counts ), 'real API should link at least one session to speakers' );
+
+		$track_names = array_filter(
+			array_map(
+				static function ( Session $session ): string {
+					$track = $session->get_track();
+
+					return null === $track ? '' : get_term( $track->get_id() )->name;
+				},
+				$sessions
+			)
+		);
+		$this->assertNotEmpty( $track_names, 'real API should assign track terms' );
+		$this->assertNotEmpty(
+			array_filter( $track_names, static fn( string $name ): bool => 1 === preg_match( '/(?:track|workshop)/i', $name ) ),
+			'real API should use tracks/workshops rather than room meta'
+		);
+
+		foreach ( $sessions as $session ) {
+			$this->assertSame( '', get_post_meta( $session->get_id(), 'wpcamp_room', true ) );
+		}
+	}
+
+	/**
 	 * Re-running the import updates existing records instead of duplicating.
 	 */
 	public function test_import_is_idempotent(): void {

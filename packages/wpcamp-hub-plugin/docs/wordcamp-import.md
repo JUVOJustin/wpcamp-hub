@@ -140,13 +140,19 @@ explicitly in `wpcamp-hub.php` after the Composer autoloader.
 
 ## Tests
 
-End-to-end coverage lives in `tests/php/WordCampImportTest.php`. It short-circuits
-`pre_http_request` with paginated fixtures and asserts: header-driven pagination,
-session/speaker upserts, event assignment, track mapping, speaker linking,
-idempotency on re-run, identity convergence with an existing attendee, the
-independent per-event fan-out, page self-rescheduling, and recurring-job
-installation.
+End-to-end coverage lives in `tests/php/WordCampImportTest.php`. The default suite
+short-circuits `pre_http_request` with paginated fixtures and asserts:
+header-driven pagination, session/speaker upserts, event assignment, track
+mapping, speaker linking, idempotency on re-run, identity convergence with an
+existing attendee, the independent per-event fan-out, page self-rescheduling, and
+recurring-job installation.
+
+The same test file also includes an `external-http` test that imports from the
+real WordCamp Europe 2026 REST API and verifies sessions, speaker profiles,
+speaker links, and Track/Workshop terms. Run it explicitly because it depends on
+the public network and live WordCamp data.
 
 ```bash
 npm run test:php
+npm run test:php:external
 ```
