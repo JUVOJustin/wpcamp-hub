@@ -508,9 +508,15 @@ a { color: var(--brand); text-decoration: none; }
   position: sticky; top: 0; z-index: 4; background: #fff; grid-row: 1;
 }
 .wpch-tt__cell-head {
+  --wpch-track: var(--wp--preset--color--brand, #3858e9);
+  display: flex; align-items: center; gap: 8px;
   padding: 14px 14px 12px;
   border-bottom: 1px solid var(--line); border-left: 1px solid var(--line-soft);
   font-weight: 700; font-size: 14px; color: var(--ink-900);
+}
+.wpch-tt__col-dot {
+  flex: none; width: 9px; height: 9px; border-radius: 50%;
+  background: var(--wpch-track);
 }
 .wpch-tt__corner { border-bottom: 1px solid var(--line); }
 .wpch-tt__time {

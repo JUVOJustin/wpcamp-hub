@@ -129,15 +129,17 @@ usort( $wpch_rows, static fn( array $a, array $b ): int => $a['ts'] <=> $b['ts']
 					<div class="wpch-sv__view wpch-sv__view--timetable" data-view="timetable">
 						<?php
 						// Group sessions by day. $wpch_rows is sorted by start time, so
-						// day insertion order is chronological. Per day we keep the rooms
-						// (columns) and every session (placed by its start/end minutes).
+						// day insertion order is chronological. Each Track (taxonomy term)
+						// is a column; a session is placed in its track column and spans its
+						// start/end minutes. Untracked sessions fall in a "General" column.
 						$tt_days = array();
 						foreach ( $wpch_rows as $row ) {
-							$day_key = '' !== $row['day'] ? $row['day'] : __( 'Unscheduled', 'wpcamp-hub' );
-							$room    = '' !== $row['room'] ? $row['room'] : __( 'Unassigned', 'wpcamp-hub' );
+							$day_key  = '' !== $row['day'] ? $row['day'] : __( 'Unscheduled', 'wpcamp-hub' );
+							$track    = '' !== $row['track'] ? $row['track'] : __( 'General', 'wpcamp-hub' );
 
-							$tt_days[ $day_key ]['rooms'][ $room ] = true;
-							$tt_days[ $day_key ]['sessions'][]     = array( 'room' => $room ) + $row;
+							// Remember the track's colour for the column header.
+							$tt_days[ $day_key ]['tracks'][ $track ] = $row['color'];
+							$tt_days[ $day_key ]['sessions'][]       = array( 'col' => $track ) + $row;
 						}
 						$tt_day_labels = array_keys( $tt_days );
 						?>
@@ -157,10 +159,11 @@ usort( $wpch_rows, static fn( array $a, array $b ): int => $a['ts'] <=> $b['ts']
 
 						<?php
 						foreach ( $tt_day_labels as $i => $day_label ) :
-							$day      = $tt_days[ $day_label ];
-							$rooms    = array_keys( $day['rooms'] );
-							$room_col = array_flip( $rooms ); // room name → 0-based index.
-							$cols     = count( $rooms );
+							$day        = $tt_days[ $day_label ];
+							$track_cols = $day['tracks']; // track name → colour.
+							$tracks     = array_keys( $track_cols );
+							$col_index  = array_flip( $tracks ); // track name → 0-based index.
+							$cols       = count( $tracks );
 
 							// Unique time boundaries (each session's start + end) become the
 							// horizontal gridlines. A session block then spans from its start
@@ -195,13 +198,16 @@ usort( $wpch_rows, static fn( array $a, array $b ): int => $a['ts'] <=> $b['ts']
 										style="--tt-cols:<?php echo esc_attr( (string) $cols ); ?>;grid-template-rows:<?php echo esc_attr( $grid_rows ); ?>;"
 									>
 										<div class="wpch-tt__head wpch-tt__corner"></div>
-										<?php foreach ( $rooms as $room ) : ?>
-											<div class="wpch-tt__head wpch-tt__cell-head"><?php echo esc_html( $room ); ?></div>
+										<?php foreach ( $tracks as $track ) : ?>
+											<div class="wpch-tt__head wpch-tt__cell-head" style="--wpch-track:<?php echo esc_attr( $track_cols[ $track ] ); ?>">
+												<span class="wpch-tt__col-dot" aria-hidden="true"></span>
+												<?php echo esc_html( $track ); ?>
+											</div>
 										<?php endforeach; ?>
 
 										<?php // Full-height column rules so empty bands still read as a grid. ?>
-										<?php foreach ( $rooms as $ri => $room ) : ?>
-											<div class="wpch-tt__col-rule" style="grid-column:<?php echo esc_attr( (string) ( $ri + 2 ) ); ?>;grid-row:2 / -1;"></div>
+										<?php foreach ( $tracks as $ti => $track ) : ?>
+											<div class="wpch-tt__col-rule" style="grid-column:<?php echo esc_attr( (string) ( $ti + 2 ) ); ?>;grid-row:2 / -1;"></div>
 										<?php endforeach; ?>
 
 										<?php // Time labels down the first column, one per boundary line. ?>
@@ -217,7 +223,7 @@ usort( $wpch_rows, static fn( array $a, array $b ): int => $a['ts'] <=> $b['ts']
 											<div class="wpch-tt__time" style="grid-row:<?php echo esc_attr( (string) ( $bi + 2 ) ); ?>;grid-column:1;"><?php echo esc_html( $hh . ':' . $mm ); ?></div>
 										<?php endforeach; ?>
 
-										<?php // Session blocks, each spanning its start→end lines in its room column. ?>
+										<?php // Session blocks, each spanning its start→end lines in its track column. ?>
 										<?php
 										foreach ( $day['sessions'] as $s ) :
 											if ( ! isset( $line_for[ $s['start_m'] ] ) ) {
@@ -227,7 +233,7 @@ usort( $wpch_rows, static fn( array $a, array $b ): int => $a['ts'] <=> $b['ts']
 											$end_line   = isset( $line_for[ $s['end_m'] ] ) && $s['end_m'] > $s['start_m']
 												? $line_for[ $s['end_m'] ] + 2
 												: $start_line + 1;
-											$col        = ( $room_col[ $s['room'] ] ?? 0 ) + 2;
+											$col        = ( $col_index[ $s['col'] ] ?? 0 ) + 2;
 											$range      = '' !== $s['end'] ? $s['time'] . '–' . $s['end'] : $s['time'];
 											?>
 											<a
@@ -235,8 +241,8 @@ usort( $wpch_rows, static fn( array $a, array $b ): int => $a['ts'] <=> $b['ts']
 												href="<?php echo esc_url( $s['url'] ); ?>"
 												style="--wpch-track:<?php echo esc_attr( $s['color'] ); ?>;grid-column:<?php echo esc_attr( (string) $col ); ?>;grid-row:<?php echo esc_attr( $start_line . ' / ' . $end_line ); ?>;"
 											>
-												<?php if ( '' !== $s['track'] ) : ?>
-													<span class="wpch-tt__type"><?php echo esc_html( $s['track'] ); ?></span>
+												<?php if ( '' !== $s['room'] ) : ?>
+													<span class="wpch-tt__type"><?php echo esc_html( $s['room'] ); ?></span>
 												<?php endif; ?>
 												<span class="wpch-tt__title"><?php echo esc_html( $s['title'] ); ?></span>
 												<span class="wpch-tt__meta"><?php echo esc_html( $range ); ?></span>
