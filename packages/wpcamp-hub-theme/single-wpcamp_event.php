@@ -247,9 +247,17 @@ while ( have_posts() ) :
 						data-label="<?php echo esc_attr( get_the_title() . ( '' !== $location ? ' — ' . $location : '' ) ); ?>"
 					<?php endif; ?>
 				>
-					<?php $wpch_speakers_url = class_exists( \WPCAMP_HUB\Frontend\Speakers_Page::class ) ? \WPCAMP_HUB\Frontend\Speakers_Page::url_for( get_the_ID() ) : ''; ?>
+					<?php
+					$wpch_speakers_url = class_exists( \WPCAMP_HUB\Frontend\Speakers_Page::class ) ? \WPCAMP_HUB\Frontend\Speakers_Page::url_for( get_the_ID() ) : '';
+					$wpch_sessions_url = class_exists( \WPCAMP_HUB\Frontend\Sessions_Page::class ) ? \WPCAMP_HUB\Frontend\Sessions_Page::url_for( get_the_ID() ) : '';
+					?>
 					<div class="wpch-sv__head">
 						<h2 class="wpch-event__section-title"><?php esc_html_e( 'Sessions', 'wpcamp-hub' ); ?></h2>
+						<?php if ( '' !== $wpch_sessions_url ) : ?>
+							<a class="wpch-event__section-link" href="<?php echo esc_url( $wpch_sessions_url ); ?>">
+								<?php esc_html_e( 'View all sessions', 'wpcamp-hub' ); ?>
+							</a>
+						<?php endif; ?>
 						<?php if ( '' !== $wpch_speakers_url ) : ?>
 							<a class="wpch-event__section-link" href="<?php echo esc_url( $wpch_speakers_url ); ?>">
 								<?php esc_html_e( 'View all speakers', 'wpcamp-hub' ); ?>
@@ -363,8 +371,16 @@ while ( have_posts() ) :
 			<?php endif; ?>
 
 			<?php if ( array() !== $tweets ) : ?>
+				<?php $wpch_tweets_url = class_exists( \WPCAMP_HUB\Frontend\Tweets_Page::class ) ? \WPCAMP_HUB\Frontend\Tweets_Page::url_for( get_the_ID() ) : ''; ?>
 				<section class="wpch-event__section">
-					<h2 class="wpch-event__section-title"><?php esc_html_e( 'From #WCEU', 'wpcamp-hub' ); ?></h2>
+					<div class="wpch-event__section-head">
+						<h2 class="wpch-event__section-title"><?php esc_html_e( 'From #WCEU', 'wpcamp-hub' ); ?></h2>
+						<?php if ( '' !== $wpch_tweets_url ) : ?>
+							<a class="wpch-event__section-link" href="<?php echo esc_url( $wpch_tweets_url ); ?>">
+								<?php esc_html_e( 'View all posts', 'wpcamp-hub' ); ?>
+							</a>
+						<?php endif; ?>
+					</div>
 					<div class="wpch-event__tweets">
 						<?php
 						foreach ( array_slice( $tweets, 0, 4 ) as $tweet ) :

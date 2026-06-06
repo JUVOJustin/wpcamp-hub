@@ -190,6 +190,16 @@ class WPCAMP_HUB {
 		$this->loader->add_action( 'init', $speakers_page, 'add_endpoint', 10, 0 );
 		$this->loader->add_filter( 'template_include', $speakers_page, 'template_include', 20, 1 );
 
+		// Per-event sessions subpage — /event/<slug>/sessions/.
+		$sessions_page = new \WPCAMP_HUB\Frontend\Sessions_Page();
+		$this->loader->add_action( 'init', $sessions_page, 'add_endpoint', 10, 0 );
+		$this->loader->add_filter( 'template_include', $sessions_page, 'template_include', 20, 1 );
+
+		// Per-event tweets subpage — /event/<slug>/tweets/.
+		$tweets_page = new \WPCAMP_HUB\Frontend\Tweets_Page();
+		$this->loader->add_action( 'init', $tweets_page, 'add_endpoint', 10, 0 );
+		$this->loader->add_filter( 'template_include', $tweets_page, 'template_include', 20, 1 );
+
 		// Serve the imported attendee avatar everywhere (front end + admin).
 		$avatar = new \WPCAMP_HUB\Frontend\Avatar();
 		$this->loader->add_filter( 'get_avatar_url', $avatar, 'filter_url', 10, 3 );
