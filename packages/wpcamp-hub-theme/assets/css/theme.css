@@ -734,9 +734,10 @@ a { color: var(--brand); text-decoration: none; }
 .wpch-attendees__search-input:focus { outline: none; border-color: var(--brand); box-shadow: var(--focus-ring); }
 
 .wpch-attendees__grid {
-  display: grid; grid-template-columns: repeat(3, 1fr); gap: 18px;
+  /* Two columns at every width (incl. large screens). minmax(0, 1fr) lets the
+     tracks shrink so long names/URLs wrap instead of overflowing the layout. */
+  display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 18px;
 }
-@media (max-width: 980px) { .wpch-attendees__grid { grid-template-columns: repeat(2, 1fr); } }
 @media (max-width: 640px) { .wpch-attendees__grid { grid-template-columns: 1fr; } }
 
 .wpch-att-card {
@@ -755,7 +756,7 @@ a { color: var(--brand); text-decoration: none; }
   font-weight: 700; font-size: 18px; color: var(--brand);
 }
 .wpch-att-card__person { min-width: 0; }
-.wpch-att-card__name { margin: 0 0 2px; font-size: 17px; font-weight: 700; }
+.wpch-att-card__name { margin: 0 0 2px; font-size: 17px; font-weight: 700; overflow-wrap: anywhere; }
 .wpch-att-card__meta { font-size: 14px; color: var(--ink-600); }
 .wpch-att-card__website,
 .wpch-att-card__session {
