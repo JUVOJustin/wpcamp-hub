@@ -86,6 +86,7 @@ After replacement, setup asks whether to install agent skills for ongoing AI-ass
 | Write application tests | [`docs/testing.mdx`](docs/testing.mdx) |
 | Work on bundling or block assets | [`docs/bundeling.mdx`](docs/bundeling.mdx), [`docs/create-blocks.mdx`](docs/create-blocks.mdx) |
 | Configure translations | [`docs/i18n.mdx`](docs/i18n.mdx) |
+| Review WordCamp imports | [`docs/wordcamp-import.md`](docs/wordcamp-import.md), [`docs/attendee-importer.md`](docs/attendee-importer.md) |
 | Review AI-specific repo rules | [`AGENTS.md`](AGENTS.md), [`docs/work-with-ai.mdx`](docs/work-with-ai.mdx), [`.agents/skills/wp-plugin-bp/SKILL.md`](.agents/skills/wp-plugin-bp/SKILL.md) |
 
 ## AI And Maintenance Notes

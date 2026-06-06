@@ -13,18 +13,18 @@ use WPCAMP_HUB\Abilities\Import\Event_Import_Attendees;
 use WPCAMP_HUB\Data\Event;
 
 /**
- * Schedules and runs the recurring WordCamp session import.
+ * Schedules and runs the recurring WordCamp import.
  *
  * The work is split into bounded Action Scheduler jobs in the shared
  * {@see GROUP} group:
  *
  *  - A single daily {@see AS_HOOK} master job scans every event flagged as a
  *    major WordCamp and fans out per-event imports.
- *  - {@see AS_SESSIONS_HOOK} (`event_id`) invokes the internal
- *    `wpcamp-hub/event-import-sessions` ability, then queues the speaker job
- *    only after the session ability succeeds.
  *  - {@see AS_SPEAKERS_HOOK} (`event_id`) invokes the internal
- *    `wpcamp-hub/event-import-speakers` ability.
+ *    `wpcamp-hub/event-import-speakers` ability, then queues the session job
+ *    only after the speaker ability succeeds.
+ *  - {@see AS_SESSIONS_HOOK} (`event_id`) invokes the internal
+ *    `wpcamp-hub/event-import-sessions` ability.
  *  - {@see AS_ATTENDEES_HOOK} (`event_id`) invokes the internal
  *    `wpcamp-hub/event-import-attendees` ability.
  *
@@ -98,7 +98,7 @@ class Import_Scheduler {
 	}
 
 	/**
-	 * Remove all scheduled session import jobs. Call on deactivation.
+	 * Remove all scheduled import jobs. Call on deactivation.
 	 */
 	public static function unschedule_daily_import(): void {
 		if ( ! function_exists( 'as_unschedule_all_actions' ) ) {
@@ -106,13 +106,15 @@ class Import_Scheduler {
 		}
 
 		as_unschedule_all_actions( self::AS_HOOK, array(), self::GROUP );
-		as_unschedule_all_actions( self::AS_SESSIONS_HOOK, array(), self::GROUP );
-		as_unschedule_all_actions( self::AS_SPEAKERS_HOOK, array(), self::GROUP );
-		as_unschedule_all_actions( self::AS_ATTENDEES_HOOK, array(), self::GROUP );
+		as_unschedule_all_actions( self::AS_SESSIONS_HOOK );
+		as_unschedule_all_actions( self::AS_SPEAKERS_HOOK );
+		as_unschedule_all_actions( self::AS_ATTENDEES_HOOK );
+		as_unschedule_all_actions( 'wpcamp_hub/import_wordcamp_attendees' );
+		as_unschedule_all_actions( 'wpcamp_hub/upsert_event_attendees' );
 	}
 
 	/**
-	 * Master job: queue session imports per flagged camp.
+	 * Master job: queue speaker imports per flagged camp.
 	 */
 	public function fan_out(): void {
 		foreach ( Event::major_wordcamps() as $event ) {
@@ -121,19 +123,19 @@ class Import_Scheduler {
 	}
 
 	/**
-	 * Queue per-event session and attendee imports for a single event.
+	 * Queue per-event speaker and attendee imports for a single event.
 	 *
 	 * @param int $event_id Event post ID.
 	 */
 	public function queue_event_import( int $event_id ): void {
-		$this->enqueue( self::AS_SESSIONS_HOOK, $event_id );
+		$this->enqueue( self::AS_SPEAKERS_HOOK, $event_id );
 		if ( $this->has_attendees_url( $event_id ) ) {
 			$this->enqueue( self::AS_ATTENDEES_HOOK, $event_id );
 		}
 	}
 
 	/**
-	 * Import sessions, then queue the speaker ability job after success.
+	 * Import sessions for an event through the internal sessions ability.
 	 *
 	 * @param int $event_id Event post ID.
 	 */
@@ -142,16 +144,11 @@ class Import_Scheduler {
 			return;
 		}
 
-		$result = Event_Import_Sessions::execute( array( 'event_id' => $event_id ) );
-		if ( is_wp_error( $result ) ) {
-			return;
-		}
-
-		$this->enqueue( self::AS_SPEAKERS_HOOK, $event_id );
+		Event_Import_Sessions::execute( array( 'event_id' => $event_id ) );
 	}
 
 	/**
-	 * Import speakers for an event through the internal speakers ability.
+	 * Import speakers, then queue the session ability job after success.
 	 *
 	 * @param int $event_id Event post ID.
 	 */
@@ -160,7 +157,12 @@ class Import_Scheduler {
 			return;
 		}
 
-		Event_Import_Speakers::execute( array( 'event_id' => $event_id ) );
+		$result = Event_Import_Speakers::execute( array( 'event_id' => $event_id ) );
+		if ( is_wp_error( $result ) ) {
+			return;
+		}
+
+		$this->enqueue( self::AS_SESSIONS_HOOK, $event_id );
 	}
 
 	/**
@@ -207,10 +209,10 @@ class Import_Scheduler {
 	}
 
 	/**
-	 * Enqueue a single one-off page job (unless an identical one is pending).
+	 * Enqueue a single one-off import job (unless an identical one is pending).
 	 *
-	 * Args are stored positionally (`[event_id]`) — Action Scheduler
-	 * invokes the callback with `array_values()` of the stored args.
+	 * Args are stored by parameter name so Action Scheduler invokes callbacks with
+	 * explicit named arguments.
 	 *
 	 * @param string $hook Action hook.
 	 * @param int    $event_id Event post ID.
@@ -220,7 +222,7 @@ class Import_Scheduler {
 			return;
 		}
 
-		$args = array( $event_id );
+		$args = array( 'event_id' => $event_id );
 		if ( false !== as_has_scheduled_action( $hook, $args, self::GROUP ) ) {
 			return;
 		}

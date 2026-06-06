@@ -7,6 +7,8 @@
 
 use WPCAMP_HUB\Data\Data_Structure;
 use WPCAMP_HUB\Data\Event;
+use WPCAMP_HUB\Abilities\Import\Event_Import_Attendees;
+use WPCAMP_HUB\Import\Import_Scheduler;
 use WPCAMP_HUB\Import\WordCamp_Attendee_Importer;
 
 /**
@@ -36,8 +38,7 @@ class WordCampAttendeeImporterTest extends WP_UnitTestCase {
 	 * Cleanup scheduled jobs and HTTP mocks.
 	 */
 	public function tear_down(): void {
-		as_unschedule_all_actions( WordCamp_Attendee_Importer::AS_HOOK, array(), WordCamp_Attendee_Importer::AS_GROUP );
-		as_unschedule_all_actions( WordCamp_Attendee_Importer::AS_EVENT_HOOK, array(), WordCamp_Attendee_Importer::AS_GROUP );
+		Import_Scheduler::unschedule_daily_import();
 
 		remove_all_filters( 'pre_http_request' );
 		remove_all_filters( 'wpcamp_hub_attendee_importer_ai_parsing_profile' );
@@ -254,26 +255,6 @@ class WordCampAttendeeImporterTest extends WP_UnitTestCase {
 	}
 
 	/**
-	 * A daily recurring Action Scheduler job is registered once.
-	 */
-	public function test_schedule_daily_import_registers_recurring_action(): void {
-		$importer = new WordCamp_Attendee_Importer();
-		$importer->schedule_daily_import();
-		$importer->schedule_daily_import();
-
-		$actions = as_get_scheduled_actions(
-			array(
-				'hook'   => WordCamp_Attendee_Importer::AS_HOOK,
-				'group'  => WordCamp_Attendee_Importer::AS_GROUP,
-				'status' => ActionScheduler_Store::STATUS_PENDING,
-			),
-			'ids'
-		);
-
-		$this->assertCount( 1, $actions );
-	}
-
-	/**
 	 * Attendee page crawls accept public URLs that WordPress considers safe to fetch.
 	 */
 	public function test_allowed_attendees_url_accepts_public_http_urls(): void {
@@ -309,9 +290,9 @@ class WordCampAttendeeImporterTest extends WP_UnitTestCase {
 	}
 
 	/**
-	 * The scheduled importer fans out per-event crawl jobs and imports attendees through the event job.
+	 * The shared scheduler fans out attendee jobs that execute the attendee ability.
 	 */
-	public function test_scheduled_import_queues_event_jobs_and_populates_attendees(): void {
+	public function test_shared_scheduler_queues_attendee_job_and_populates_attendees(): void {
 		$this->use_parsing_profile( 'article', 'person-card' );
 
 		$event_id = wp_insert_post(
@@ -328,31 +309,12 @@ class WordCampAttendeeImporterTest extends WP_UnitTestCase {
 
 		add_filter( 'pre_http_request', array( $this, 'mock_profile_http_responses' ), 10, 3 );
 
-		$action_id = as_schedule_single_action(
-			time(),
-			WordCamp_Attendee_Importer::AS_HOOK,
-			array(),
-			WordCamp_Attendee_Importer::AS_GROUP
-		);
-		$this->assertIsInt( $action_id );
-		$this->assertGreaterThan( 0, $action_id );
-
-		$pending = as_get_scheduled_actions(
-			array(
-				'hook'   => WordCamp_Attendee_Importer::AS_HOOK,
-				'group'  => WordCamp_Attendee_Importer::AS_GROUP,
-				'status' => ActionScheduler_Store::STATUS_PENDING,
-			),
-			'ids'
-		);
-		$this->assertContains( $action_id, array_map( 'intval', $pending ) );
-
-		ActionScheduler_QueueRunner::instance()->process_action( $action_id, 'PHPUnit' );
+		( new Import_Scheduler() )->queue_event_import( (int) $event_id );
 
 		$event_actions = as_get_scheduled_actions(
 			array(
-				'hook'   => WordCamp_Attendee_Importer::AS_EVENT_HOOK,
-				'group'  => WordCamp_Attendee_Importer::AS_GROUP,
+				'hook'   => Import_Scheduler::AS_ATTENDEES_HOOK,
+				'group'  => Import_Scheduler::GROUP,
 				'status' => ActionScheduler_Store::STATUS_PENDING,
 			),
 			'ids'
@@ -391,6 +353,25 @@ class WordCampAttendeeImporterTest extends WP_UnitTestCase {
 		$this->assertSame( array(), get_user_meta( $gravatar_only_user->ID, 'wpcamp_wporg_profile', true ) );
 		$this->assertSame( array(), get_user_meta( $gravatar_only_user->ID, 'wpcamp_gravatar_profile', true ) );
 		$this->assertContains( (int) $gravatar_only_user->ID, Event::from( (int) $event_id )->get_related( 'user' ) );
+	}
+
+	/**
+	 * The attendee ability is REST-visible, admin-only, and validates input strictly.
+	 */
+	public function test_attendee_ability_is_rest_visible_admin_only_and_strict(): void {
+		$admin_id = self::factory()->user->create( array( 'role' => 'administrator' ) );
+		$user_id  = self::factory()->user->create( array( 'role' => 'subscriber' ) );
+
+		wp_set_current_user( $user_id );
+		$this->assertFalse( Event_Import_Attendees::check_permissions( array( 'event_id' => 1 ) ) );
+
+		wp_set_current_user( $admin_id );
+		$this->assertTrue( Event_Import_Attendees::check_permissions( array( 'event_id' => 1 ) ) );
+		$this->assertTrue( Event_Import_Attendees::show_rest() );
+
+		$invalid = Event_Import_Attendees::execute( array( 'event_id' => '26' ) );
+		$this->assertWPError( $invalid );
+		$this->assertSame( 'wpcamp_hub_invalid_event_id', $invalid->get_error_code() );
 	}
 
 	/**

@@ -1,6 +1,6 @@
 <?php
 /**
- * Internal ability for importing WordCamp event speakers.
+ * Ability for importing WordCamp event speakers.
  *
  * @package WPCAMP_HUB
  */
@@ -108,6 +108,8 @@ class Event_Import_Speakers implements Ability_Interface {
 
 	/**
 	 * Only administrators may execute the ability through the Abilities API.
+	 *
+	 * @param mixed $input Ability input.
 	 */
 	public static function check_permissions( mixed $input = null ): bool|WP_Error {
 		unset( $input );
@@ -117,6 +119,8 @@ class Event_Import_Speakers implements Ability_Interface {
 
 	/**
 	 * Import all speaker pages for one event.
+	 *
+	 * @param mixed $input Ability input.
 	 */
 	public static function execute( mixed $input = null ): mixed {
 		$event_id = self::event_id_from_input( $input );
@@ -137,9 +141,9 @@ class Event_Import_Speakers implements Ability_Interface {
 		do {
 			$result = $importer->import_speakers_page( $page );
 			++$pages_imported;
-			$items_seen  += count( $result->items );
-			$total_items  = $result->total_items;
-			$page         = $result->next_page();
+			$items_seen += count( $result->items );
+			$total_items = $result->total_items;
+			$page        = $result->next_page();
 		} while ( null !== $page );
 
 		return array(
@@ -152,12 +156,14 @@ class Event_Import_Speakers implements Ability_Interface {
 
 	/**
 	 * Validate and return the event ID from ability input.
+	 *
+	 * @param mixed $input Ability input.
 	 */
 	public static function event_id_from_input( mixed $input ): int|WP_Error {
-		if ( ! is_array( $input ) || ! array_key_exists( 'event_id', $input ) || ! is_int( $input['event_id'] ) || $input['event_id'] < 1 ) {
+		if ( ! is_array( $input ) || array( 'event_id' ) !== array_keys( $input ) || ! is_int( $input['event_id'] ) || $input['event_id'] < 1 ) {
 			return new WP_Error(
 				'wpcamp_hub_invalid_event_id',
-				__( 'A positive integer event_id is required.', 'wpcamp-hub' )
+				__( 'A positive integer event_id is required and must be the only input property.', 'wpcamp-hub' )
 			);
 		}
 
@@ -166,6 +172,8 @@ class Event_Import_Speakers implements Ability_Interface {
 
 	/**
 	 * Build an importer for a valid major WordCamp event.
+	 *
+	 * @param int $event_id Event post ID.
 	 */
 	public static function importer_for_event( int $event_id ): WordCamp_Importer|WP_Error {
 		if ( Event::get_post_type() !== get_post_type( $event_id ) ) {

@@ -72,21 +72,6 @@ class WordCamp_Client {
 	}
 
 	/**
-	 * Fetch a single speaker by source ID.
-	 *
-	 * @param int $speaker_id WordCamp speaker post ID.
-	 * @return array<string,mixed>|null Decoded speaker, or null when not found.
-	 */
-	public function get_speaker( int $speaker_id ): ?array {
-		$url = add_query_arg( array(), $this->base_url . 'speakers/' . $speaker_id );
-
-		$response = $this->request( $url );
-		$body     = json_decode( (string) wp_remote_retrieve_body( $response ), true );
-
-		return is_array( $body ) && isset( $body['id'] ) ? $body : null;
-	}
-
-	/**
 	 * Host of the WordCamp site, used to namespace source identifiers.
 	 */
 	public function get_host(): string {

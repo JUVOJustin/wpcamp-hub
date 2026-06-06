@@ -1075,30 +1075,4 @@ class WordCamp_Attendee_Importer {
 
 		return 0;
 	}
-
-	/**
-	 * Return configured attendees pages keyed by event ID.
-	 *
-	 * @return array<int,string>
-	 */
-	private function get_event_attendee_pages(): array {
-		$event_ids = get_posts(
-			array(
-				'post_type'      => Data_Structure::POST_TYPE_EVENT,
-				'post_status'    => 'any',
-				'fields'         => 'ids',
-				'posts_per_page' => -1,
-			)
-		);
-
-		$pages = array();
-		foreach ( $event_ids as $event_id ) {
-			$url = get_post_meta( (int) $event_id, 'wpcamp_attendees_url', true );
-			if ( is_string( $url ) && '' !== esc_url_raw( $url ) ) {
-				$pages[ (int) $event_id ] = esc_url_raw( $url );
-			}
-		}
-
-		return $pages;
-	}
 }

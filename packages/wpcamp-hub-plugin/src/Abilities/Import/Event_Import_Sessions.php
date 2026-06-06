@@ -1,6 +1,6 @@
 <?php
 /**
- * Internal ability for importing WordCamp event sessions.
+ * Ability for importing WordCamp event sessions.
  *
  * @package WPCAMP_HUB
  */
@@ -95,6 +95,8 @@ class Event_Import_Sessions implements Ability_Interface {
 
 	/**
 	 * Only administrators may execute the ability through the Abilities API.
+	 *
+	 * @param mixed $input Ability input.
 	 */
 	public static function check_permissions( mixed $input = null ): bool|WP_Error {
 		return Event_Import_Speakers::check_permissions( $input );
@@ -102,6 +104,8 @@ class Event_Import_Sessions implements Ability_Interface {
 
 	/**
 	 * Import all session pages for one event.
+	 *
+	 * @param mixed $input Ability input.
 	 */
 	public static function execute( mixed $input = null ): mixed {
 		$event_id = Event_Import_Speakers::event_id_from_input( $input );
@@ -122,9 +126,9 @@ class Event_Import_Sessions implements Ability_Interface {
 		do {
 			$result = $importer->import_sessions_page( $page );
 			++$pages_imported;
-			$items_seen  += count( $result->items );
-			$total_items  = $result->total_items;
-			$page         = $result->next_page();
+			$items_seen += count( $result->items );
+			$total_items = $result->total_items;
+			$page        = $result->next_page();
 		} while ( null !== $page );
 
 		return array(

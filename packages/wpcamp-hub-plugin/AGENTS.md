@@ -40,7 +40,7 @@ This plugin is a modern WordPress plugin with strict conventions and automated w
 - **wp-env**: Start with `npm run env:start`. Use the `wp-plugin-bp` skill when tests are involved.
 - **wp-env secrets**: Keep AI Client keys in ignored `.wp-env.override.json`; CI writes the same file when the `OPENAI_API_KEY` secret is present.
 - **Testing**: Run application tests with `npm run test:php`. Use the `wp-plugin-bp` skill for testing guidance.
-- **WordCamp import**: `src/Import/` imports sessions/speakers from native WordCamp REST APIs daily via Action Scheduler and assigns them to flagged events; shares conventions and identity model with the attendee importer for a future unified per-event sync. See `docs/wordcamp-import.md`. Manual run: `wp wpcamp-hub import-wordcamps`.
+- **WordCamp import**: `src/Import/` imports sessions, speakers, and attendees daily via Action Scheduler jobs that execute REST-visible, admin-only Abilities API operations. See `docs/wordcamp-import.md` and `docs/attendee-importer.md`.
 - **Plugin upgrades**: Use the `wp-plugin-bp` skill or ask naturally to sync with upstream project conventions.
 - **Official WordPress skills**: `.agents/skills/wp-*/` contains focused skills for block development, Interactivity API, PHPStan, project triage, and REST API work. Use the `wp-plugin-bp` skill `wp-skills` workflow to refresh or add official WordPress skills.
 - **Composer setup**: `.agents/` ships in the initial Composer package so setup can run `wp-plugin-bp/scripts/plugin-replace.php`; replacement cleanup removes `.agents/`, then setup asks whether to install agent skills for ongoing work.

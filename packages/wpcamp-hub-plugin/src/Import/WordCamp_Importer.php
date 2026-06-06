@@ -290,37 +290,115 @@ class WordCamp_Importer {
 	/**
 	 * Relate the session to its speaker attendee profiles.
 	 *
-	 * Speakers are matched to attendees previously imported by source ID. Any
-	 * speaker not yet imported is fetched and created on demand so a session
-	 * page processed before its speakers still links correctly.
+	 * Speakers are matched to attendees previously imported by source ID. The
+	 * scheduler imports speakers first, so sessions only persist relationships
+	 * that are explicitly present in the session payload.
 	 *
 	 * @param Session             $session Imported session.
 	 * @param array<string,mixed> $data Decoded session item.
 	 */
 	private function assign_speakers( Session $session, array $data ): void {
-		$speakers = isset( $data['session_speakers'] ) && is_array( $data['session_speakers'] ) ? $data['session_speakers'] : array();
-
 		$related = $session->get_related( 'user' );
 
+		foreach ( $this->session_speaker_ids( $data ) as $speaker_post_id ) {
+			$source_id = $this->client->get_host() . ':' . $speaker_post_id;
+			$profile   = $this->find_attendee( $source_id, '' );
+
+			$this->relate_session_speaker( $session, $profile, $related );
+		}
+
+		$this->sync_session_speaker_meta( $session );
+	}
+
+	/**
+	 * Keep legacy/editor speaker meta aligned with normalized relationships.
+	 *
+	 * @param Session $session Imported session.
+	 */
+	private function sync_session_speaker_meta( Session $session ): void {
+		$speaker_ids = $session->get_related( 'user' );
+
+		update_post_meta( $session->get_id(), 'wpcamp_speakers', $speaker_ids );
+		update_post_meta( $session->get_id(), 'wpcamp_related_attendees', $speaker_ids );
+	}
+
+	/**
+	 * Relate a session to a speaker profile once.
+	 *
+	 * @param Session           $session Imported session.
+	 * @param User_Profile|null $profile Imported speaker profile.
+	 * @param array<int,int>    $related Existing related user IDs, updated in place.
+	 */
+	private function relate_session_speaker( Session $session, ?User_Profile $profile, array &$related ): void {
+		if ( null === $profile || in_array( $profile->get_id(), $related, true ) ) {
+			return;
+		}
+
+		$session->relate_to( 'user', $profile->get_id() );
+		$related[] = $profile->get_id();
+	}
+
+	/**
+	 * Extract speaker post IDs from a WordCamp session item.
+	 *
+	 * @param array<string,mixed> $session Decoded session item.
+	 * @return list<int>
+	 */
+	private function session_speaker_ids( array $session ): array {
+		$ids = array();
+
+		$speakers = isset( $session['session_speakers'] ) && is_array( $session['session_speakers'] ) ? $session['session_speakers'] : array();
 		foreach ( $speakers as $speaker ) {
-			if ( ! is_array( $speaker ) || ! isset( $speaker['id'] ) ) {
-				continue;
-			}
-
-			$speaker_post_id = (int) $speaker['id'];
-			$source_id       = $this->client->get_host() . ':' . $speaker_post_id;
-			$profile         = $this->find_attendee( $source_id, '' );
-
-			if ( null === $profile ) {
-				$fetched = $this->client->get_speaker( $speaker_post_id );
-				$profile = is_array( $fetched ) ? $this->upsert_speaker( $fetched ) : null;
-			}
-
-			if ( null !== $profile && ! in_array( $profile->get_id(), $related, true ) ) {
-				$session->relate_to( 'user', $profile->get_id() );
-				$related[] = $profile->get_id();
+			if ( is_array( $speaker ) && isset( $speaker['id'] ) ) {
+				$ids[] = (int) $speaker['id'];
 			}
 		}
+
+		$meta_ids = $session['meta']['_wcpt_speaker_id'] ?? array();
+		foreach ( (array) $meta_ids as $id ) {
+			$ids[] = (int) $id;
+		}
+
+		$links = isset( $session['_links']['speakers'] ) && is_array( $session['_links']['speakers'] ) ? $session['_links']['speakers'] : array();
+		foreach ( $links as $link ) {
+			$id = $this->id_from_link( $link, 'speakers' );
+			if ( $id > 0 ) {
+				$ids[] = $id;
+			}
+		}
+
+		$embedded_speakers = isset( $session['_embedded']['speakers'] ) && is_array( $session['_embedded']['speakers'] ) ? $session['_embedded']['speakers'] : array();
+		foreach ( $embedded_speakers as $speaker ) {
+			if ( is_array( $speaker ) && isset( $speaker['id'] ) ) {
+				$ids[] = (int) $speaker['id'];
+			}
+		}
+
+		return $this->positive_unique_ids( $ids );
+	}
+
+	/**
+	 * Extract a numeric REST resource ID from a link object.
+	 *
+	 * @param mixed  $link REST link object.
+	 * @param string $collection REST collection resource.
+	 */
+	private function id_from_link( mixed $link, string $collection ): int {
+		if ( ! is_array( $link ) || ! isset( $link['href'] ) || ! is_string( $link['href'] ) ) {
+			return 0;
+		}
+
+		return 1 === preg_match( '~/' . preg_quote( $collection, '~' ) . '/(\d+)(?:[/?#]|$)~', $link['href'], $matches ) ? (int) $matches[1] : 0;
+	}
+
+	/**
+	 * Return positive unique IDs while preserving source order.
+	 *
+	 * @param array<int,int> $ids Raw IDs.
+	 * @return list<int>
+	 */
+	private function positive_unique_ids( array $ids ): array {
+		return array_values( array_unique( array_filter( $ids, static fn( int $id ): bool => $id > 0 ) ) );
 	}
 
 	/**

@@ -96,6 +96,8 @@ class Event_Import_Attendees implements Ability_Interface {
 
 	/**
 	 * Only administrators may execute the ability.
+	 *
+	 * @param mixed $input Ability input.
 	 */
 	public static function check_permissions( mixed $input = null ): bool|WP_Error {
 		return Event_Import_Speakers::check_permissions( $input );
@@ -103,6 +105,8 @@ class Event_Import_Attendees implements Ability_Interface {
 
 	/**
 	 * Import attendees for one configured event.
+	 *
+	 * @param mixed $input Ability input.
 	 */
 	public static function execute( mixed $input = null ): mixed {
 		$event_id = Event_Import_Speakers::event_id_from_input( $input );

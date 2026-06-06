@@ -32,37 +32,30 @@ Example official URL: `https://europe.wordcamp.org/2026/`
 
 ## How the schedule works
 
-`Import_Scheduler` (`src/Import/Import_Scheduler.php`) splits the work into
-bounded Action Scheduler jobs in the shared `wpcamp-hub` group:
+`Import_Scheduler` (`src/Import/Import_Scheduler.php`) uses one recurring Action
+Scheduler cron job in the shared `wpcamp-hub` group and fans out per-event async
+jobs that invoke REST-visible, admin-only WordPress abilities:
 
 1. **`wpcamp_hub/import_wordcamp_schedule`** — a single recurring **daily**
    master job, installed on `action_scheduler_init` (`schedule_daily_import()`
    is idempotent and uses Action Scheduler's `$unique` flag). On each run it
-   scans `Event::major_wordcamps()` and, per event, fans out **two independent**
-   jobs via `queue_event_import()`.
-2. **`wpcamp_hub/import_wordcamp_event_speakers`** (`event_id`, `page`) — imports
-   **one page** of speakers, then reschedules itself for the next page.
-3. **`wpcamp_hub/import_wordcamp_event_sessions`** (`event_id`, `page`) — imports
-   **one page** of sessions, then reschedules itself for the next page.
+   scans `Event::major_wordcamps()` and queues per-event speaker and attendee
+   jobs.
+2. **`wpcamp_hub/import_wordcamp_event_speakers`** (`event_id`) — executes the
+   `wpcamp-hub/event-import-speakers` ability. After that ability succeeds, it
+   queues the session job for the same event.
+3. **`wpcamp_hub/import_wordcamp_event_sessions`** (`event_id`) — executes the
+   `wpcamp-hub/event-import-sessions` ability. Sessions relate to speaker
+   profiles that were imported by the preceding speaker job.
+4. **`wpcamp_hub/import_wordcamp_event_attendees`** (`event_id`) — executes the
+   `wpcamp-hub/event-import-attendees` ability when the event has a configured
+   attendees URL.
 
-Speakers and sessions are **independent** — neither chains into the other. A
-session that references a not-yet-imported speaker fetches that speaker on demand,
-so the two resources can run in any order or in parallel. Page-at-a-time
-scheduling keeps every job small and lets Action Scheduler retry a single failed
-page without re-running an entire camp. The recurring job and its pending
-per-event jobs are removed on plugin deactivation (`unschedule_daily_import()`).
-
-### Designed for one master sync per event
-
-This importer deliberately mirrors the WordCamp **attendee** importer
-(`src/Import/WordCamp_Attendee_Importer.php`): same `src/Import` namespace, same
-`wpcamp-hub` Action Scheduler group, same `wpcamp_hub/…` hook convention, same
-`action_scheduler_init` scheduling pattern, and the same positional
-`[event_id, …]` job-argument shape. Because schedule, speakers, and attendees do
-not depend on one another, the three can later be driven by **one master sync
-job per event** that fans out three independent jobs — call
-`Import_Scheduler::queue_event_import()` alongside the attendee importer's
-per-event queue from a single master.
+The abilities are visible through the WordPress Abilities REST API and require an
+administrator (`manage_options`) to execute. Their input schema requires a
+positive integer `event_id` and rejects additional properties. The recurring job
+and pending per-event jobs are removed on plugin deactivation. Per-event Action
+Scheduler jobs store `event_id` as a named argument.
 
 ## Pagination
 
@@ -70,7 +63,7 @@ per-event queue from a single master.
 items per page (`per_page=100`) and reads the WordCamp API's `X-WP-TotalPages`
 and `X-WP-Total` response headers. Each fetch returns a `WordCamp_Page` value
 object exposing `page`, `total_pages`, `total_items`, `has_more()`, and
-`next_page()`, which the scheduler and CLI use to walk all pages.
+`next_page()`, which the import abilities use to walk all pages.
 
 ## What gets imported
 
@@ -89,7 +82,7 @@ lunches, and other custom items are skipped.
 | `meta._wcpt_session_time` + `_wcpt_session_duration` | `wpcamp_end_time` (ISO 8601) |
 | `id` | `wpcamp_source_id` meta (`<host>:<id>`) |
 | embedded `wcb_track` / `session_track` term | `wpcamp_track` taxonomy term (created if missing), such as Track 1, Track 2, Workshop 1, or Workshop 2 |
-| `session_speakers[].id` | related attendee profiles (`session → user`) |
+| `session_speakers[].id`, `meta._wcpt_speaker_id`, `_links.speakers`, or `_embedded.speakers[].id` | related attendee profiles (`session → user`) |
 
 Each session is related to its event via `Relationships` (`session → event`) and
 also stores `wpcamp_event`. `wpcamp_source` is set to `wordcamp`.
@@ -105,8 +98,9 @@ also stores `wpcamp_event`. `wpcamp_source` is set to `wordcamp`.
 | `meta._wcpt_user_name` | `wpcamp_wporg_username` |
 | largest `avatar_urls` | `wpcamp_avatar` |
 
-A session that references a speaker not yet imported fetches and creates that
-speaker on demand, so session/speaker page ordering does not matter.
+Speakers import before sessions. Sessions only relate to speaker profiles that
+already have the matching `wpcamp_wordcamp_speaker` source ID, so relationships
+come from the session payload rather than inferred speaker-side backfills.
 
 **Identity & deduplication.** Speakers upsert against a shared identity so a
 person imported as both a speaker and an attendee resolves to **one** user.
@@ -116,19 +110,6 @@ Matching tries, in order: this camp's speaker source ID
 profiles are created with the WordPress.org username as their `user_login` —
 identical to the attendee importer's identifier — falling back to the speaker
 slug and finally the source ID. Sessions dedupe by `wpcamp_source_id`.
-
-## Running on demand (WP-CLI)
-
-The daily run is automated, but a synchronous command exists for verification and
-backfills:
-
-```bash
-# Import every flagged WordCamp, walking all pages inline.
-wp wpcamp-hub import-wordcamps
-
-# Limit to a single event.
-wp wpcamp-hub import-wordcamps --event=42
-```
 
 ## Action Scheduler dependency
 
@@ -144,7 +125,7 @@ End-to-end coverage lives in `tests/php/WordCampImportTest.php`. The default sui
 short-circuits `pre_http_request` with paginated fixtures and asserts:
 header-driven pagination, session/speaker upserts, event assignment, track
 mapping, speaker linking, idempotency on re-run, identity convergence with an
-existing attendee, the independent per-event fan-out, page self-rescheduling, and
+existing attendee, per-event fan-out, session queueing after a speaker import, and
 recurring-job installation.
 
 The same test file also includes an `external-http` test that imports from the

@@ -23,20 +23,23 @@ Page markup, text, CSS classes, and element proximity must not decide whether tw
 
 ## Scheduling
 
-The importer uses one recurring Action Scheduler dispatcher job:
+Attendees share the WordCamp import scheduler. The daily dispatcher job queues a
+per-event attendee job when an event has a valid `wpcamp_attendees_url` value:
 
 ```text
-wpcamp_hub/import_wordcamp_attendees
+wpcamp_hub/import_wordcamp_schedule
 ```
 
-That dispatcher finds events with a `wpcamp_attendees_url` value and queues one crawl job per event:
+The per-event job executes the REST-visible, admin-only attendee import ability:
 
 ```text
-wpcamp_hub/upsert_event_attendees
+wpcamp_hub/import_wordcamp_event_attendees
+wpcamp-hub/event-import-attendees
 ```
 
-Each event crawl action receives the event ID and attendees URL as arguments. This keeps the daily schedule stable
-while allowing individual event pages to crawl independently in the Action Scheduler queue.
+Each event crawl action receives `event_id` as a named Action Scheduler argument.
+This keeps the daily schedule stable while allowing individual event pages to
+crawl independently in the Action Scheduler queue.
 
 The importer only queues and fetches URLs accepted by WordPress' safe HTTP URL validation. This supports public
 attendee pages on any host while rejecting unsafe URL shapes before the scheduled server-side request runs.

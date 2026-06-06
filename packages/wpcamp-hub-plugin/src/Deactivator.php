@@ -8,7 +8,6 @@
 namespace WPCAMP_HUB;
 
 use WPCAMP_HUB\Import\Import_Scheduler;
-use WPCAMP_HUB\Import\WordCamp_Attendee_Importer;
 
 /**
  * Fired during plugin deactivation.
@@ -26,6 +25,5 @@ class Deactivator {
 	 */
 	public static function deactivate(): void {
 		Import_Scheduler::unschedule_daily_import();
-		WordCamp_Attendee_Importer::unschedule_daily_import();
 	}
 }

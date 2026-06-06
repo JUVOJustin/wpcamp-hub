@@ -68,20 +68,14 @@ class WordCampImportTest extends WP_UnitTestCase {
 		$parsed   = wp_parse_url( $url );
 		$resource = '';
 
-		if ( isset( $parsed['path'] ) && preg_match( '#/wp/v2/(sessions|speakers)(/(\d+))?$#', $parsed['path'], $m ) ) {
+		if ( isset( $parsed['path'] ) && preg_match( '#/wp/v2/(sessions|speakers)$#', $parsed['path'], $m ) ) {
 			$resource = $m[1];
-			$single   = isset( $m[3] ) ? (int) $m[3] : 0;
 		} else {
 			return new WP_Error( 'unexpected_url', 'Unexpected request: ' . $url );
 		}
 
 		if ( isset( $parsed['query'] ) ) {
 			parse_str( $parsed['query'], $query );
-		}
-
-		// Single-resource fetch (used when linking a not-yet-imported speaker).
-		if ( ! empty( $single ) ) {
-			return $this->http_response( wp_json_encode( $this->find_single( $resource, $single ) ), 1, 1 );
 		}
 
 		$page = isset( $query['page'] ) ? (int) $query['page'] : 1;
@@ -129,6 +123,8 @@ class WordCampImportTest extends WP_UnitTestCase {
 		$names  = $blocks->get_speaker_names();
 		sort( $names );
 		$this->assertSame( array( 'Ada Lovelace', 'Grace Hopper' ), $names );
+		$this->assertSame( $blocks->get_related( 'user' ), get_post_meta( $blocks->get_id(), 'wpcamp_speakers', true ) );
+		$this->assertSame( $blocks->get_related( 'user' ), get_post_meta( $blocks->get_id(), 'wpcamp_related_attendees', true ) );
 
 		// Track term was created and assigned.
 		$track = $blocks->get_track();
@@ -301,6 +297,50 @@ class WordCampImportTest extends WP_UnitTestCase {
 	}
 
 	/**
+	 * Sessions link speakers when WordCamp only exposes speaker IDs in meta.
+	 */
+	public function test_session_links_speakers_from_wcpt_speaker_id_meta(): void {
+		$this->queue_two_pages_of_speakers();
+
+		$session = $this->session( 11298, 'Meta Speaker Session', 'Developer', 1780747800, 600, array( 6886 ) );
+		unset( $session['session_speakers'] );
+		$session['meta']['_wcpt_speaker_id'] = array( 6886 );
+
+		$this->responses['sessions:1'] = array(
+			'body'  => wp_json_encode( array( $session ) ),
+			'total' => 1,
+			'pages' => 1,
+		);
+
+		$event    = $this->make_major_wordcamp();
+		$importer = new WordCamp_Importer( $event );
+
+		$this->walk( array( $importer, 'import_speakers_page' ) );
+		$this->walk( array( $importer, 'import_sessions_page' ) );
+
+		$imported = $this->session_by_title( $event->get_sessions(), 'Meta Speaker Session' );
+		$this->assertSame( array( 'Grace Hopper' ), $imported->get_speaker_names() );
+	}
+
+	/**
+	 * Sessions skip speaker references that do not have an imported speaker profile.
+	 */
+	public function test_sessions_skip_missing_speaker_profiles(): void {
+		$this->responses['sessions:1'] = array(
+			'body'  => wp_json_encode( array( $this->session( 11298, 'Missing Speaker Session', 'Developer', 1780747800, 600, array( 6886 ) ) ) ),
+			'total' => 1,
+			'pages' => 1,
+		);
+
+		$event    = $this->make_major_wordcamp();
+		$importer = new WordCamp_Importer( $event );
+
+		$this->walk( array( $importer, 'import_sessions_page' ) );
+		$imported = $this->session_by_title( $event->get_sessions(), 'Missing Speaker Session' );
+		$this->assertSame( array(), $imported->get_speaker_names() );
+	}
+
+	/**
 	 * The client reads pagination metadata from the response headers.
 	 */
 	public function test_client_reports_pagination_from_headers(): void {
@@ -333,7 +373,7 @@ class WordCampImportTest extends WP_UnitTestCase {
 	}
 
 	/**
-	 * The master job fans out one session ability job per flagged event.
+	 * The master job fans out one speaker ability job per flagged event.
 	 */
 	public function test_master_fans_out_independent_jobs_per_flagged_event(): void {
 		$major   = $this->make_major_wordcamp();
@@ -341,55 +381,61 @@ class WordCampImportTest extends WP_UnitTestCase {
 
 		$enqueued = $this->capture_enqueued( static fn() => ( new Import_Scheduler() )->fan_out() );
 
-		$this->assertCount( 1, $enqueued, 'flagged camp should fan out exactly one session job' );
+		$this->assertCount( 1, $enqueued, 'flagged camp should fan out exactly one speaker job' );
 
 		$this->assertSame(
-			array( Import_Scheduler::AS_SESSIONS_HOOK, array( $major->get_id() ) ),
+			array( Import_Scheduler::AS_SPEAKERS_HOOK, array( 'event_id' => $major->get_id() ) ),
 			array( $enqueued[0]['hook'], $enqueued[0]['args'] )
 		);
 		$this->assertNotSame( $curated, $major->get_id() );
 	}
 
 	/**
-	 * The session job runs the session ability, then queues the speaker ability job.
+	 * The speaker job runs the speaker ability, then queues the session ability job.
 	 */
-	public function test_session_job_imports_sessions_then_queues_speaker_job(): void {
+	public function test_speaker_job_imports_speakers_then_queues_session_job(): void {
 		$this->queue_two_pages_of_speakers();
-		$this->queue_two_pages_of_sessions();
 
 		$event     = $this->make_major_wordcamp();
 		$scheduler = new Import_Scheduler();
 
 		$enqueued = $this->capture_enqueued(
 			static function () use ( $scheduler, $event ): void {
-				$scheduler->import_sessions( $event->get_id() );
+				$scheduler->import_speakers( $event->get_id() );
 			}
 		);
 
 		$this->assertSame(
-			array( array( Import_Scheduler::AS_SPEAKERS_HOOK, array( $event->get_id() ) ) ),
+			array( array( Import_Scheduler::AS_SESSIONS_HOOK, array( 'event_id' => $event->get_id() ) ) ),
 			array_map( static fn( array $j ): array => array( $j['hook'], $j['args'] ), $enqueued )
 		);
-
-		$this->assertCount( 3, $event->get_sessions() );
-	}
-
-	/**
-	 * The speaker async job imports speaker profiles through the speaker ability.
-	 */
-	public function test_speaker_job_imports_speaker_profiles(): void {
-		$this->queue_two_pages_of_speakers();
-
-		$event     = $this->make_major_wordcamp();
-		$scheduler = new Import_Scheduler();
-
-		$scheduler->import_speakers( $event->get_id() );
 
 		$this->assertCount( 2, get_users( array( 'meta_key' => 'wpcamp_wordcamp_speaker' ) ) ); // phpcs:ignore WordPress.DB.SlowDBQuery.slow_db_query_meta_key
 	}
 
 	/**
-	 * A non-importable event ID is ignored by the page jobs.
+	 * The session async job imports sessions through the session ability.
+	 */
+	public function test_session_job_imports_sessions_and_relates_imported_speakers(): void {
+		$this->queue_two_pages_of_speakers();
+		$this->queue_two_pages_of_sessions();
+
+		$event     = $this->make_major_wordcamp();
+		$importer  = new WordCamp_Importer( $event );
+		$scheduler = new Import_Scheduler();
+
+		$this->walk( array( $importer, 'import_speakers_page' ) );
+		$scheduler->import_sessions( $event->get_id() );
+
+		$sessions = $event->get_sessions();
+		$this->assertCount( 3, $sessions );
+		$names = $this->session_by_title( $sessions, 'Building Blocks' )->get_speaker_names();
+		sort( $names );
+		$this->assertSame( array( 'Ada Lovelace', 'Grace Hopper' ), $names );
+	}
+
+	/**
+	 * A non-importable event ID is ignored by per-event import jobs.
 	 */
 	public function test_page_jobs_ignore_unflagged_events(): void {
 		$plain = self::factory()->post->create( array( 'post_type' => Data_Structure::POST_TYPE_EVENT ) );
@@ -402,9 +448,9 @@ class WordCampImportTest extends WP_UnitTestCase {
 	}
 
 	/**
-	 * Import abilities are internal, admin-only, and validate event input strictly.
+	 * Import abilities are REST-visible, admin-only, and validate event input strictly.
 	 */
-	public function test_import_abilities_are_internal_admin_only_and_strict(): void {
+	public function test_import_abilities_are_rest_visible_admin_only_and_strict(): void {
 		$admin_id = self::factory()->user->create( array( 'role' => 'administrator' ) );
 		$user_id  = self::factory()->user->create( array( 'role' => 'subscriber' ) );
 
@@ -415,12 +461,21 @@ class WordCampImportTest extends WP_UnitTestCase {
 		wp_set_current_user( $admin_id );
 		$this->assertTrue( Event_Import_Speakers::check_permissions( array( 'event_id' => 1 ) ) );
 		$this->assertTrue( Event_Import_Sessions::check_permissions( array( 'event_id' => 1 ) ) );
-		$this->assertFalse( Event_Import_Speakers::show_rest() );
-		$this->assertFalse( Event_Import_Sessions::show_rest() );
+		$this->assertTrue( Event_Import_Speakers::show_rest() );
+		$this->assertTrue( Event_Import_Sessions::show_rest() );
 
 		$invalid = Event_Import_Speakers::execute( array( 'event_id' => '26' ) );
 		$this->assertWPError( $invalid );
 		$this->assertSame( 'wpcamp_hub_invalid_event_id', $invalid->get_error_code() );
+
+		$extra = Event_Import_Sessions::execute(
+			array(
+				'event_id' => 26,
+				'page'     => 1,
+			)
+		);
+		$this->assertWPError( $extra );
+		$this->assertSame( 'wpcamp_hub_invalid_event_id', $extra->get_error_code() );
 	}
 
 	/**
@@ -444,8 +499,15 @@ class WordCampImportTest extends WP_UnitTestCase {
 		);
 		$this->assertCount( 1, $actions, 'duplicate recurring jobs scheduled' );
 
+		as_enqueue_async_action( 'wpcamp_hub/import_wordcamp_attendees', array(), Import_Scheduler::GROUP, true );
+		as_enqueue_async_action( 'wpcamp_hub/upsert_event_attendees', array(), Import_Scheduler::GROUP, true );
+		as_enqueue_async_action( Import_Scheduler::AS_SESSIONS_HOOK, array( 'event_id' => 26 ), Import_Scheduler::GROUP, true );
+
 		Import_Scheduler::unschedule_daily_import();
 		$this->assertFalse( as_has_scheduled_action( Import_Scheduler::AS_HOOK, array(), Import_Scheduler::GROUP ) );
+		$this->assertFalse( as_has_scheduled_action( 'wpcamp_hub/import_wordcamp_attendees', array(), Import_Scheduler::GROUP ) );
+		$this->assertFalse( as_has_scheduled_action( 'wpcamp_hub/upsert_event_attendees', array(), Import_Scheduler::GROUP ) );
+		$this->assertFalse( as_has_scheduled_action( Import_Scheduler::AS_SESSIONS_HOOK, array( 'event_id' => 26 ), Import_Scheduler::GROUP ) );
 	}
 
 	/**
@@ -557,28 +619,6 @@ class WordCampImportTest extends WP_UnitTestCase {
 			'cookies'  => array(),
 			'filename' => '',
 		);
-	}
-
-	/**
-	 * Look up a single item from the queued page fixtures by source ID.
-	 *
-	 * @param string $resource Resource (sessions|speakers).
-	 * @param int    $id Source post ID.
-	 * @return array<string,mixed>
-	 */
-	private function find_single( string $resource, int $id ): array {
-		foreach ( $this->responses as $key => $canned ) {
-			if ( 0 !== strpos( $key, $resource . ':' ) ) {
-				continue;
-			}
-			foreach ( (array) json_decode( $canned['body'], true ) as $item ) {
-				if ( is_array( $item ) && (int) ( $item['id'] ?? 0 ) === $id ) {
-					return $item;
-				}
-			}
-		}
-
-		return array();
 	}
 
 	/**
