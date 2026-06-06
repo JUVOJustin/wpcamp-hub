@@ -13,6 +13,8 @@ use WPCAMP_HUB\Data\Data_Structure;
 use WPCAMP_HUB\Data\Event;
 use WPCAMP_HUB\Data\Session;
 use WPCAMP_HUB\Data\User_Profile;
+use WPCAMP_HUB\Abilities\Import\Event_Import_Sessions;
+use WPCAMP_HUB\Abilities\Import\Event_Import_Speakers;
 use WPCAMP_HUB\Import\Import_Scheduler;
 use WPCAMP_HUB\Import\WordCamp_Client;
 use WPCAMP_HUB\Import\WordCamp_Importer;
@@ -331,9 +333,7 @@ class WordCampImportTest extends WP_UnitTestCase {
 	}
 
 	/**
-	 * The master job fans out independent speaker AND session imports per
-	 * flagged event only — the two resources do not chain into each other, so
-	 * they can run alongside the attendee import as a 3-way fan-out.
+	 * The master job fans out one session ability job per flagged event.
 	 */
 	public function test_master_fans_out_independent_jobs_per_flagged_event(): void {
 		$major   = $this->make_major_wordcamp();
@@ -341,29 +341,19 @@ class WordCampImportTest extends WP_UnitTestCase {
 
 		$enqueued = $this->capture_enqueued( static fn() => ( new Import_Scheduler() )->fan_out() );
 
-		// One speakers job + one sessions job for the flagged camp; nothing for
-		// the curated (unflagged) event.
-		$this->assertCount( 2, $enqueued, 'flagged camp should fan out exactly two jobs' );
+		$this->assertCount( 1, $enqueued, 'flagged camp should fan out exactly one session job' );
 
-		$hooks = array_column( $enqueued, 'hook' );
-		sort( $hooks );
 		$this->assertSame(
-			array( Import_Scheduler::AS_SESSIONS_HOOK, Import_Scheduler::AS_SPEAKERS_HOOK ),
-			$hooks
+			array( Import_Scheduler::AS_SESSIONS_HOOK, array( $major->get_id() ) ),
+			array( $enqueued[0]['hook'], $enqueued[0]['args'] )
 		);
-
-		foreach ( $enqueued as $job ) {
-			$this->assertSame( array( $major->get_id(), 1 ), $job['args'], 'positional [event_id, page] args' );
-		}
 		$this->assertNotSame( $curated, $major->get_id() );
 	}
 
 	/**
-	 * The per-page jobs import data and self-reschedule page-by-page, exactly as
-	 * Action Scheduler invokes them (positional args). Speakers and sessions are
-	 * independent — neither chains into the other.
+	 * The session job runs the session ability, then queues the speaker ability job.
 	 */
-	public function test_page_jobs_import_data_and_self_reschedule(): void {
+	public function test_session_job_imports_sessions_then_queues_speaker_job(): void {
 		$this->queue_two_pages_of_speakers();
 		$this->queue_two_pages_of_sessions();
 
@@ -372,27 +362,29 @@ class WordCampImportTest extends WP_UnitTestCase {
 
 		$enqueued = $this->capture_enqueued(
 			static function () use ( $scheduler, $event ): void {
-				// Action Scheduler invokes callbacks with array_values() of the
-				// stored args, i.e. positionally — mirror that here.
-				$scheduler->import_speakers( $event->get_id(), 1 ); // page 1 → reschedules page 2.
-				$scheduler->import_speakers( $event->get_id(), 2 ); // last page → no chaining.
-				$scheduler->import_sessions( $event->get_id(), 1 ); // page 1 → reschedules page 2.
-				$scheduler->import_sessions( $event->get_id(), 2 ); // last page → no chaining.
+				$scheduler->import_sessions( $event->get_id() );
 			}
 		);
 
-		// Only the two "next page" jobs are enqueued; speakers never enqueue a
-		// session job and vice versa.
 		$this->assertSame(
-			array(
-				array( Import_Scheduler::AS_SPEAKERS_HOOK, array( $event->get_id(), 2 ) ),
-				array( Import_Scheduler::AS_SESSIONS_HOOK, array( $event->get_id(), 2 ) ),
-			),
+			array( array( Import_Scheduler::AS_SPEAKERS_HOOK, array( $event->get_id() ) ) ),
 			array_map( static fn( array $j ): array => array( $j['hook'], $j['args'] ), $enqueued )
 		);
 
-		// Data actually landed and is linked to the event.
 		$this->assertCount( 3, $event->get_sessions() );
+	}
+
+	/**
+	 * The speaker async job imports speaker profiles through the speaker ability.
+	 */
+	public function test_speaker_job_imports_speaker_profiles(): void {
+		$this->queue_two_pages_of_speakers();
+
+		$event     = $this->make_major_wordcamp();
+		$scheduler = new Import_Scheduler();
+
+		$scheduler->import_speakers( $event->get_id() );
+
 		$this->assertCount( 2, get_users( array( 'meta_key' => 'wpcamp_wordcamp_speaker' ) ) ); // phpcs:ignore WordPress.DB.SlowDBQuery.slow_db_query_meta_key
 	}
 
@@ -403,10 +395,32 @@ class WordCampImportTest extends WP_UnitTestCase {
 		$plain = self::factory()->post->create( array( 'post_type' => Data_Structure::POST_TYPE_EVENT ) );
 
 		$enqueued = $this->capture_enqueued(
-			static fn() => ( new Import_Scheduler() )->import_speakers( $plain, 1 )
+			static fn() => ( new Import_Scheduler() )->import_sessions( $plain )
 		);
 
 		$this->assertCount( 0, $enqueued, 'unflagged event must not schedule work' );
+	}
+
+	/**
+	 * Import abilities are internal, admin-only, and validate event input strictly.
+	 */
+	public function test_import_abilities_are_internal_admin_only_and_strict(): void {
+		$admin_id = self::factory()->user->create( array( 'role' => 'administrator' ) );
+		$user_id  = self::factory()->user->create( array( 'role' => 'subscriber' ) );
+
+		wp_set_current_user( $user_id );
+		$this->assertFalse( Event_Import_Speakers::check_permissions( array( 'event_id' => 1 ) ) );
+		$this->assertFalse( Event_Import_Sessions::check_permissions( array( 'event_id' => 1 ) ) );
+
+		wp_set_current_user( $admin_id );
+		$this->assertTrue( Event_Import_Speakers::check_permissions( array( 'event_id' => 1 ) ) );
+		$this->assertTrue( Event_Import_Sessions::check_permissions( array( 'event_id' => 1 ) ) );
+		$this->assertFalse( Event_Import_Speakers::show_rest() );
+		$this->assertFalse( Event_Import_Sessions::show_rest() );
+
+		$invalid = Event_Import_Speakers::execute( array( 'event_id' => '26' ) );
+		$this->assertWPError( $invalid );
+		$this->assertSame( 'wpcamp_hub_invalid_event_id', $invalid->get_error_code() );
 	}
 
 	/**

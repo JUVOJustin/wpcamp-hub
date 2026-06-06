@@ -7,7 +7,6 @@
 
 namespace WPCAMP_HUB\Import;
 
-use WPCAMP_HUB\Data\Data_Structure;
 use WPCAMP_HUB\Data\Event;
 use WPCAMP_HUB\Data\Relationships;
 use WPCAMP_HUB\Data\User_Profile;
@@ -17,77 +16,8 @@ use WPCAMP_HUB\Data\User_Profile;
  */
 class WordCamp_Attendee_Importer {
 
-	public const string AS_HOOK                   = 'wpcamp_hub/import_wordcamp_attendees';
-	public const string AS_EVENT_HOOK             = 'wpcamp_hub/upsert_event_attendees';
-	public const string AS_GROUP                  = 'wpcamp-hub';
 	private const float MIN_AI_PROFILE_CONFIDENCE = 0.6;
 	private const int AI_HTML_CONTEXT_LIMIT       = 20000;
-
-	/**
-	 * Register the recurring importer job when Action Scheduler is ready.
-	 */
-	public function schedule_daily_import(): void {
-		if ( ! function_exists( 'as_next_scheduled_action' ) || ! function_exists( 'as_schedule_recurring_action' ) ) {
-			return;
-		}
-
-		if ( false !== as_next_scheduled_action( self::AS_HOOK, array(), self::AS_GROUP ) ) {
-			return;
-		}
-
-		as_schedule_recurring_action(
-			time() + HOUR_IN_SECONDS,
-			DAY_IN_SECONDS,
-			self::AS_HOOK,
-			array(),
-			self::AS_GROUP,
-			true
-		);
-	}
-
-	/**
-	 * Remove pending importer jobs.
-	 */
-	public static function unschedule_daily_import(): void {
-		if ( ! function_exists( 'as_unschedule_all_actions' ) ) {
-			return;
-		}
-
-		as_unschedule_all_actions( self::AS_HOOK, array(), self::AS_GROUP );
-		as_unschedule_all_actions( self::AS_EVENT_HOOK, array(), self::AS_GROUP );
-	}
-
-	/**
-	 * Queue individual imports for events that have an attendees page configured.
-	 */
-	public function import_scheduled_events(): void {
-		foreach ( $this->get_event_attendee_pages() as $event_id => $attendees_url ) {
-			$this->queue_event_import( (int) $event_id, $attendees_url );
-		}
-	}
-
-	/**
-	 * Queue one event attendee import unless an equivalent action is already pending.
-	 *
-	 * @param int    $event_id Event post ID.
-	 * @param string $attendees_url WordCamp attendees page URL.
-	 */
-	private function queue_event_import( int $event_id, string $attendees_url ): void {
-		if ( ! function_exists( 'as_enqueue_async_action' ) || ! function_exists( 'as_has_scheduled_action' ) ) {
-			return;
-		}
-
-		if ( ! self::is_allowed_attendees_url( $attendees_url ) ) {
-			return;
-		}
-
-		$args = array( $event_id, $attendees_url );
-		if ( false !== as_has_scheduled_action( self::AS_EVENT_HOOK, $args, self::AS_GROUP ) ) {
-			return;
-		}
-
-		as_enqueue_async_action( self::AS_EVENT_HOOK, $args, self::AS_GROUP, true );
-	}
 
 	/**
 	 * Fetch and import attendees for one event.

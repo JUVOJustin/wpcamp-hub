@@ -1,37 +1,36 @@
 <?php
 /**
- * Action Scheduler wiring for the daily WordCamp schedule/speaker import.
+ * Action Scheduler wiring for the daily WordCamp schedule import.
  *
  * @package WPCAMP_HUB
  */
 
 namespace WPCAMP_HUB\Import;
 
+use WPCAMP_HUB\Abilities\Import\Event_Import_Sessions;
+use WPCAMP_HUB\Abilities\Import\Event_Import_Speakers;
+use WPCAMP_HUB\Abilities\Import\Event_Import_Attendees;
 use WPCAMP_HUB\Data\Event;
 
 /**
- * Schedules and runs the recurring WordCamp session and speaker import.
+ * Schedules and runs the recurring WordCamp session import.
  *
  * The work is split into bounded Action Scheduler jobs in the shared
  * {@see GROUP} group:
  *
  *  - A single daily {@see AS_HOOK} master job scans every event flagged as a
  *    major WordCamp and fans out per-event imports.
- *  - {@see AS_SPEAKERS_HOOK} (`event_id`, `page`) imports one page of speakers
- *    and reschedules itself for the next page.
- *  - {@see AS_SESSIONS_HOOK} (`event_id`, `page`) imports one page of sessions
- *    and reschedules itself for the next page.
+ *  - {@see AS_SESSIONS_HOOK} (`event_id`) invokes the internal
+ *    `wpcamp-hub/event-import-sessions` ability, then queues the speaker job
+ *    only after the session ability succeeds.
+ *  - {@see AS_SPEAKERS_HOOK} (`event_id`) invokes the internal
+ *    `wpcamp-hub/event-import-speakers` ability.
+ *  - {@see AS_ATTENDEES_HOOK} (`event_id`) invokes the internal
+ *    `wpcamp-hub/event-import-attendees` ability.
  *
- * Speakers and sessions are scheduled as **independent** per-event jobs — they
- * do not chain into one another. A session that references a speaker not yet
- * imported fetches that speaker on demand, so the two resources can run in any
- * order or in parallel. This mirrors the WordCamp attendee importer
- * ({@see \WPCAMP_HUB\Import\WordCamp_Attendee_Importer}) so all three resources
- * (schedule, speakers, attendees) can later be driven by one master sync job
- * that fans out three independent jobs per event.
- *
- * Page-at-a-time scheduling keeps each job small and lets Action Scheduler
- * retry a single failed page without re-running an entire camp.
+ * The import logic lives in internal Abilities API operations with
+ * administrator-only permissions; Action Scheduler only decides when those
+ * operations run asynchronously.
  */
 class Import_Scheduler {
 
@@ -41,14 +40,19 @@ class Import_Scheduler {
 	public const string AS_HOOK = 'wpcamp_hub/import_wordcamp_schedule';
 
 	/**
-	 * Per-event, per-page speaker import.
+	 * Per-event session import.
+	 */
+	public const string AS_SESSIONS_HOOK = 'wpcamp_hub/import_wordcamp_event_sessions';
+
+	/**
+	 * Per-event speaker import.
 	 */
 	public const string AS_SPEAKERS_HOOK = 'wpcamp_hub/import_wordcamp_event_speakers';
 
 	/**
-	 * Per-event, per-page session import.
+	 * Per-event attendee import.
 	 */
-	public const string AS_SESSIONS_HOOK = 'wpcamp_hub/import_wordcamp_event_sessions';
+	public const string AS_ATTENDEES_HOOK = 'wpcamp_hub/import_wordcamp_event_attendees';
 
 	/**
 	 * Action Scheduler group shared by all WPCamp Hub import jobs.
@@ -63,8 +67,9 @@ class Import_Scheduler {
 	 */
 	public function register_hooks(): void {
 		add_action( self::AS_HOOK, array( $this, 'fan_out' ) );
-		add_action( self::AS_SPEAKERS_HOOK, array( $this, 'import_speakers' ), 10, 2 );
-		add_action( self::AS_SESSIONS_HOOK, array( $this, 'import_sessions' ), 10, 2 );
+		add_action( self::AS_SESSIONS_HOOK, array( $this, 'import_sessions' ), 10, 1 );
+		add_action( self::AS_SPEAKERS_HOOK, array( $this, 'import_speakers' ), 10, 1 );
+		add_action( self::AS_ATTENDEES_HOOK, array( $this, 'import_attendees' ), 10, 1 );
 	}
 
 	/**
@@ -93,7 +98,7 @@ class Import_Scheduler {
 	}
 
 	/**
-	 * Remove all scheduled schedule/speaker import jobs. Call on deactivation.
+	 * Remove all scheduled session import jobs. Call on deactivation.
 	 */
 	public static function unschedule_daily_import(): void {
 		if ( ! function_exists( 'as_unschedule_all_actions' ) ) {
@@ -101,12 +106,13 @@ class Import_Scheduler {
 		}
 
 		as_unschedule_all_actions( self::AS_HOOK, array(), self::GROUP );
-		as_unschedule_all_actions( self::AS_SPEAKERS_HOOK, array(), self::GROUP );
 		as_unschedule_all_actions( self::AS_SESSIONS_HOOK, array(), self::GROUP );
+		as_unschedule_all_actions( self::AS_SPEAKERS_HOOK, array(), self::GROUP );
+		as_unschedule_all_actions( self::AS_ATTENDEES_HOOK, array(), self::GROUP );
 	}
 
 	/**
-	 * Master job: queue independent speaker and session imports per flagged camp.
+	 * Master job: queue session imports per flagged camp.
 	 */
 	public function fan_out(): void {
 		foreach ( Event::major_wordcamps() as $event ) {
@@ -115,97 +121,106 @@ class Import_Scheduler {
 	}
 
 	/**
-	 * Queue the per-event speaker and session imports for a single event.
-	 *
-	 * Public so a future unified master sync can fan a single event out to all
-	 * of its resources (schedule, speakers, attendees) in one place.
+	 * Queue per-event session and attendee imports for a single event.
 	 *
 	 * @param int $event_id Event post ID.
 	 */
 	public function queue_event_import( int $event_id ): void {
-		$this->enqueue( self::AS_SPEAKERS_HOOK, $event_id, 1 );
-		$this->enqueue( self::AS_SESSIONS_HOOK, $event_id, 1 );
+		$this->enqueue( self::AS_SESSIONS_HOOK, $event_id );
+		if ( $this->has_attendees_url( $event_id ) ) {
+			$this->enqueue( self::AS_ATTENDEES_HOOK, $event_id );
+		}
 	}
 
 	/**
-	 * Import one page of speakers for an event, then continue to the next page.
+	 * Import sessions, then queue the speaker ability job after success.
 	 *
 	 * @param int $event_id Event post ID.
-	 * @param int $page 1-based page number.
 	 */
-	public function import_speakers( int $event_id, int $page ): void {
-		$importer = $this->importer_for( $event_id );
-		if ( null === $importer ) {
+	public function import_sessions( int $event_id ): void {
+		if ( ! $this->is_importable_event( $event_id ) ) {
 			return;
 		}
 
-		$result = $importer->import_speakers_page( $page );
-
-		$next = $result->next_page();
-		if ( null !== $next ) {
-			$this->enqueue( self::AS_SPEAKERS_HOOK, $event_id, $next );
-		}
-	}
-
-	/**
-	 * Import one page of sessions for an event, then continue to the next page.
-	 *
-	 * @param int $event_id Event post ID.
-	 * @param int $page 1-based page number.
-	 */
-	public function import_sessions( int $event_id, int $page ): void {
-		$importer = $this->importer_for( $event_id );
-		if ( null === $importer ) {
+		$result = Event_Import_Sessions::execute( array( 'event_id' => $event_id ) );
+		if ( is_wp_error( $result ) ) {
 			return;
 		}
 
-		$result = $importer->import_sessions_page( $page );
-
-		$next = $result->next_page();
-		if ( null !== $next ) {
-			$this->enqueue( self::AS_SESSIONS_HOOK, $event_id, $next );
-		}
+		$this->enqueue( self::AS_SPEAKERS_HOOK, $event_id );
 	}
 
 	/**
-	 * Build an importer for an event, or null when it is not importable.
+	 * Import speakers for an event through the internal speakers ability.
 	 *
 	 * @param int $event_id Event post ID.
-	 * @return WordCamp_Importer|null
 	 */
-	private function importer_for( int $event_id ): ?WordCamp_Importer {
+	public function import_speakers( int $event_id ): void {
+		if ( ! $this->is_importable_event( $event_id ) ) {
+			return;
+		}
+
+		Event_Import_Speakers::execute( array( 'event_id' => $event_id ) );
+	}
+
+	/**
+	 * Import attendees for an event through the attendee ability.
+	 *
+	 * @param int $event_id Event post ID.
+	 */
+	public function import_attendees( int $event_id ): void {
+		if ( ! $this->has_attendees_url( $event_id ) ) {
+			return;
+		}
+
+		Event_Import_Attendees::execute( array( 'event_id' => $event_id ) );
+	}
+
+	/**
+	 * Determine whether an event can be imported.
+	 *
+	 * @param int $event_id Event post ID.
+	 */
+	private function is_importable_event( int $event_id ): bool {
 		if ( Event::get_post_type() !== get_post_type( $event_id ) ) {
-			return null;
+			return false;
 		}
 
 		$event = Event::from( $event_id );
-		if ( ! $event->is_major_wordcamp() || '' === $event->get_official_url() ) {
-			return null;
+
+		return $event->is_major_wordcamp() && '' !== $event->get_official_url();
+	}
+
+	/**
+	 * Determine whether an event has a configured attendees URL.
+	 *
+	 * @param int $event_id Event post ID.
+	 */
+	private function has_attendees_url( int $event_id ): bool {
+		if ( Event::get_post_type() !== get_post_type( $event_id ) ) {
+			return false;
 		}
 
-		try {
-			return new WordCamp_Importer( $event );
-		} catch ( \Throwable $e ) {
-			return null;
-		}
+		$value = get_post_meta( $event_id, 'wpcamp_attendees_url', true );
+
+		return is_string( $value ) && '' !== esc_url_raw( $value );
 	}
 
 	/**
 	 * Enqueue a single one-off page job (unless an identical one is pending).
 	 *
-	 * Args are stored positionally (`[event_id, page]`) — Action Scheduler
+	 * Args are stored positionally (`[event_id]`) — Action Scheduler
 	 * invokes the callback with `array_values()` of the stored args.
 	 *
 	 * @param string $hook Action hook.
 	 * @param int    $event_id Event post ID.
-	 * @param int    $page Page number.
 	 */
-	private function enqueue( string $hook, int $event_id, int $page ): void {
+	private function enqueue( string $hook, int $event_id ): void {
 		if ( ! function_exists( 'as_enqueue_async_action' ) || ! function_exists( 'as_has_scheduled_action' ) ) {
 			return;
 		}
 
-		$args = array( $event_id, $page );
+		$args = array( $event_id );
 		if ( false !== as_has_scheduled_action( $hook, $args, self::GROUP ) ) {
 			return;
 		}

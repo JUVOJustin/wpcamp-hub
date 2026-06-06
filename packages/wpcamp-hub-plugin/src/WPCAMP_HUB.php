@@ -14,8 +14,10 @@
 namespace WPCAMP_HUB;
 
 use WPCAMP_HUB\API\REST_API_Authentication;
+use WPCAMP_HUB\Abilities\Import\Event_Import_Attendees;
+use WPCAMP_HUB\Abilities\Import\Event_Import_Sessions;
+use WPCAMP_HUB\Abilities\Import\Event_Import_Speakers;
 use WPCAMP_HUB\Data\Data_Structure;
-use WPCAMP_HUB\Import\WordCamp_Attendee_Importer;
 
 /**
  * The core plugin class.
@@ -50,13 +52,6 @@ class WPCAMP_HUB {
 	 * @var Data_Structure
 	 */
 	protected Data_Structure $data_structure;
-
-	/**
-	 * WordCamp attendee import orchestration.
-	 *
-	 * @var WordCamp_Attendee_Importer
-	 */
-	protected WordCamp_Attendee_Importer $attendee_importer;
 
 	/**
 	 * REST API authentication policy.
@@ -97,7 +92,6 @@ class WPCAMP_HUB {
 
 		$this->loader                  = new Loader();
 		$this->data_structure          = new Data_Structure();
-		$this->attendee_importer       = new WordCamp_Attendee_Importer();
 		$this->rest_api_authentication = new REST_API_Authentication();
 	}
 
@@ -171,10 +165,6 @@ class WPCAMP_HUB {
 
 		$this->loader->add_action( 'init', $this->data_structure, 'register' );
 		$this->loader->add_filter( 'rest_authentication_errors', $this->rest_api_authentication, 'require_authentication_for_all_rest_api_requests', 11, 1 );
-		$this->loader->add_action( 'action_scheduler_init', $this->attendee_importer, 'schedule_daily_import', 10, 0 );
-		$this->loader->add_action( WordCamp_Attendee_Importer::AS_HOOK, $this->attendee_importer, 'import_scheduled_events', 10, 0 );
-		$this->loader->add_action( WordCamp_Attendee_Importer::AS_EVENT_HOOK, $this->attendee_importer, 'import_event_attendees', 10, 2 );
-
 		// Community tweet feed — AJAX-paginated archive cards.
 		$tweet_feed = new \WPCAMP_HUB\Frontend\Tweet_Feed();
 		$this->loader->add_action( 'wp_ajax_' . \WPCAMP_HUB\Frontend\Tweet_Feed::AJAX_ACTION, $tweet_feed, 'ajax_feed', 10, 0 );
@@ -184,7 +174,9 @@ class WPCAMP_HUB {
 		$import_scheduler = new \WPCAMP_HUB\Import\Import_Scheduler();
 		$import_scheduler->register_hooks();
 		$this->loader->add_action( 'action_scheduler_init', $import_scheduler, 'schedule_daily_import', 10, 0 );
-		$this->loader->add_cli( 'wpcamp-hub', new \WPCAMP_HUB\Import\Import_CLI(), array( 'shortdesc' => 'WPCamp Hub commands.' ) );
+		$this->loader->add_ability( Event_Import_Speakers::class );
+		$this->loader->add_ability( Event_Import_Sessions::class );
+		$this->loader->add_ability( Event_Import_Attendees::class );
 
 		add_action(
 			'wp_enqueue_scripts',
