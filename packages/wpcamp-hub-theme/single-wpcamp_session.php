@@ -56,16 +56,24 @@ if ( have_posts() ) :
 
 			<section class="wpch-attendees__hero">
 				<div class="wpch-attendees__inner">
-					<?php if ( $wpch_track ) : ?>
+					<?php if ( null !== $wpch_event ) : ?>
 						<div class="wpch-attendees__eyebrow">
-							<span class="wpch-session__track-dot" style="--wpch-track:<?php echo esc_attr( $wpch_accent ); ?>" aria-hidden="true"></span>
-							<?php echo esc_html( $wpch_track->get_name() ); ?>
+							<a href="<?php echo esc_url( (string) get_permalink( $wpch_event->get_id() ) ); ?>">
+								<?php echo esc_html( get_the_title( $wpch_event->get_id() ) ); ?>
+							</a>
 						</div>
 					<?php endif; ?>
 
 					<h1 class="wpch-attendees__title"><?php the_title(); ?></h1>
 
 					<div class="wpch-event__meta wpch-session__meta">
+						<?php if ( $wpch_track ) : ?>
+							<span class="wpch-event__metaitem">
+								<span class="wpch-session__track-dot" style="--wpch-track:<?php echo esc_attr( $wpch_accent ); ?>" aria-hidden="true"></span>
+								<?php echo esc_html( $wpch_track->get_name() ); ?>
+							</span>
+						<?php endif; ?>
+
 						<?php if ( '' !== $wpch_when ) : ?>
 							<span class="wpch-event__metaitem">
 								<?php echo wpcamp_hub_icon( 'clock', 15 ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- trusted inline SVG from the theme icon set. ?>
@@ -83,15 +91,6 @@ if ( have_posts() ) :
 								);
 								echo esc_html( implode( ', ', array_filter( $wpch_names ) ) );
 								?>
-							</span>
-						<?php endif; ?>
-
-						<?php if ( null !== $wpch_event ) : ?>
-							<span class="wpch-event__metaitem">
-								<?php echo wpcamp_hub_icon( 'calendar', 15 ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- trusted inline SVG from the theme icon set. ?>
-								<a href="<?php echo esc_url( (string) get_permalink( $wpch_event->get_id() ) ); ?>">
-									<?php echo esc_html( get_the_title( $wpch_event->get_id() ) ); ?>
-								</a>
 							</span>
 						<?php endif; ?>
 					</div>
