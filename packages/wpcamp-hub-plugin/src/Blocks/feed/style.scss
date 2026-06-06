@@ -15,6 +15,19 @@
 		box-sizing: border-box;
 	}
 
+	/**
+	 * Full-bleed background. When the block is set to Full width, span the whole
+	 * viewport so the section background always reaches both window edges — even
+	 * when the surrounding container is constrained or narrow (the theme's
+	 * alignfull alone does not cover that case). The inner element still caps
+	 * the content at content-size.
+	 */
+	&.alignfull {
+		width: 100vw;
+		max-width: 100vw;
+		margin-inline: calc( 50% - 50vw );
+	}
+
 	.wpch-feeds__inner {
 		max-width: var( --wp--style--global--content-size, 1200px );
 		margin: 0 auto;
