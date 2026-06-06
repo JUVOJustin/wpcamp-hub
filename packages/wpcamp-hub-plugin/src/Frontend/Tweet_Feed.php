@@ -129,12 +129,16 @@ class Tweet_Feed {
 		$stamp  = $tweet->get_timestamp();
 		$event  = $tweet->get_event();
 
-		$handle_line = '' !== $handle ? '@' . $handle : '';
+		// We rarely have a real display name, so the primary line is the handle
+		// (falling back to the name/title only when no handle is stored). The
+		// subline then carries just the relative time.
+		$display = '' !== $handle ? '@' . $handle : $name;
+
+		$time_line = '';
 		if ( $stamp instanceof \DateTimeImmutable ) {
 			$ago = human_time_diff( $stamp->getTimestamp(), time() );
 			/* translators: %s: human time difference, e.g. "2 hours". */
-			$ago_text    = sprintf( __( '%s ago', 'wpcamp-hub' ), $ago );
-			$handle_line = '' !== $handle_line ? $handle_line . ' · ' . $ago_text : $ago_text;
+			$time_line = sprintf( __( '%s ago', 'wpcamp-hub' ), $ago );
 		}
 
 		$icon = sprintf(
@@ -146,7 +150,7 @@ class Tweet_Feed {
 			'',
 			38,
 			'',
-			$name,
+			$display,
 			array(
 				'class'         => 'wpch-feed__avatar',
 				'force_display' => true,
@@ -178,9 +182,9 @@ class Tweet_Feed {
 			<div class="wpch-feed__head">
 				<?php echo $avatar; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- get_avatar() returns escaped markup. ?>
 				<div class="wpch-feed__person">
-					<div class="wpch-feed__author"><?php echo esc_html( $name ); ?></div>
-					<?php if ( '' !== $handle_line ) : ?>
-						<div class="wpch-feed__handle"><?php echo esc_html( $handle_line ); ?></div>
+					<div class="wpch-feed__author"><?php echo esc_html( $display ); ?></div>
+					<?php if ( '' !== $time_line ) : ?>
+						<div class="wpch-feed__handle"><?php echo esc_html( $time_line ); ?></div>
 					<?php endif; ?>
 				</div>
 			</div>
