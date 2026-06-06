@@ -82,6 +82,11 @@ $heading  = (string) ( $attributes['heading'] ?? '' );
 $lead     = (string) ( $attributes['lead'] ?? '' );
 $date     = $resolve( (string) ( $attributes['dateLabel'] ?? '' ), $ev_date );
 
+// CTA links: a manually-entered URL always wins; otherwise the event-derived
+// link (official URL / sessions page). A button renders only when it has a URL.
+$tickets_url = $resolve( (string) ( $attributes['ticketsUrl'] ?? '' ), $tickets_url );
+$explore_url = $resolve( (string) ( $attributes['exploreUrl'] ?? '' ), $explore_url );
+
 $show_badge    = ! empty( $attributes['showBadge'] );
 $tickets_label = (string) ( $attributes['ticketsLabel'] ?? __( 'Get tickets', 'wpcamp-hub' ) );
 $explore_label = (string) ( $attributes['exploreLabel'] ?? __( 'Explore events', 'wpcamp-hub' ) );

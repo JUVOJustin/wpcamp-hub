@@ -54,9 +54,17 @@
 			"type": "string",
 			"default": "Get tickets"
 		},
+		"ticketsUrl": {
+			"type": "string",
+			"default": ""
+		},
 		"exploreLabel": {
 			"type": "string",
 			"default": "Explore events"
+		},
+		"exploreUrl": {
+			"type": "string",
+			"default": ""
 		},
 		"imageId": {
 			"type": "number"

@@ -44,7 +44,9 @@ export default function Edit( { attributes, setAttributes } ) {
 		showBadge,
 		goingSubtext,
 		ticketsLabel,
+		ticketsUrl,
 		exploreLabel,
+		exploreUrl,
 		imageId,
 		imageUrl,
 		imageAlt,
@@ -162,14 +164,19 @@ export default function Edit( { attributes, setAttributes } ) {
 					) }
 				</PanelBody>
 				<PanelBody
-					title={ __( 'Call-to-action labels', 'wpcamp-hub' ) }
+					title={ __( 'Call to action', 'wpcamp-hub' ) }
 					initialOpen={ false }
 				>
 					<p style={ { marginTop: 0 } }>
-						{ __(
-							'Tickets links to the event’s official URL; Explore links to its sessions page. Buttons hide automatically when their link is unavailable.',
-							'wpcamp-hub'
-						) }
+						{ linkedEvent
+							? __(
+									'Leave a link empty to auto-use the linked event (Tickets → official URL, Explore → sessions page). A button hides when it has no link.',
+									'wpcamp-hub'
+							  )
+							: __(
+									'Set a link for each button. A button hides when it has no link.',
+									'wpcamp-hub'
+							  ) }
 					</p>
 					<TextControl
 						label={ __( 'Tickets label', 'wpcamp-hub' ) }
@@ -180,11 +187,35 @@ export default function Edit( { attributes, setAttributes } ) {
 						__nextHasNoMarginBottom
 					/>
 					<TextControl
+						label={ __( 'Tickets link', 'wpcamp-hub' ) }
+						type="url"
+						value={ ticketsUrl || '' }
+						placeholder={
+							linkedEvent
+								? __( 'Event official URL', 'wpcamp-hub' )
+								: 'https://'
+						}
+						onChange={ ( v ) => setAttributes( { ticketsUrl: v } ) }
+						__nextHasNoMarginBottom
+					/>
+					<TextControl
 						label={ __( 'Explore label', 'wpcamp-hub' ) }
 						value={ exploreLabel || '' }
 						onChange={ ( v ) =>
 							setAttributes( { exploreLabel: v } )
 						}
+						__nextHasNoMarginBottom
+					/>
+					<TextControl
+						label={ __( 'Explore link', 'wpcamp-hub' ) }
+						type="url"
+						value={ exploreUrl || '' }
+						placeholder={
+							linkedEvent
+								? __( 'Event sessions page', 'wpcamp-hub' )
+								: 'https://'
+						}
+						onChange={ ( v ) => setAttributes( { exploreUrl: v } ) }
 						__nextHasNoMarginBottom
 					/>
 				</PanelBody>
