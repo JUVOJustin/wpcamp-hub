@@ -18,18 +18,15 @@ use WPCAMP_HUB\Data\User_Profile;
 class WordCamp_Attendee_Importer {
 
 	public const string AS_HOOK                   = 'wpcamp_hub/import_wordcamp_attendees';
-	public const string AS_EVENT_HOOK             = 'wpcamp_hub/import_wordcamp_event_attendees';
+	public const string AS_EVENT_HOOK             = 'wpcamp_hub/upsert_event_attendees';
 	public const string AS_GROUP                  = 'wpcamp-hub';
 	private const float MIN_AI_PROFILE_CONFIDENCE = 0.6;
+	private const int AI_HTML_CONTEXT_LIMIT       = 30000;
 
 	/**
 	 * Register the recurring importer job when Action Scheduler is ready.
 	 */
 	public function schedule_daily_import(): void {
-		if ( ! function_exists( 'as_next_scheduled_action' ) || ! function_exists( 'as_schedule_recurring_action' ) ) {
-			return;
-		}
-
 		if ( false !== as_next_scheduled_action( self::AS_HOOK, array(), self::AS_GROUP ) ) {
 			return;
 		}
@@ -48,10 +45,8 @@ class WordCamp_Attendee_Importer {
 	 * Remove pending importer jobs.
 	 */
 	public static function unschedule_daily_import(): void {
-		if ( function_exists( 'as_unschedule_all_actions' ) ) {
-			as_unschedule_all_actions( self::AS_HOOK, array(), self::AS_GROUP );
-			as_unschedule_all_actions( self::AS_EVENT_HOOK, array(), self::AS_GROUP );
-		}
+		as_unschedule_all_actions( self::AS_HOOK, array(), self::AS_GROUP );
+		as_unschedule_all_actions( self::AS_EVENT_HOOK, array(), self::AS_GROUP );
 	}
 
 	/**
@@ -70,7 +65,7 @@ class WordCamp_Attendee_Importer {
 	 * @param string $attendees_url WordCamp attendees page URL.
 	 */
 	private function queue_event_import( int $event_id, string $attendees_url ): void {
-		if ( ! function_exists( 'as_enqueue_async_action' ) || ! function_exists( 'as_has_scheduled_action' ) ) {
+		if ( ! self::is_allowed_attendees_url( $attendees_url ) ) {
 			return;
 		}
 
@@ -88,19 +83,30 @@ class WordCamp_Attendee_Importer {
 	 * @param int    $event_id Event post ID.
 	 * @param string $attendees_url WordCamp attendees page URL.
 	 * @return list<int> Imported attendee user IDs.
+	 * @throws \RuntimeException When fetch fails or import fails.
 	 */
 	public function import_event_attendees( int $event_id, string $attendees_url ): array {
-		$response = wp_remote_get(
+		if ( ! self::is_allowed_attendees_url( $attendees_url ) ) {
+			throw new \RuntimeException( 'Disallowed attendees URL: ' . esc_url_raw( $attendees_url ) );
+		}
+
+		$response = wp_safe_remote_get(
 			$attendees_url,
 			array(
-				'timeout'     => 20,
-				'redirection' => 5,
-				'user-agent'  => 'WPCamp Hub/' . ( defined( 'WPCAMP_HUB_VERSION' ) ? WPCAMP_HUB_VERSION : '1.0.0' ),
+				'timeout'            => 20,
+				'redirection'        => 5,
+				'reject_unsafe_urls' => true,
+				'user-agent'         => 'WPCamp Hub/' . ( defined( 'WPCAMP_HUB_VERSION' ) ? WPCAMP_HUB_VERSION : '1.0.0' ),
 			)
 		);
 
-		if ( is_wp_error( $response ) || 200 !== wp_remote_retrieve_response_code( $response ) ) {
-			return array();
+		if ( is_wp_error( $response ) ) {
+			throw new \RuntimeException( 'Failed to fetch attendees page: ' . esc_html( $response->get_error_message() ) );
+		}
+
+		$status_code = wp_remote_retrieve_response_code( $response );
+		if ( 200 !== $status_code ) {
+			throw new \RuntimeException( 'Attendees page returned HTTP status: ' . absint( $status_code ) );
 		}
 
 		return $this->import_attendees_from_html( $event_id, wp_remote_retrieve_body( $response ), $attendees_url );
@@ -141,18 +147,21 @@ class WordCamp_Attendee_Importer {
 	 * @param string $html Attendees page HTML.
 	 * @param string $source_url Source attendees page URL.
 	 * @return array{wporg_usernames:array<string,string>,gravatar_hashes:array<string,string>,identity_groups:list<array<string,mixed>>}
+	 * @throws \RuntimeException When AI profile discovery fails.
 	 */
 	public function extract_identity_urls( string $html, string $source_url = '' ): array {
 		$ai_profile = $this->discover_ai_parsing_profile( $html, $source_url );
-		if ( null === $ai_profile ) {
-			return array(
-				'wporg_usernames' => array(),
-				'gravatar_hashes' => array(),
-				'identity_groups' => array(),
-			);
-		}
 
 		return $this->extract_identity_urls_with_profile( $html, $ai_profile );
+	}
+
+	/**
+	 * Validate that scheduled attendee fetches use a public URL shape accepted by WordPress.
+	 *
+	 * @param string $url Candidate attendees page URL.
+	 */
+	public static function is_allowed_attendees_url( string $url ): bool {
+		return false !== wp_http_validate_url( $url );
 	}
 
 	/**
@@ -296,13 +305,14 @@ class WordCamp_Attendee_Importer {
 	}
 
 	/**
-	 * Discover an attendee wrapper profile with the WordPress AI Client when available.
+	 * Discover an attendee wrapper profile with the WordPress AI Client.
 	 *
 	 * @param string $html Attendees page HTML.
 	 * @param string $source_url Source attendees page URL.
-	 * @return array<string,mixed>|null
+	 * @return array<string,mixed>
+	 * @throws \RuntimeException When AI client is available but fails to generate a valid profile.
 	 */
-	private function discover_ai_parsing_profile( string $html, string $source_url ): ?array {
+	private function discover_ai_parsing_profile( string $html, string $source_url ): array {
 		$filtered_profile = apply_filters(
 			'wpcamp_hub_attendee_importer_ai_parsing_profile',
 			null,
@@ -311,52 +321,171 @@ class WordCamp_Attendee_Importer {
 		);
 
 		if ( is_array( $filtered_profile ) ) {
-			return $this->validate_ai_parsing_profile( $filtered_profile );
+			$validated = $this->validate_ai_parsing_profile( $filtered_profile );
+			if ( null !== $validated ) {
+				return $validated;
+			}
 		}
 
-		if ( '' === $source_url || ! function_exists( 'wp_ai_client_prompt' ) ) {
-			return null;
+		$static_profile = $this->discover_static_parsing_profile( $html );
+		if ( null !== $static_profile ) {
+			return $static_profile;
+		}
+
+		if ( '' === $source_url ) {
+			throw new \RuntimeException( 'No source URL available and no static parsing profile matched' );
 		}
 
 		$cache_key      = 'wpcamp_hub_ai_parser_' . md5( $source_url );
 		$cached_profile = get_transient( $cache_key );
 		if ( is_array( $cached_profile ) ) {
-			return $this->validate_ai_parsing_profile( $cached_profile );
+			$validated = $this->validate_ai_parsing_profile( $cached_profile );
+			if ( null !== $validated ) {
+				return $validated;
+			}
 		}
 
-		$profile = $this->generate_ai_parsing_profile( $html, $source_url );
-		if ( null !== $profile ) {
-			set_transient( $cache_key, $profile, WEEK_IN_SECONDS );
-		}
-
+		$profile = $this->generate_ai_parsing_profile( $html );
+		set_transient( $cache_key, $profile, WEEK_IN_SECONDS );
 		return $profile;
+	}
+
+	/**
+	 * Recognize common attendee page structures that do not need AI discovery.
+	 *
+	 * @param string $html Attendees page HTML.
+	 * @return array<string,mixed>|null
+	 */
+	private function discover_static_parsing_profile( string $html ): ?array {
+		if ( ! str_contains( $html, 'tix-attendee-list' ) ) {
+			return null;
+		}
+
+		return array(
+			'item_tag'   => 'li',
+			'confidence' => 1.0,
+		);
 	}
 
 	/**
 	 * Ask the WordPress AI Client for a deterministic parsing profile.
 	 *
 	 * @param string $html Attendees page HTML.
-	 * @param string $source_url Source attendees page URL.
-	 * @return array<string,mixed>|null
+	 * @return array<string,mixed>
+	 * @throws \RuntimeException When AI client fails or returns invalid response.
 	 */
-	private function generate_ai_parsing_profile( string $html, string $source_url ): ?array {
+	private function generate_ai_parsing_profile( string $html ): array {
 		$prompt = sprintf(
-			"%s\n\nSource URL: %s\n\nHTML structure sample:\n%s",
+			"%s\n\nFetched HTML context, truncated to the first %d characters:\n%s",
 			$this->ai_parser_system_instruction(),
-			$source_url,
-			$this->html_structure_sample( $html )
+			self::AI_HTML_CONTEXT_LIMIT,
+			$this->ai_html_context( $html )
 		);
 
 		// @phpstan-ignore-next-line The WordPress AI Client function is provided by WordPress 7.0.
 		$json = wp_ai_client_prompt( $prompt )
 			->as_json_response( $this->ai_parsing_profile_schema() )
 			->generate_text();
-		if ( is_wp_error( $json ) || ! is_string( $json ) ) {
-			return null;
+		if ( is_wp_error( $json ) ) {
+			throw new \RuntimeException( 'AI parsing profile generation failed: ' . esc_html( $json->get_error_message() ) );
+		}
+		if ( ! is_string( $json ) ) {
+			throw new \RuntimeException( 'AI parsing profile generation returned invalid response type' );
 		}
 
 		$decoded = json_decode( $json, true );
-		return is_array( $decoded ) ? $this->validate_ai_parsing_profile( $decoded ) : null;
+		if ( ! is_array( $decoded ) ) {
+			throw new \RuntimeException( 'AI parsing profile generation returned invalid JSON' );
+		}
+
+		$validated = $this->validate_ai_parsing_profile( $decoded );
+		if ( null === $validated ) {
+			throw new \RuntimeException( 'AI parsing profile validation failed: confidence too low or invalid structure' );
+		}
+
+		return $validated;
+	}
+
+	/**
+	 * Return the bounded fetched page context sent to the AI parser.
+	 *
+	 * @param string $html Attendees page HTML.
+	 */
+	private function ai_html_context( string $html ): string {
+		$clean_html = $this->clean_html_for_ai( $html );
+
+		if ( function_exists( 'mb_substr' ) ) {
+			return mb_substr( $clean_html, 0, self::AI_HTML_CONTEXT_LIMIT );
+		}
+
+		return substr( $clean_html, 0, self::AI_HTML_CONTEXT_LIMIT );
+	}
+
+	/**
+	 * Clean HTML for AI parsing by extracting only the body content.
+	 *
+	 * @param string $html Raw HTML.
+	 * @return string Body HTML.
+	 */
+	private function clean_html_for_ai( string $html ): string {
+		$processor  = \WP_HTML_Processor::create_full_parser( $html );
+		$body_html  = '';
+		$in_body    = false;
+		$skip_tag   = '';
+		$skip_depth = 0;
+
+		while ( $processor->next_token() ) {
+			$tag_name   = strtoupper( (string) $processor->get_tag() );
+			$token_type = $processor->get_token_type();
+
+			if ( 'BODY' === $tag_name && ! $processor->is_tag_closer() ) {
+				$in_body = true;
+				continue;
+			}
+			if ( 'BODY' === $tag_name && $processor->is_tag_closer() ) {
+				break;
+			}
+			if ( ! $in_body ) {
+				continue;
+			}
+
+			if ( '#text' === $token_type && '' !== $skip_tag ) {
+				continue;
+			}
+
+			if ( '#tag' === $token_type ) {
+				if ( '' !== $skip_tag ) {
+					if ( $tag_name === $skip_tag && $processor->is_tag_closer() ) {
+						--$skip_depth;
+						if ( 0 === $skip_depth ) {
+							$skip_tag = '';
+						}
+					} elseif ( $tag_name === $skip_tag && ! $processor->is_tag_closer() ) {
+						++$skip_depth;
+					}
+					continue;
+				}
+
+				if ( ! $processor->is_tag_closer() ) {
+					if ( in_array( $tag_name, array( 'SCRIPT', 'STYLE', 'NOSCRIPT', 'IFRAME' ), true ) ) {
+						$token = $processor->serialize_token();
+						if ( str_contains( strtolower( $token ), '</' . strtolower( $tag_name ) . '>' ) ) {
+							continue;
+						}
+						$skip_tag   = $tag_name;
+						$skip_depth = 1;
+						continue;
+					}
+				}
+			}
+			if ( '#funky-comment' === $token_type ) {
+				continue;
+			}
+
+			$body_html .= $processor->serialize_token();
+		}
+
+		return $body_html;
 	}
 
 	/**
@@ -480,49 +609,6 @@ class WordCamp_Attendee_Importer {
 			'confidence'       => $confidence,
 			'reason'           => isset( $profile['reason'] ) && is_string( $profile['reason'] ) ? $profile['reason'] : '',
 		);
-	}
-
-	/**
-	 * Build a compact structural sample for the AI prompt.
-	 *
-	 * @param string $html Attendees page HTML.
-	 */
-	private function html_structure_sample( string $html ): string {
-		$processor  = new \WP_HTML_Tag_Processor( $html );
-		$lines      = array();
-		$tags       = array( 'UL', 'OL', 'LI', 'DIV', 'ARTICLE', 'SECTION', 'A', 'IMG' );
-		$line_count = 0;
-
-		while ( $processor->next_token() && $line_count < 220 ) {
-			$tag_name = (string) $processor->get_tag();
-			if ( $processor->is_tag_closer() || ! in_array( $tag_name, $tags, true ) ) {
-				continue;
-			}
-
-			$lines[] = $this->html_structure_sample_line( $processor, $tag_name );
-			++$line_count;
-		}
-
-		return implode( "\n", $lines );
-	}
-
-	/**
-	 * Build one compact structural sample line.
-	 *
-	 * @param \WP_HTML_Tag_Processor $processor HTML processor.
-	 * @param string                 $tag_name Tag name.
-	 */
-	private function html_structure_sample_line( \WP_HTML_Tag_Processor $processor, string $tag_name ): string {
-		$attributes = array();
-
-		foreach ( array( 'id', 'class', 'href', 'src' ) as $attribute ) {
-			$value = $processor->get_attribute( $attribute );
-			if ( is_string( $value ) && '' !== $value ) {
-				$attributes[] = $attribute . '="' . esc_attr( wp_html_excerpt( $value, 140, '...' ) ) . '"';
-			}
-		}
-
-		return '<' . strtolower( $tag_name ) . ( empty( $attributes ) ? '' : ' ' . implode( ' ', $attributes ) ) . '>';
 	}
 
 	/**

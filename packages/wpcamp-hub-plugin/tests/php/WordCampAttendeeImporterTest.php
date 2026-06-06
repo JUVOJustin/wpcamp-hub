@@ -36,10 +36,8 @@ class WordCampAttendeeImporterTest extends WP_UnitTestCase {
 	 * Cleanup scheduled jobs and HTTP mocks.
 	 */
 	public function tear_down(): void {
-		if ( function_exists( 'as_unschedule_all_actions' ) ) {
-			as_unschedule_all_actions( WordCamp_Attendee_Importer::AS_HOOK, array(), WordCamp_Attendee_Importer::AS_GROUP );
-			as_unschedule_all_actions( WordCamp_Attendee_Importer::AS_EVENT_HOOK, array(), WordCamp_Attendee_Importer::AS_GROUP );
-		}
+		as_unschedule_all_actions( WordCamp_Attendee_Importer::AS_HOOK, array(), WordCamp_Attendee_Importer::AS_GROUP );
+		as_unschedule_all_actions( WordCamp_Attendee_Importer::AS_EVENT_HOOK, array(), WordCamp_Attendee_Importer::AS_GROUP );
 
 		remove_all_filters( 'pre_http_request' );
 		remove_all_filters( 'wpcamp_hub_attendee_importer_ai_parsing_profile' );
@@ -165,6 +163,26 @@ class WordCampAttendeeImporterTest extends WP_UnitTestCase {
 	}
 
 	/**
+	 * Camptix attendee lists can be parsed without calling the AI Client.
+	 */
+	public function test_extract_identity_urls_uses_static_camptix_profile_without_ai_request(): void {
+		$importer = new WordCamp_Attendee_Importer();
+		$signals  = $importer->extract_identity_urls(
+			$this->germany_2023_attendees_html(),
+			'https://example.com/attendees/'
+		);
+
+		$this->assertSame(
+			array(
+				self::HASH_GERMANY_ONE => 'https://secure.gravatar.com/avatar/' . self::HASH_GERMANY_ONE . '?s=96&d=mm&r=g',
+				self::HASH_GERMANY_TWO => 'https://secure.gravatar.com/avatar/' . self::HASH_GERMANY_TWO . '?s=96&d=mm&r=g',
+			),
+			$signals['gravatar_hashes']
+		);
+		$this->assertCount( 2, $signals['identity_groups'] );
+	}
+
+	/**
 	 * Germany 2023 row context is carried into the resolved attendee payload.
 	 */
 	public function test_extract_attendees_uses_germany_2023_li_context_for_profile_links(): void {
@@ -253,6 +271,41 @@ class WordCampAttendeeImporterTest extends WP_UnitTestCase {
 		);
 
 		$this->assertCount( 1, $actions );
+	}
+
+	/**
+	 * Attendee page crawls accept public URLs that WordPress considers safe to fetch.
+	 */
+	public function test_allowed_attendees_url_accepts_public_http_urls(): void {
+		$this->assertTrue( WordCamp_Attendee_Importer::is_allowed_attendees_url( self::ATTENDEES_URL ) );
+		$this->assertTrue( WordCamp_Attendee_Importer::is_allowed_attendees_url( 'https://example.com/attendees/' ) );
+
+		$this->assertFalse( WordCamp_Attendee_Importer::is_allowed_attendees_url( 'ftp://example.com/attendees/' ) );
+		$this->assertFalse( WordCamp_Attendee_Importer::is_allowed_attendees_url( 'https://127.0.0.1/private/' ) );
+	}
+
+	/**
+	 * Disallowed attendee URLs are rejected before the HTTP API can fetch them.
+	 */
+	public function test_import_event_attendees_rejects_disallowed_url_before_http_request(): void {
+		$requests = 0;
+		add_filter(
+			'pre_http_request',
+			static function ( false|array|\WP_Error $preempt ) use ( &$requests ): false|array|\WP_Error {
+				++$requests;
+				return $preempt;
+			}
+		);
+
+		$importer = new WordCamp_Attendee_Importer();
+		$this->expectException( RuntimeException::class );
+		$this->expectExceptionMessage( 'Disallowed attendees URL' );
+
+		try {
+			$importer->import_event_attendees( 123, 'https://127.0.0.1/private/' );
+		} finally {
+			$this->assertSame( 0, $requests );
+		}
 	}
 
 	/**

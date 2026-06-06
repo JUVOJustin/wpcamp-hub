@@ -12,13 +12,14 @@ Page markup, text, CSS classes, and element proximity must not decide whether tw
 
 ## Flow
 
-1. Fetch each configured attendees page.
-2. Discover structural parsing rules for attendee rows with the WordPress AI Client.
-3. Scrape supported URLs from the full HTML document.
-4. Extract identity signals from those URLs.
-5. Preserve row-level context when the page exposes one attendee per repeated wrapper.
-6. Merge identities that appear in the same parsed attendee row.
-7. Upsert attendee users and relate them to the event.
+1. Validate each configured attendees page URL with WordPress safe HTTP URL rules.
+2. Fetch each configured attendees page.
+3. Discover structural parsing rules for attendee rows with a deterministic Camptix fallback or the WordPress AI Client.
+4. Scrape supported URLs from the full HTML document.
+5. Extract identity signals from those URLs.
+6. Preserve row-level context when the page exposes one attendee per repeated wrapper.
+7. Merge identities that appear in the same parsed attendee row.
+8. Upsert attendee users and relate them to the event.
 
 ## Scheduling
 
@@ -31,11 +32,14 @@ wpcamp_hub/import_wordcamp_attendees
 That dispatcher finds events with a `wpcamp_attendees_url` value and queues one crawl job per event:
 
 ```text
-wpcamp_hub/import_wordcamp_event_attendees
+wpcamp_hub/upsert_event_attendees
 ```
 
 Each event crawl action receives the event ID and attendees URL as arguments. This keeps the daily schedule stable
 while allowing individual event pages to crawl independently in the Action Scheduler queue.
+
+The importer only queues and fetches URLs accepted by WordPress' safe HTTP URL validation. This supports public
+attendee pages on any host while rejecting unsafe URL shapes before the scheduled server-side request runs.
 
 ## URL Extraction
 
@@ -60,9 +64,10 @@ while keeping URL extraction as the only source of imported attendee data.
 
 ## AI-Assisted Structural Profiles
 
-The importer uses the WordPress AI Client to identify the repeated wrapper for one attendee.
-The AI request is intentionally limited to schema discovery. It receives a compact structural HTML sample and returns
-a parsing profile such as:
+The importer first recognizes common Camptix attendee lists by the `tix-attendee-list` marker and uses each `<li>` as
+one attendee row. For other page structures, it uses the WordPress AI Client to identify the repeated wrapper for one
+attendee. The AI request is used only for schema discovery. It receives the first 20,000 characters of the fetched
+public attendees page HTML and returns a parsing profile such as:
 
 ```json
 {
@@ -73,9 +78,10 @@ a parsing profile such as:
 }
 ```
 
-The AI response is not used as attendee data and does not decide identity relationships. PHP validates the profile,
-then the normal HTML processor extracts only accepted URLs from inside each repeated wrapper. If the AI Client,
-provider, model, or returned confidence is unavailable, the importer does not parse or upsert attendees from that page.
+The source attendees URL is not included in the prompt. The AI response is not used as attendee data and does not
+decide identity relationships. PHP validates the profile, then the normal HTML processor extracts only accepted URLs
+from inside each repeated wrapper. Recognized Camptix lists can be processed without an AI request; other page
+structures require a valid AI parsing profile.
 
 The prompt uses `as_json_response( $schema )` so the AI Client returns a structured JSON parsing profile.
 
@@ -112,8 +118,8 @@ Keep the API key out of git by creating `packages/wpcamp-hub-plugin/.wp-env.over
 Restart `wp-env` after adding or changing the key so the generated `wp-config.php` contains the constant.
 
 In CI, the application-test job writes the same ignored override file before `wp-env` starts when a repository secret
-named `OPENAI_API_KEY` is available. Pull requests without that secret still run the deterministic unit fixtures by
-injecting parsing profiles through the test filter, but runtime imports require AI-generated parsing rules.
+named `OPENAI_API_KEY` is available. Pull requests without that secret still run deterministic unit fixtures by
+injecting parsing profiles through the test filter and by exercising Camptix parsing that does not need an AI request.
 
 ## Grouping And Decoupling
 
