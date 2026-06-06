@@ -64,7 +64,11 @@ class Attendees_Page {
 	}
 
 	/**
-	 * Load the attendees template for the subpage, falling back gracefully.
+	 * Point WordPress at the theme's attendees template for the subpage.
+	 *
+	 * Rendering is a theme concern: the plugin only routes the request. When the
+	 * active theme provides `attendees-wpcamp_event.php` it is used; otherwise
+	 * WordPress falls back to its normal single-event template.
 	 *
 	 * @param string $template Template path resolved by WordPress.
 	 * @return string
@@ -74,14 +78,8 @@ class Attendees_Page {
 			return $template;
 		}
 
-		// Prefer a theme-provided template; otherwise ship a default with the plugin.
 		$located = locate_template( array( 'attendees-wpcamp_event.php' ) );
-		if ( '' !== $located ) {
-			return $located;
-		}
 
-		$bundled = WPCAMP_HUB_PATH . 'templates/attendees-wpcamp_event.php';
-
-		return is_readable( $bundled ) ? $bundled : $template;
+		return '' !== $located ? $located : $template;
 	}
 }

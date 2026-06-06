@@ -6,10 +6,11 @@
  * the people listed are exactly those related to this event through the
  * platform relationship map ({@see \WPCAMP_HUB\Data\Event::get_attendees()}).
  *
- * Bundled fallback template; a theme may override it with
- * `attendees-wpcamp_event.php`.
+ * Routed here by the plugin's Attendees_Page (rewrite endpoint) via
+ * `template_include` → `locate_template()`. Requires the WPCamp Hub plugin for
+ * the Event/User_Profile entities.
  *
- * @package WPCAMP_HUB
+ * @package wpcamp-hub
  */
 
 use WPCAMP_HUB\Data\Event;
@@ -26,24 +27,12 @@ $wpch_event    = class_exists( Event::class ) ? Event::from( $wpch_event_id ) : 
 $wpch_people   = $wpch_event ? $wpch_event->get_attendees() : array();
 $wpch_title    = get_the_title( $wpch_event_id );
 
-// Self-contained initials fallback (the bundled template must not depend on
-// theme helper functions, which may be absent under another theme).
-$wpch_initials = static function ( string $name ): string {
-	$name  = trim( $name );
-	$parts = preg_split( '/\s+/', $name ) ?: array();
-	$first = isset( $parts[0] ) ? mb_substr( $parts[0], 0, 1 ) : '';
-	$last  = count( $parts ) > 1 ? mb_substr( (string) end( $parts ), 0, 1 ) : '';
-
-	return strtoupper( $first . $last );
-};
-
 /**
  * Render one attendee card, mirroring the prototype PersonCard.
  *
  * @param User_Profile $person Attendee profile.
- * @param callable     $initials Initials fallback renderer.
  */
-$wpch_render_card = static function ( User_Profile $person, callable $initials ): void {
+$wpch_render_card = static function ( User_Profile $person ): void {
 	$name    = $person->get_display_name();
 	$company = $person->get_company();
 	$role    = $person->get_role();
@@ -63,7 +52,7 @@ $wpch_render_card = static function ( User_Profile $person, callable $initials )
 			<?php if ( '' !== $avatar ) : ?>
 				<img class="wpch-att-card__avatar" src="<?php echo esc_url( $avatar ); ?>" alt="" width="52" height="52" loading="lazy" decoding="async" />
 			<?php else : ?>
-				<span class="wpch-att-card__avatar wpch-att-card__avatar--initials" aria-hidden="true"><?php echo esc_html( $initials( $name ) ); ?></span>
+				<span class="wpch-att-card__avatar wpch-att-card__avatar--initials" aria-hidden="true"><?php echo esc_html( wpcamp_hub_initials( $name ) ); ?></span>
 			<?php endif; ?>
 			<div class="wpch-att-card__person">
 				<h3 class="wpch-att-card__name"><?php echo esc_html( $name ); ?></h3>
@@ -105,7 +94,7 @@ $wpch_render_card = static function ( User_Profile $person, callable $initials )
 			<div class="wpch-attendees__toolbar">
 				<h2 class="wpch-attendees__subtitle"><?php esc_html_e( 'Everyone going', 'wpcamp-hub' ); ?></h2>
 				<div class="wpch-attendees__search">
-					<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="m21 21-4.34-4.34"/><circle cx="11" cy="11" r="8"/></svg>
+					<?php echo wpcamp_hub_icon( 'search', 18 ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- trusted inline SVG from the theme icon set. ?>
 					<input
 						type="search"
 						class="wpch-attendees__search-input"
@@ -119,7 +108,7 @@ $wpch_render_card = static function ( User_Profile $person, callable $initials )
 				<div class="wpch-attendees__grid">
 					<?php
 					foreach ( $wpch_people as $wpch_person ) :
-						$wpch_render_card( $wpch_person, $wpch_initials );
+						$wpch_render_card( $wpch_person );
 					endforeach;
 					?>
 				</div>
@@ -128,7 +117,7 @@ $wpch_render_card = static function ( User_Profile $person, callable $initials )
 				</p>
 			<?php else : ?>
 				<div class="wpch-attendees__empty">
-					<svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><path d="M16 3.128a4 4 0 0 1 0 7.744"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><circle cx="9" cy="7" r="4"/></svg>
+					<?php echo wpcamp_hub_icon( 'users', 32 ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- trusted inline SVG from the theme icon set. ?>
 					<p><?php esc_html_e( 'No attendees yet for this event.', 'wpcamp-hub' ); ?></p>
 				</div>
 			<?php endif; ?>
