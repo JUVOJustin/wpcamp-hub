@@ -495,7 +495,18 @@ a { color: var(--brand); text-decoration: none; }
   display: grid; min-width: 640px;
   grid-template-columns: 64px repeat(var(--tt-cols, 3), minmax(170px, 1fr));
 }
-.wpch-tt__head { position: sticky; top: 0; z-index: 3; background: #fff; }
+
+/* Time-proportional grid: blocks are placed explicitly (grid-row spans the
+   session's duration), so concurrent sessions sit side by side and longer ones
+   visibly overlap the shorter slots running next to them. Empty room columns
+   render full-height rule cells so the grid still reads when a slot is empty. */
+.wpch-tt__col-rule {
+  border-left: 1px solid var(--line-soft); z-index: 0;
+}
+
+.wpch-tt__head {
+  position: sticky; top: 0; z-index: 4; background: #fff; grid-row: 1;
+}
 .wpch-tt__cell-head {
   padding: 14px 14px 12px;
   border-bottom: 1px solid var(--line); border-left: 1px solid var(--line-soft);
@@ -503,23 +514,24 @@ a { color: var(--brand); text-decoration: none; }
 }
 .wpch-tt__corner { border-bottom: 1px solid var(--line); }
 .wpch-tt__time {
-  grid-column: 1; font: 600 12px var(--font-mono); color: var(--ink-500);
-  padding: 10px 8px; text-align: right; border-top: 1px solid var(--line-soft);
+  font: 600 12px var(--font-mono); color: var(--ink-500);
+  padding: 6px 8px 0; text-align: right; border-top: 1px solid var(--line-soft);
 }
-.wpch-tt__track {
-  border-left: 1px solid var(--line-soft); border-top: 1px solid var(--line-soft);
-  padding: 6px; position: relative; min-height: 64px;
+/* faint horizontal rule across each time band (drawn from the time column) */
+.wpch-tt--grid .wpch-tt__time::after {
+  content: ""; position: absolute; left: 64px; right: 0; height: 1px;
+  margin-top: -6px; background: var(--line-soft); z-index: 0;
 }
 .wpch-tt__block {
   --wpch-track: var(--wp--preset--color--brand, #3858e9);
   display: flex; flex-direction: column; gap: 4px;
-  height: 100%; padding: 9px 11px; border-radius: 8px;
+  margin: 4px; padding: 9px 11px; border-radius: 8px; overflow: hidden;
   border: 1px solid var(--line); border-left: 4px solid var(--wpch-track);
   background: color-mix(in srgb, var(--wpch-track) 9%, #fff);
-  text-decoration: none; color: inherit;
+  text-decoration: none; color: inherit; z-index: 2;
   transition: box-shadow .15s ease, transform .12s ease;
 }
-.wpch-tt__block:hover { box-shadow: var(--shadow-sm); transform: translateY(-1px); }
+.wpch-tt__block:hover { box-shadow: var(--shadow-sm); transform: translateY(-1px); z-index: 3; }
 .wpch-tt__type { font: 700 11px var(--font-mono); color: var(--wpch-track); }
 .wpch-tt__title { font-weight: 700; font-size: 13.5px; line-height: 1.25; color: var(--ink-900); }
 .wpch-tt__meta { font: 500 11px var(--font-mono); color: var(--ink-500); }
