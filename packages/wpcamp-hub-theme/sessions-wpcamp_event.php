@@ -161,6 +161,7 @@ usort( $wpch_rows, static fn( array $a, array $b ): int => $a['ts'] <=> $b['ts']
 						foreach ( $tt_day_labels as $i => $day_label ) :
 							$day        = $tt_days[ $day_label ];
 							$track_cols = $day['tracks']; // track name → colour.
+							ksort( $track_cols, SORT_NATURAL | SORT_FLAG_CASE ); // columns ordered by track name.
 							$tracks     = array_keys( $track_cols );
 							$col_index  = array_flip( $tracks ); // track name → 0-based index.
 							$cols       = count( $tracks );
@@ -208,6 +209,13 @@ usort( $wpch_rows, static fn( array $a, array $b ): int => $a['ts'] <=> $b['ts']
 										<?php // Full-height column rules so empty bands still read as a grid. ?>
 										<?php foreach ( $tracks as $ti => $track ) : ?>
 											<div class="wpch-tt__col-rule" style="grid-column:<?php echo esc_attr( (string) ( $ti + 2 ) ); ?>;grid-row:2 / -1;"></div>
+										<?php endforeach; ?>
+
+										<?php // Full-width horizontal rule at each time boundary (skip the first; the header border covers it). ?>
+										<?php foreach ( $bounds as $bi => $minutes ) : ?>
+											<?php if ( $bi > 0 ) : ?>
+												<div class="wpch-tt__row-line" style="grid-row:<?php echo esc_attr( (string) ( $bi + 2 ) ); ?>;"></div>
+											<?php endif; ?>
 										<?php endforeach; ?>
 
 										<?php // Time labels down the first column, one per boundary line. ?>

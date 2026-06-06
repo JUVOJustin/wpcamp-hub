@@ -498,35 +498,35 @@ a { color: var(--brand); text-decoration: none; }
 
 /* Time-proportional grid: blocks are placed explicitly (grid-row spans the
    session's duration), so concurrent sessions sit side by side and longer ones
-   visibly overlap the shorter slots running next to them. Empty room columns
-   render full-height rule cells so the grid still reads when a slot is empty. */
+   visibly overlap the shorter slots running next to them.
+
+   Gridlines are drawn without doubling: vertical rules come only from the
+   full-height column cells (border-left), horizontal rules only from full-width
+   row lines (border-top). Headers and time labels carry no borders of their own. */
 .wpch-tt__col-rule {
   border-left: 1px solid var(--line-soft); z-index: 0;
+}
+.wpch-tt__row-line {
+  grid-column: 1 / -1; border-top: 1px solid var(--line-soft); z-index: 0;
 }
 
 .wpch-tt__head {
   position: sticky; top: 0; z-index: 4; background: #fff; grid-row: 1;
+  border-bottom: 1px solid var(--line);
 }
 .wpch-tt__cell-head {
   --wpch-track: var(--wp--preset--color--brand, #3858e9);
   display: flex; align-items: center; gap: 8px;
   padding: 14px 14px 12px;
-  border-bottom: 1px solid var(--line); border-left: 1px solid var(--line-soft);
   font-weight: 700; font-size: 14px; color: var(--ink-900);
 }
 .wpch-tt__col-dot {
   flex: none; width: 9px; height: 9px; border-radius: 50%;
   background: var(--wpch-track);
 }
-.wpch-tt__corner { border-bottom: 1px solid var(--line); }
 .wpch-tt__time {
   font: 600 12px var(--font-mono); color: var(--ink-500);
-  padding: 6px 8px 0; text-align: right; border-top: 1px solid var(--line-soft);
-}
-/* faint horizontal rule across each time band (drawn from the time column) */
-.wpch-tt--grid .wpch-tt__time::after {
-  content: ""; position: absolute; left: 64px; right: 0; height: 1px;
-  margin-top: -6px; background: var(--line-soft); z-index: 0;
+  padding: 6px 8px 0; text-align: right; z-index: 1;
 }
 .wpch-tt__block {
   --wpch-track: var(--wp--preset--color--brand, #3858e9);
