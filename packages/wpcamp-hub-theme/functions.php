@@ -214,6 +214,8 @@ function wpcamp_hub_icon_paths() {
 		'globe'      => '<circle cx="12" cy="12" r="10"/><path d="M12 2a14.5 14.5 0 0 0 0 20 14.5 14.5 0 0 0 0-20"/><path d="M2 12h20"/>',
 		'mic'        => '<path d="M12 19v3"/><path d="M19 10v2a7 7 0 0 1-14 0v-2"/><rect x="9" y="2" width="6" height="13" rx="3"/>',
 		'x'          => '<path d="M18 6 6 18"/><path d="m6 6 12 12"/>',
+		'external-link' => '<path d="M15 3h6v6"/><path d="M10 14 21 3"/><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/>',
+		'arrow-left' => '<path d="m12 19-7-7 7-7"/><path d="M19 12H5"/>',
 	);
 }
 

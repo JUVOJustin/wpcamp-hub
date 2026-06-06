@@ -98,7 +98,15 @@ $wpch_render_card = static function ( User_Profile $person, array $event_session
 <main class="wpch-attendees wpch-speakers">
 	<section class="wpch-attendees__hero">
 		<div class="wpch-attendees__inner">
-			<div class="wpch-attendees__eyebrow"><?php echo esc_html( $wpch_title ); ?></div>
+			<div class="wpch-attendees__eyebrow">
+				<a class="wpch-attendees__back" href="<?php echo esc_url( (string) get_permalink( $wpch_event_id ) ); ?>">
+					<?php echo wpcamp_hub_icon( 'arrow-left', 14 ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- trusted inline SVG from the theme icon set. ?>
+					<?php
+					/* translators: %s: event title. */
+					echo esc_html( sprintf( __( 'Back to %s', 'wpcamp-hub' ), $wpch_title ) );
+					?>
+				</a>
+			</div>
 			<h1 class="wpch-attendees__title"><?php esc_html_e( 'Speakers', 'wpcamp-hub' ); ?></h1>
 			<p class="wpch-attendees__lead">
 				<?php
