@@ -17,6 +17,17 @@
 		box-sizing: border-box;
 	}
 
+	/**
+	 * Full-bleed band. When set to Full width, span the whole viewport so the
+	 * band tint reaches both window edges even inside a constrained or narrow
+	 * parent. The inner element keeps the content at content-size.
+	 */
+	&.alignfull {
+		width: 100vw;
+		max-width: 100vw;
+		margin-inline: calc( 50% - 50vw );
+	}
+
 	.wpch-intro__inner {
 		max-width: var( --wp--style--global--content-size, 1200px );
 		margin: 0 auto;

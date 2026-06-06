@@ -22,7 +22,6 @@ class User_Profile extends User_Entity {
 	 */
 	public static function create_attendee( string $identifier, string $name ): self {
 		$slug = sanitize_user( $identifier, true );
-
 		// Suppress WordPress' new-user notification emails — these are imported
 		// profiles, not real sign-ups. A random password is supplied so WordPress
 		// does not emit a "user_pass is required" notice; the profiles never

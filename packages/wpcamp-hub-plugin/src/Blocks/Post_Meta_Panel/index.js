@@ -3,12 +3,12 @@ import { useEntityProp } from '@wordpress/core-data';
 import { useSelect } from '@wordpress/data';
 import { useState } from '@wordpress/element';
 import { PluginDocumentSettingPanel } from '@wordpress/editor';
-import { __ } from '@wordpress/i18n';
+import { __, sprintf } from '@wordpress/i18n';
 import { registerPlugin } from '@wordpress/plugins';
 import {
 	BaseControl,
-	Button,
 	ComboboxControl,
+	FormTokenField,
 	__experimentalInputControl as InputControl,
 	__experimentalInputControlPrefixWrapper as InputControlPrefixWrapper,
 	TextControl,
@@ -74,6 +74,22 @@ const getFieldLabel = ( metaKey ) =>
 		.replace( /_/g, ' ' )
 		.replace( /\b\w/g, ( letter ) => letter.toUpperCase() );
 
+const getRelationHelp = ( label, multiple ) => {
+	const relationLabel = label.toLowerCase();
+
+	return multiple
+		? sprintf(
+				/* translators: %s: relation field label, such as related tweets. */
+				__( 'Search and select one or more %s.', 'wpcamp-hub' ),
+				relationLabel
+		  )
+		: sprintf(
+				/* translators: %s: relation field label, such as related event. */
+				__( 'Search and select a %s.', 'wpcamp-hub' ),
+				relationLabel
+		  );
+};
+
 const toIntegerList = ( value ) =>
 	String( value )
 		.split( ',' )
@@ -127,6 +143,9 @@ const getFallbackRelationOption = ( id ) => ( {
 	value: String( id ),
 } );
 
+const getTokenValue = ( token ) =>
+	typeof token === 'string' ? token : token?.value;
+
 const mergeRelationOptions = ( ...optionGroups ) => {
 	const optionsByValue = new Map();
 
@@ -137,6 +156,9 @@ const mergeRelationOptions = ( ...optionGroups ) => {
 	return [ ...optionsByValue.values() ];
 };
 
+const normalizeOptionValue = ( value ) =>
+	typeof value === 'string' ? value : '';
+
 const toRelationIds = ( value, multiple ) => {
 	const values = multiple && Array.isArray( value ) ? value : [ value ];
 
@@ -145,15 +167,26 @@ const toRelationIds = ( value, multiple ) => {
 		.filter( ( id ) => Number.isInteger( id ) && id > 0 );
 };
 
-function AsyncRelationControl( {
-	help,
-	label,
-	metaKey,
-	multiple,
-	onChange,
-	target,
-	value,
-} ) {
+/**
+ * Loads relation targets from core-data and stores only their numeric IDs.
+ *
+ * Migration note: multi-value relations currently use `FormTokenField` because
+ * the Storybook "Design System / Form Primitives / Combobox" API is not exposed
+ * as a public `@wordpress/components` export in the WordPress runtime this
+ * plugin builds against. When WordPress exposes that primitive through
+ * `wp-components` or a stable package export, replace the `multiple` branch
+ * below with the primitive combobox, pass `multiple`, keep `selectedIds` as the
+ * controlled value, map option labels through `getRelationOption()`, and keep
+ * `onFilterValueChange`/equivalent wired to `setQuery` for async searching.
+ *
+ * @param {Object}   root0          Component props.
+ * @param {string}   root0.label    Visible field label.
+ * @param {boolean}  root0.multiple Whether the field stores multiple relation IDs.
+ * @param {Function} root0.onChange Receives the next relation ID or ID array.
+ * @param {string}   root0.target   REST entity target for relation searches.
+ * @param {*}        root0.value    Current meta value from the editor store.
+ */
+function AsyncRelationControl( { label, multiple, onChange, target, value } ) {
 	const [ query, setQuery ] = useState( '' );
 	const selectedIds = toRelationIds( value, multiple );
 	const selectedIdsKey = selectedIds.join( ',' );
@@ -205,6 +238,21 @@ function AsyncRelationControl( {
 			options.find( ( option ) => option.value === String( id ) ) ||
 			getFallbackRelationOption( id )
 	);
+	const getRelationLabel = ( relationId ) =>
+		options.find( ( option ) => option.value === relationId )?.label ||
+		relationId;
+	const updateMultipleSelection = ( nextTokens ) => {
+		const validOptionValues = new Set(
+			options.map( ( option ) => option.value )
+		);
+		const nextIds = nextTokens
+			.map( getTokenValue )
+			.filter( ( tokenValue ) => validOptionValues.has( tokenValue ) )
+			.map( ( tokenValue ) => Number.parseInt( tokenValue, 10 ) )
+			.filter( ( id ) => Number.isInteger( id ) && id > 0 );
+
+		onChange( [ ...new Set( nextIds ) ] );
+	};
 	const updateSelection = ( nextValue ) => {
 		const nextId = Number.parseInt( nextValue, 10 );
 
@@ -224,6 +272,57 @@ function AsyncRelationControl( {
 		setQuery( '' );
 	};
 
+	return multiple ? (
+		<FormTokenField
+			__next40pxDefaultSize
+			__nextHasNoMarginBottom
+			__experimentalExpandOnFocus
+			__experimentalShowHowTo={ false }
+			__experimentalValidateInput={ ( tokenValue ) =>
+				options.some( ( option ) => option.value === tokenValue )
+			}
+			disabled={ isLoading }
+			displayTransform={ getRelationLabel }
+			help={ getRelationHelp( label, multiple ) }
+			label={ label }
+			onChange={ updateMultipleSelection }
+			onInputChange={ setQuery }
+			placeholder={ __( 'Search relations', 'wpcamp-hub' ) }
+			suggestions={ options
+				.filter(
+					( option ) =>
+						! selectedIds.includes(
+							Number.parseInt( option.value, 10 )
+						)
+				)
+				.map( ( option ) => option.value ) }
+			value={ selectedOptions.map( ( option ) => option.value ) }
+		/>
+	) : (
+		<ComboboxControl
+			__next40pxDefaultSize
+			__nextHasNoMarginBottom
+			allowReset
+			help={ getRelationHelp( label, multiple ) }
+			isLoading={ isLoading }
+			label={ label }
+			onChange={ updateSelection }
+			onFilterValueChange={ setQuery }
+			options={ options }
+			placeholder={ __( 'Search relations', 'wpcamp-hub' ) }
+			value={ selectedOptions[ 0 ]?.value || '' }
+		/>
+	);
+}
+
+function OptionComboboxControl( {
+	help,
+	label,
+	metaKey,
+	onChange,
+	options,
+	value,
+} ) {
 	return (
 		<BaseControl
 			__nextHasNoMarginBottom
@@ -231,46 +330,18 @@ function AsyncRelationControl( {
 			label={ label }
 			help={ help }
 		>
-			<div className="wpcamp-hub-editor-control-list">
-				<ComboboxControl
-					__next40pxDefaultSize
-					__nextHasNoMarginBottom
-					allowReset={ ! multiple }
-					hideLabelFromVision
-					isLoading={ isLoading }
-					label={ label }
-					onChange={ updateSelection }
-					onFilterValueChange={ setQuery }
-					options={ options }
-					placeholder={ __( 'Search relations', 'wpcamp-hub' ) }
-					value={ multiple ? '' : selectedOptions[ 0 ]?.value || '' }
-				/>
-				{ multiple && selectedOptions.length > 0 && (
-					<div className="wpcamp-hub-editor-relation-list">
-						{ selectedOptions.map( ( option ) => (
-							<Button
-								key={ option.value }
-								size="small"
-								variant="secondary"
-								onClick={ () =>
-									onChange(
-										selectedIds.filter(
-											( selectedId ) =>
-												selectedId !==
-												Number.parseInt(
-													option.value,
-													10
-												)
-										)
-									)
-								}
-							>
-								{ option.label }
-							</Button>
-						) ) }
-					</div>
-				) }
-			</div>
+			<ComboboxControl
+				__next40pxDefaultSize
+				__nextHasNoMarginBottom
+				allowReset
+				hideLabelFromVision
+				label={ label }
+				options={ options }
+				value={ normalizeOptionValue( value ) }
+				onChange={ ( nextValue ) =>
+					onChange( normalizeOptionValue( nextValue ) )
+				}
+			/>
 		</BaseControl>
 	);
 }
@@ -390,9 +461,7 @@ function FieldControl( { field, metaKey, relationTarget, value, onChange } ) {
 		if ( relationTarget ) {
 			return (
 				<AsyncRelationControl
-					help={ help }
 					label={ label }
-					metaKey={ metaKey }
 					multiple={ false }
 					onChange={ onChange }
 					target={ relationTarget }
@@ -424,9 +493,7 @@ function FieldControl( { field, metaKey, relationTarget, value, onChange } ) {
 		if ( relationTarget ) {
 			return (
 				<AsyncRelationControl
-					help={ help }
 					label={ label }
-					metaKey={ metaKey }
 					multiple
 					onChange={ onChange }
 					target={ relationTarget }
@@ -496,13 +563,12 @@ function FieldControl( { field, metaKey, relationTarget, value, onChange } ) {
 
 	if ( comboboxOptions[ metaKey ] ) {
 		return (
-			<ComboboxControl
-				__next40pxDefaultSize
-				__nextHasNoMarginBottom
+			<OptionComboboxControl
 				label={ label }
 				help={ help }
+				metaKey={ metaKey }
 				options={ comboboxOptions[ metaKey ] }
-				value={ value || '' }
+				value={ value }
 				onChange={ onChange }
 			/>
 		);

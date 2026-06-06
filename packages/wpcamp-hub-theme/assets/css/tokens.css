@@ -78,7 +78,7 @@
      Sans-serif throughout (editorial grotesque). Mono for code,
      event metadata, ticket/schedule data.
      --------------------------------------------------------- */
-  --font-display: 'EB Garamond', Georgia, 'Times New Roman', serif;  /* serif for large editorial headlines */
+  --font-display: 'Hanken Grotesk', -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif;  /* headings (Hanken Grotesk) */
   --font-sans: 'Hanken Grotesk', -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif;
   --font-mono: 'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
 

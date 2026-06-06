@@ -143,8 +143,7 @@ class Loader {
 
 		$category_class = $ability_class::get_category();
 
-		// @phpstan-ignore function.alreadyNarrowedType
-		if ( ! class_exists( $category_class ) || ! is_subclass_of( $category_class, Ability_Category_Interface::class ) ) {
+		if ( ! is_subclass_of( $category_class, Ability_Category_Interface::class ) ) {
 			return;
 		}
 		$this->ability_categories[ $category_class::get_slug() ] = $category_class;
@@ -241,8 +240,7 @@ class Loader {
 			}
 		}
 
-		// Register WordPress Abilities
-		if ( ! empty( $this->abilities ) && function_exists( 'wp_register_ability' ) ) {
+		if ( ! empty( $this->abilities ) ) {
 			add_action( 'wp_abilities_api_categories_init', array( $this, 'do_register_ability_categories' ) );
 			add_action( 'wp_abilities_api_init', array( $this, 'do_register_abilities' ) );
 		}

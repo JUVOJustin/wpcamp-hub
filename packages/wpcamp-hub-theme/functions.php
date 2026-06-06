@@ -17,6 +17,16 @@ function wpcamp_hub_setup() {
 	add_theme_support( 'post-thumbnails' );
 	add_theme_support( 'automatic-feed-links' );
 	add_theme_support( 'customize-selective-refresh-widgets' );
+
+	// Block alignment + layout support. `align-wide` exposes the Wide/Full
+	// width controls; `wp-block-styles` and `editor-styles` align the front
+	// end and editor with core block defaults. Combined with the theme.json
+	// layout (contentSize/wideSize) this lets full/wide blocks break out of
+	// the constrained content container (see the `is-layout-constrained`
+	// wrapper around the_content()).
+	add_theme_support( 'align-wide' );
+	add_theme_support( 'wp-block-styles' );
+	add_theme_support( 'editor-styles' );
 	add_theme_support(
 		'html5',
 		array( 'search-form', 'comment-form', 'comment-list', 'gallery', 'caption', 'style', 'script', 'navigation-widgets' )
@@ -59,11 +69,30 @@ add_action( 'widgets_init', 'wpcamp_hub_widgets_init' );
 /**
  * Enqueue fonts, design tokens, component styles and the icon library.
  */
+/**
+ * Version string for a theme-owned asset: its file modification time.
+ *
+ * Busts the browser cache whenever the file changes, so edits to CSS/JS show
+ * up without bumping the theme version by hand. Falls back to the theme
+ * version when the file is missing.
+ *
+ * @param string $relative_path Theme-relative asset path.
+ * @return string Cache-busting version string.
+ */
+function wpcamp_hub_asset_version( $relative_path ) {
+	$file = get_theme_file_path( $relative_path );
+	if ( file_exists( $file ) ) {
+		return (string) filemtime( $file );
+	}
+
+	return (string) wp_get_theme()->get( 'Version' );
+}
+
 function wpcamp_hub_enqueue_assets() {
 	$theme   = wp_get_theme();
 	$version = $theme->get( 'Version' );
 
-	// Fonts — self-hosted (EB Garamond, Hanken Grotesk, JetBrains Mono).
+	// Fonts — self-hosted (Hanken Grotesk, JetBrains Mono).
 	wp_enqueue_style(
 		'wpcamp-hub-fonts',
 		get_theme_file_uri( 'assets/css/fonts.css' ),
@@ -84,7 +113,7 @@ function wpcamp_hub_enqueue_assets() {
 		'wpcamp-hub-theme',
 		get_theme_file_uri( 'assets/css/theme.css' ),
 		array( 'wpcamp-hub-tokens' ),
-		$version
+		wpcamp_hub_asset_version( 'assets/css/theme.css' )
 	);
 
 	// Root stylesheet (theme header; reserved for overrides).
@@ -102,9 +131,61 @@ function wpcamp_hub_enqueue_assets() {
 		'wpcamp-hub-header',
 		get_theme_file_uri( 'assets/js/header.js' ),
 		array(),
-		$version,
+		wpcamp_hub_asset_version( 'assets/js/header.js' ),
 		true
 	);
+
+	// Single event: self-hosted Leaflet for the map view + the event-detail
+	// view switcher / map init.
+	if ( is_singular( 'wpcamp_event' ) ) {
+		wp_enqueue_style(
+			'leaflet',
+			get_theme_file_uri( 'assets/leaflet/leaflet.css' ),
+			array(),
+			'1.9.4'
+		);
+		wp_enqueue_script(
+			'leaflet',
+			get_theme_file_uri( 'assets/leaflet/leaflet.js' ),
+			array(),
+			'1.9.4',
+			true
+		);
+		wp_enqueue_script(
+			'wpcamp-hub-event',
+			get_theme_file_uri( 'assets/js/event.js' ),
+			array( 'leaflet' ),
+			wpcamp_hub_asset_version( 'assets/js/event.js' ),
+			true
+		);
+		wp_localize_script(
+			'wpcamp-hub-event',
+			'wpcampHubEvent',
+			array(
+				'markerBase' => get_theme_file_uri( 'assets/leaflet/images/' ),
+			)
+		);
+	}
+
+	// Tweets archive: AJAX filter + pagination for the community feed.
+	if ( is_post_type_archive( 'wpcamp_tweet' ) ) {
+		wp_enqueue_script(
+			'wpcamp-hub-tweet-feed',
+			get_theme_file_uri( 'assets/js/tweet-feed.js' ),
+			array(),
+			wpcamp_hub_asset_version( 'assets/js/tweet-feed.js' ),
+			true
+		);
+		wp_localize_script(
+			'wpcamp-hub-tweet-feed',
+			'wpcampHubFeed',
+			array(
+				'ajaxUrl' => admin_url( 'admin-ajax.php' ),
+				'action'  => 'wpcamp_tweet_feed',
+				'nonce'   => wp_create_nonce( 'wpcamp_tweet_feed' ),
+			)
+		);
+	}
 }
 add_action( 'wp_enqueue_scripts', 'wpcamp_hub_enqueue_assets' );
 
@@ -240,6 +321,25 @@ function wpcamp_hub_customize_register( $wp_customize ) {
 			'type'        => 'url',
 		)
 	);
+
+	$wp_customize->add_setting(
+		'wpcamp_hub_schedule_enabled',
+		array(
+			'default'           => false,
+			'sanitize_callback' => 'wp_validate_boolean',
+			'transport'         => 'refresh',
+		)
+	);
+
+	$wp_customize->add_control(
+		'wpcamp_hub_schedule_enabled',
+		array(
+			'label'       => __( 'Show “My schedule” button', 'wpcamp-hub' ),
+			'description' => __( 'Display the "My schedule" button in the header. Off until the schedule feature is ready.', 'wpcamp-hub' ),
+			'section'     => 'wpcamp_hub_header',
+			'type'        => 'checkbox',
+		)
+	);
 }
 add_action( 'customize_register', 'wpcamp_hub_customize_register' );
 
@@ -253,6 +353,18 @@ add_action( 'customize_register', 'wpcamp_hub_customize_register' );
  */
 function wpcamp_hub_tickets_url() {
 	return trim( (string) get_theme_mod( 'wpcamp_hub_tickets_url', '' ) );
+}
+
+/**
+ * Whether the header "My schedule" button is enabled.
+ *
+ * Off by default — the button stays hidden until the schedule feature is
+ * turned on under Appearance → Customize → Header.
+ *
+ * @return bool
+ */
+function wpcamp_hub_schedule_enabled() {
+	return (bool) get_theme_mod( 'wpcamp_hub_schedule_enabled', false );
 }
 
 /**
@@ -286,4 +398,25 @@ function wpcamp_hub_wordmark( $class_attr = '' ) {
 		esc_attr( $classes ),
 		esc_url( home_url( '/' ) )
 	);
+}
+
+/**
+ * Build up-to-two-letter initials from a name for avatar placeholders.
+ *
+ * @param string $name Person/handle name.
+ * @return string
+ */
+function wpcamp_hub_initials( $name ) {
+	$name = trim( (string) $name );
+	if ( '' === $name ) {
+		return '';
+	}
+
+	$parts    = preg_split( '/\s+/', $name );
+	$initials = '';
+	foreach ( array_slice( is_array( $parts ) ? $parts : array(), 0, 2 ) as $part ) {
+		$initials .= mb_strtoupper( mb_substr( $part, 0, 1 ) );
+	}
+
+	return $initials;
 }
