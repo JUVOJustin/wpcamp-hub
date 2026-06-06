@@ -164,7 +164,7 @@ $geo_art = '<svg viewBox="0 0 360 460" preserveAspectRatio="xMidYMid slice" widt
 			<?php endif; ?>
 
 			<div class="wpch-hero__actions-row">
-				<div class="wpch-hero__actions wp-block-buttons">
+				<div class="wpch-hero__actions wp-block-buttons is-layout-flex wp-block-buttons-is-layout-flex">
 					<?php if ( '' !== $tickets_url && '' !== $tickets_label ) : ?>
 						<div class="wp-block-button">
 							<a class="wp-block-button__link wp-element-button" href="<?php echo esc_url( $tickets_url ); ?>" target="_blank" rel="noopener noreferrer">

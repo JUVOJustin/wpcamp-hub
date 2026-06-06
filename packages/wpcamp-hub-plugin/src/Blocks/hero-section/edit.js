@@ -284,7 +284,7 @@ export default function Edit( { attributes, setAttributes } ) {
 						/>
 
 						<div className="wpch-hero__actions-row">
-							<div className="wpch-hero__actions wp-block-buttons">
+							<div className="wpch-hero__actions wp-block-buttons is-layout-flex wp-block-buttons-is-layout-flex">
 								<div className="wp-block-button">
 									<span className="wp-block-button__link wp-element-button">
 										{ ticketsLabel ||

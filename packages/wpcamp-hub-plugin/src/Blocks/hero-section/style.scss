@@ -79,8 +79,13 @@
 		align-items: center;
 	}
 
-	/* The nested core/buttons block. */
+	/* The buttons wrapper. Lay it out explicitly rather than relying on core's
+	   generated flex layout (the server-rendered markup carries no
+	   `is-layout-flex` class), so the CTAs always sit in a row. */
 	.wpch-hero__actions.wp-block-buttons {
+		display: flex;
+		flex-wrap: wrap;
+		align-items: center;
 		gap: 12px;
 		margin: 0;
 	}
