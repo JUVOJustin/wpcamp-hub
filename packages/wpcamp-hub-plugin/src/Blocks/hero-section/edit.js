@@ -8,6 +8,7 @@
 import { __, sprintf } from '@wordpress/i18n';
 import {
 	useBlockProps,
+	useInnerBlocksProps,
 	RichText,
 	InspectorControls,
 	BlockControls,
@@ -19,7 +20,6 @@ import {
 	ToggleControl,
 	Button,
 	ComboboxControl,
-	TextControl,
 	ToolbarGroup,
 	ToolbarButton,
 	Notice,
@@ -33,6 +33,27 @@ import HeroCollage from './collage';
 
 const ALLOWED_MEDIA = [ 'image' ];
 
+// Manual CTA buttons (used when no event is linked): a primary "Get tickets"
+// and an outline "Explore events". Editors set labels, links and styles via the
+// core button UI.
+const BUTTONS_TEMPLATE = [
+	[
+		'core/buttons',
+		{},
+		[
+			[ 'core/button', { text: __( 'Get tickets', 'wpcamp-hub' ) } ],
+			[
+				'core/button',
+				{
+					text: __( 'Explore events', 'wpcamp-hub' ),
+					className: 'is-style-outline',
+				},
+			],
+		],
+	],
+];
+const ALLOWED_BLOCKS = [ 'core/buttons' ];
+
 export default function Edit( { attributes, setAttributes } ) {
 	const {
 		eventId,
@@ -43,10 +64,6 @@ export default function Edit( { attributes, setAttributes } ) {
 		dateLabel,
 		showBadge,
 		goingSubtext,
-		ticketsLabel,
-		ticketsUrl,
-		exploreLabel,
-		exploreUrl,
 		imageId,
 		imageUrl,
 		imageAlt,
@@ -119,6 +136,19 @@ export default function Edit( { attributes, setAttributes } ) {
 
 	const blockProps = useBlockProps( { className: 'wpch-hero' } );
 
+	// Manual CTA buttons via InnerBlocks (shown only when no event is linked).
+	const innerBlocksProps = useInnerBlocksProps(
+		{
+			className:
+				'wpch-hero__actions wp-block-buttons is-layout-flex wp-block-buttons-is-layout-flex',
+		},
+		{
+			allowedBlocks: ALLOWED_BLOCKS,
+			template: BUTTONS_TEMPLATE,
+			templateLock: false,
+		}
+	);
+
 	const onSelectImage = ( media ) => {
 		if ( ! media || ! media.url ) {
 			return;
@@ -164,65 +194,17 @@ export default function Edit( { attributes, setAttributes } ) {
 					) }
 				</PanelBody>
 				<PanelBody
-					title={ __( 'Call to action', 'wpcamp-hub' ) }
-					initialOpen={ false }
-				>
-					<p style={ { marginTop: 0 } }>
-						{ linkedEvent
-							? __(
-									'Leave a link empty to auto-use the linked event (Tickets → official URL, Explore → sessions page). A button hides when it has no link.',
-									'wpcamp-hub'
-							  )
-							: __(
-									'Set a link for each button. A button hides when it has no link.',
-									'wpcamp-hub'
-							  ) }
-					</p>
-					<TextControl
-						label={ __( 'Tickets label', 'wpcamp-hub' ) }
-						value={ ticketsLabel || '' }
-						onChange={ ( v ) =>
-							setAttributes( { ticketsLabel: v } )
-						}
-						__nextHasNoMarginBottom
-					/>
-					<TextControl
-						label={ __( 'Tickets link', 'wpcamp-hub' ) }
-						type="url"
-						value={ ticketsUrl || '' }
-						placeholder={
-							linkedEvent
-								? __( 'Event official URL', 'wpcamp-hub' )
-								: 'https://'
-						}
-						onChange={ ( v ) => setAttributes( { ticketsUrl: v } ) }
-						__nextHasNoMarginBottom
-					/>
-					<TextControl
-						label={ __( 'Explore label', 'wpcamp-hub' ) }
-						value={ exploreLabel || '' }
-						onChange={ ( v ) =>
-							setAttributes( { exploreLabel: v } )
-						}
-						__nextHasNoMarginBottom
-					/>
-					<TextControl
-						label={ __( 'Explore link', 'wpcamp-hub' ) }
-						type="url"
-						value={ exploreUrl || '' }
-						placeholder={
-							linkedEvent
-								? __( 'Event sessions page', 'wpcamp-hub' )
-								: 'https://'
-						}
-						onChange={ ( v ) => setAttributes( { exploreUrl: v } ) }
-						__nextHasNoMarginBottom
-					/>
-				</PanelBody>
-				<PanelBody
 					title={ __( 'Display', 'wpcamp-hub' ) }
 					initialOpen={ false }
 				>
+					{ linkedEvent && (
+						<Notice status="info" isDismissible={ false }>
+							{ __(
+								'The buttons are set automatically from the linked event (Get tickets → official URL, Explore events → sessions page).',
+								'wpcamp-hub'
+							) }
+						</Notice>
+					) }
 					<ToggleControl
 						label={ __( 'Show attendee badge', 'wpcamp-hub' ) }
 						checked={ showBadge }
@@ -330,42 +312,31 @@ export default function Edit( { attributes, setAttributes } ) {
 						/>
 
 						<div className="wpch-hero__actions-row">
-							<div className="wpch-hero__actions wp-block-buttons is-layout-flex wp-block-buttons-is-layout-flex">
-								<div className="wp-block-button">
-									<RichText
-										tagName="span"
-										className="wp-block-button__link wp-element-button"
-										value={ ticketsLabel }
-										allowedFormats={ [] }
-										onChange={ ( v ) =>
-											setAttributes( {
-												ticketsLabel: v,
-											} )
-										}
-										placeholder={ __(
-											'Get tickets',
-											'wpcamp-hub'
-										) }
-									/>
+							{ linkedEvent ? (
+								// Event linked: preview the auto-wired CTAs (render.php
+								// outputs these on the front end).
+								<div className="wpch-hero__actions wp-block-buttons is-layout-flex wp-block-buttons-is-layout-flex">
+									<div className="wp-block-button">
+										<span className="wp-block-button__link wp-element-button">
+											{ __(
+												'Get tickets',
+												'wpcamp-hub'
+											) }
+										</span>
+									</div>
+									<div className="wp-block-button is-style-outline">
+										<span className="wp-block-button__link wp-element-button">
+											{ __(
+												'Explore events',
+												'wpcamp-hub'
+											) }
+										</span>
+									</div>
 								</div>
-								<div className="wp-block-button is-style-outline">
-									<RichText
-										tagName="span"
-										className="wp-block-button__link wp-element-button"
-										value={ exploreLabel }
-										allowedFormats={ [] }
-										onChange={ ( v ) =>
-											setAttributes( {
-												exploreLabel: v,
-											} )
-										}
-										placeholder={ __(
-											'Explore events',
-											'wpcamp-hub'
-										) }
-									/>
-								</div>
-							</div>
+							) : (
+								// No event: real, editable core/buttons InnerBlocks.
+								<div { ...innerBlocksProps } />
+							) }
 							{ shownDate && (
 								<span className="wpch-hero__when">
 									{ shownDate }

@@ -82,15 +82,14 @@ $heading  = (string) ( $attributes['heading'] ?? '' );
 $lead     = (string) ( $attributes['lead'] ?? '' );
 $date     = $resolve( (string) ( $attributes['dateLabel'] ?? '' ), $ev_date );
 
-// CTA links: a manually-entered URL always wins; otherwise the event-derived
-// link (official URL / sessions page). A button renders only when it has a URL.
-$tickets_url = $resolve( (string) ( $attributes['ticketsUrl'] ?? '' ), $tickets_url );
-$explore_url = $resolve( (string) ( $attributes['exploreUrl'] ?? '' ), $explore_url );
+// CTAs: when an event is linked we render auto-wired buttons (tickets → the
+// event's official URL, explore → its sessions page). With no event linked the
+// buttons come from the editor's InnerBlocks ($content).
+$tickets_label = __( 'Get tickets', 'wpcamp-hub' );
+$explore_label = __( 'Explore events', 'wpcamp-hub' );
 
-$show_badge    = ! empty( $attributes['showBadge'] );
-$tickets_label = (string) ( $attributes['ticketsLabel'] ?? __( 'Get tickets', 'wpcamp-hub' ) );
-$explore_label = (string) ( $attributes['exploreLabel'] ?? __( 'Explore events', 'wpcamp-hub' ) );
-$going_sub     = (string) ( $attributes['goingSubtext'] ?? '' );
+$show_badge = ! empty( $attributes['showBadge'] );
+$going_sub  = (string) ( $attributes['goingSubtext'] ?? '' );
 
 $image_url = (string) ( $attributes['imageUrl'] ?? '' );
 $image_alt = (string) ( $attributes['imageAlt'] ?? '' );
@@ -169,22 +168,28 @@ $geo_art = '<svg viewBox="0 0 360 460" preserveAspectRatio="xMidYMid slice" widt
 			<?php endif; ?>
 
 			<div class="wpch-hero__actions-row">
-				<div class="wpch-hero__actions wp-block-buttons is-layout-flex wp-block-buttons-is-layout-flex">
-					<?php if ( '' !== $tickets_url && '' !== $tickets_label ) : ?>
-						<div class="wp-block-button">
-							<a class="wp-block-button__link wp-element-button" href="<?php echo esc_url( $tickets_url ); ?>" target="_blank" rel="noopener noreferrer">
-								<?php echo esc_html( $tickets_label ); ?>
-							</a>
-						</div>
-					<?php endif; ?>
-					<?php if ( '' !== $explore_url && '' !== $explore_label ) : ?>
-						<div class="wp-block-button is-style-outline">
-							<a class="wp-block-button__link wp-element-button" href="<?php echo esc_url( $explore_url ); ?>">
-								<?php echo esc_html( $explore_label ); ?>
-							</a>
-						</div>
-					<?php endif; ?>
-				</div>
+				<?php if ( $event instanceof Event ) : ?>
+					<?php // Event linked: auto-wired CTAs (tickets → official URL, explore → sessions). ?>
+					<div class="wpch-hero__actions wp-block-buttons is-layout-flex wp-block-buttons-is-layout-flex">
+						<?php if ( '' !== $tickets_url ) : ?>
+							<div class="wp-block-button">
+								<a class="wp-block-button__link wp-element-button" href="<?php echo esc_url( $tickets_url ); ?>" target="_blank" rel="noopener noreferrer">
+									<?php echo esc_html( $tickets_label ); ?>
+								</a>
+							</div>
+						<?php endif; ?>
+						<?php if ( '' !== $explore_url ) : ?>
+							<div class="wp-block-button is-style-outline">
+								<a class="wp-block-button__link wp-element-button" href="<?php echo esc_url( $explore_url ); ?>">
+									<?php echo esc_html( $explore_label ); ?>
+								</a>
+							</div>
+						<?php endif; ?>
+					</div>
+				<?php else : ?>
+					<?php // No event: editor-managed buttons (InnerBlocks). ?>
+					<?php echo $content; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- InnerBlocks output is pre-rendered/escaped by core. ?>
+				<?php endif; ?>
 				<?php if ( '' !== $date ) : ?>
 					<span class="wpch-hero__when"><?php echo esc_html( $date ); ?></span>
 				<?php endif; ?>
