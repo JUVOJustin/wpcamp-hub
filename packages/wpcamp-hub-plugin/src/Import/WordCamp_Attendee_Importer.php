@@ -21,7 +21,7 @@ class WordCamp_Attendee_Importer {
 	public const string AS_EVENT_HOOK             = 'wpcamp_hub/upsert_event_attendees';
 	public const string AS_GROUP                  = 'wpcamp-hub';
 	private const float MIN_AI_PROFILE_CONFIDENCE = 0.6;
-	private const int AI_HTML_CONTEXT_LIMIT       = 30000;
+	private const int AI_HTML_CONTEXT_LIMIT       = 20000;
 
 	/**
 	 * Register the recurring importer job when Action Scheduler is ready.
@@ -379,7 +379,7 @@ class WordCamp_Attendee_Importer {
 			"%s\n\nFetched HTML context, truncated to the first %d characters:\n%s",
 			$this->ai_parser_system_instruction(),
 			self::AI_HTML_CONTEXT_LIMIT,
-			$this->ai_html_context( $html )
+			substr( $html, 0, self::AI_HTML_CONTEXT_LIMIT )
 		);
 
 		// @phpstan-ignore-next-line The WordPress AI Client function is provided by WordPress 7.0.
@@ -404,88 +404,6 @@ class WordCamp_Attendee_Importer {
 		}
 
 		return $validated;
-	}
-
-	/**
-	 * Return the bounded fetched page context sent to the AI parser.
-	 *
-	 * @param string $html Attendees page HTML.
-	 */
-	private function ai_html_context( string $html ): string {
-		$clean_html = $this->clean_html_for_ai( $html );
-
-		if ( function_exists( 'mb_substr' ) ) {
-			return mb_substr( $clean_html, 0, self::AI_HTML_CONTEXT_LIMIT );
-		}
-
-		return substr( $clean_html, 0, self::AI_HTML_CONTEXT_LIMIT );
-	}
-
-	/**
-	 * Clean HTML for AI parsing by extracting only the body content.
-	 *
-	 * @param string $html Raw HTML.
-	 * @return string Body HTML.
-	 */
-	private function clean_html_for_ai( string $html ): string {
-		$processor  = \WP_HTML_Processor::create_full_parser( $html );
-		$body_html  = '';
-		$in_body    = false;
-		$skip_tag   = '';
-		$skip_depth = 0;
-
-		while ( $processor->next_token() ) {
-			$tag_name   = strtoupper( (string) $processor->get_tag() );
-			$token_type = $processor->get_token_type();
-
-			if ( 'BODY' === $tag_name && ! $processor->is_tag_closer() ) {
-				$in_body = true;
-				continue;
-			}
-			if ( 'BODY' === $tag_name && $processor->is_tag_closer() ) {
-				break;
-			}
-			if ( ! $in_body ) {
-				continue;
-			}
-
-			if ( '#text' === $token_type && '' !== $skip_tag ) {
-				continue;
-			}
-
-			if ( '#tag' === $token_type ) {
-				if ( '' !== $skip_tag ) {
-					if ( $tag_name === $skip_tag && $processor->is_tag_closer() ) {
-						--$skip_depth;
-						if ( 0 === $skip_depth ) {
-							$skip_tag = '';
-						}
-					} elseif ( $tag_name === $skip_tag && ! $processor->is_tag_closer() ) {
-						++$skip_depth;
-					}
-					continue;
-				}
-
-				if ( ! $processor->is_tag_closer() ) {
-					if ( in_array( $tag_name, array( 'SCRIPT', 'STYLE', 'NOSCRIPT', 'IFRAME' ), true ) ) {
-						$token = $processor->serialize_token();
-						if ( str_contains( strtolower( $token ), '</' . strtolower( $tag_name ) . '>' ) ) {
-							continue;
-						}
-						$skip_tag   = $tag_name;
-						$skip_depth = 1;
-						continue;
-					}
-				}
-			}
-			if ( '#funky-comment' === $token_type ) {
-				continue;
-			}
-
-			$body_html .= $processor->serialize_token();
-		}
-
-		return $body_html;
 	}
 
 	/**
