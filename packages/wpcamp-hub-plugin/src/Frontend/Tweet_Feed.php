@@ -32,25 +32,6 @@ class Tweet_Feed {
 	public const PER_PAGE = 12;
 
 	/**
-	 * Build the Twitter/X profile-image URL for a handle.
-	 *
-	 * Uses unavatar.io, which resolves and proxies the account's current X
-	 * avatar (with its own fallback) — so no API token or stored image is needed.
-	 *
-	 * @param string $handle Author handle (with or without a leading "@").
-	 * @return string Profile image URL, or '' when the handle is empty/invalid.
-	 */
-	public static function twitter_avatar_url( string $handle ): string {
-		$handle = ltrim( trim( $handle ), '@' );
-		// X usernames are alphanumeric + underscore; guard against anything else.
-		if ( '' === $handle || ! preg_match( '/^[A-Za-z0-9_]+$/', $handle ) ) {
-			return '';
-		}
-
-		return sprintf( 'https://unavatar.io/x/%s', rawurlencode( $handle ) );
-	}
-
-	/**
 	 * Build the WP_Query arguments for a feed request.
 	 *
 	 * @param array<string,mixed> $filters Raw filter input (category, label, event, search, sort, paged).
@@ -164,27 +145,16 @@ class Tweet_Feed {
 			$meta['icon']
 		);
 
-		// Prefer the author's Twitter/X profile image (derived from the handle);
-		// fall back to get_avatar(), then a blank placeholder.
-		$twitter_avatar = self::twitter_avatar_url( $handle );
-		if ( '' !== $twitter_avatar ) {
-			$avatar = sprintf(
-				'<img class="wpch-feed__avatar" src="%1$s" alt="%2$s" width="38" height="38" loading="lazy" decoding="async" referrerpolicy="no-referrer" />',
-				esc_url( $twitter_avatar ),
-				esc_attr( $display )
-			);
-		} else {
-			$avatar = get_avatar(
-				'',
-				38,
-				'',
-				$display,
-				array(
-					'class'         => 'wpch-feed__avatar',
-					'force_display' => true,
-				)
-			);
-		}
+		$avatar = get_avatar(
+			'',
+			38,
+			'',
+			$display,
+			array(
+				'class'         => 'wpch-feed__avatar',
+				'force_display' => true,
+			)
+		);
 		if ( '' === $avatar ) {
 			$avatar = '<span class="wpch-feed__avatar" aria-hidden="true"></span>';
 		}
