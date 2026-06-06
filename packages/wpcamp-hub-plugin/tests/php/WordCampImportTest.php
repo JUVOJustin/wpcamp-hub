@@ -163,6 +163,46 @@ class WordCampImportTest extends WP_UnitTestCase {
 	}
 
 	/**
+	 * Re-importing a speaker updates the existing attendee profile fields.
+	 */
+	public function test_speaker_profile_is_upserted_on_rerun(): void {
+		$event    = $this->make_major_wordcamp();
+		$importer = new WordCamp_Importer( $event );
+
+		$this->responses['speakers:1'] = array(
+			'body'  => wp_json_encode( array( $this->speaker( 6886, 'grace-hopper', 'Grace Hopper' ) ) ),
+			'total' => 1,
+			'pages' => 1,
+		);
+
+		$importer->import_speakers_page( 1 );
+
+		$user_ids = get_users(
+			array(
+				'fields'     => 'ID',
+				'meta_key'   => 'wpcamp_wordcamp_speaker', // phpcs:ignore WordPress.DB.SlowDBQuery.slow_db_query_meta_key
+				'meta_value' => self::HOST . ':6886', // phpcs:ignore WordPress.DB.SlowDBQuery.slow_db_query_meta_value
+			)
+		);
+		$this->assertCount( 1, $user_ids );
+		$user_id = (int) reset( $user_ids );
+
+		$this->responses['speakers:1'] = array(
+			'body'  => wp_json_encode( array( $this->speaker( 6886, 'grace-hopper-updated', 'Grace Hopper Updated' ) ) ),
+			'total' => 1,
+			'pages' => 1,
+		);
+
+		$importer->import_speakers_page( 1 );
+
+		$this->assertSame( 1, count( get_users( array( 'meta_key' => 'wpcamp_wordcamp_speaker' ) ) ) ); // phpcs:ignore WordPress.DB.SlowDBQuery.slow_db_query_meta_key
+		$this->assertSame( 'Grace Hopper Updated', get_userdata( $user_id )->display_name );
+		$this->assertSame( 'Grace Hopper Updated', get_user_meta( $user_id, 'nickname', true ) );
+		$this->assertSame( 'https://' . self::HOST . '/2026/speaker/grace-hopper-updated/', get_user_meta( $user_id, 'wpcamp_wporg_profile_url', true ) );
+		$this->assertSame( 'https://example.test/grace-hopper-updated-96.jpg', get_user_meta( $user_id, 'wpcamp_avatar', true ) );
+	}
+
+	/**
 	 * A speaker who already exists as an attendee (same WordPress.org username)
 	 * converges to one user instead of creating a duplicate. This keeps the
 	 * speaker importer compatible with the attendee importer's identity model.

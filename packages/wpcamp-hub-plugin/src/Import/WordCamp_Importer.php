@@ -125,6 +125,7 @@ class WordCamp_Importer {
 				array(
 					'ID'           => $profile->get_id(),
 					'display_name' => $name,
+					'nickname'     => $name,
 				)
 			);
 		}
