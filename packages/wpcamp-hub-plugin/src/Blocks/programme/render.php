@@ -45,19 +45,43 @@ if ( $event_id > 0 && class_exists( Event::class ) && Event::get_post_type() ===
 	$event = Event::from( $event_id );
 }
 
+// Tracks actually present in the rendered session cards (name => colour),
+// populated while building the cards below. The dynamic legend is limited to
+// these so it only reflects what the query shows.
+$visible_tracks = array();
+
 /**
- * Build the legend item list, from either the manual attribute or the tracks.
+ * Build the legend item list.
  *
+ * For the "tracks" source the legend is limited to the tracks that appear in
+ * the rendered session cards ($visible_tracks), preserving the canonical track
+ * order. The manual source lists exactly what the author configured.
+ *
+ * @param array<string,string> $visible_tracks Tracks present in the rendered cards (name => colour).
  * @return array<int,array{name:string,color:string}>
  */
-$legend_items = static function () use ( $legend_source, $legend_attr ): array {
+$legend_items = static function ( array $visible_tracks ) use ( $legend_source, $legend_attr, $content_source ): array {
 	if ( 'tracks' === $legend_source ) {
+		$tracks = Track::all();
+
+		// Limit to the tracks present in the rendered cards when those cards are
+		// sessions; other content modes have no session tracks to scope against,
+		// so the legend describes the full taxonomy.
+		if ( 'sessions' === $content_source ) {
+			$tracks = array_values(
+				array_filter(
+					$tracks,
+					static fn( Track $track ): bool => isset( $visible_tracks[ $track->get_name() ] )
+				)
+			);
+		}
+
 		return array_map(
 			static fn( Track $track ): array => array(
 				'name'  => $track->get_name(),
 				'color' => $track->get_color(),
 			),
-			Track::all()
+			$tracks
 		);
 	}
 
@@ -158,6 +182,12 @@ if ( 'sessions' === $content_source ) {
 
 	$cards = '';
 	foreach ( $sessions as $session ) {
+		$track = $session->get_track();
+		if ( null !== $track ) {
+			// Track which tracks are actually present, keyed by name so the
+			// legend can be limited to what the query renders.
+			$visible_tracks[ $track->get_name() ] = $track->get_color();
+		}
 		$cards .= $render_session_card( $session );
 	}
 	$grid_inner = $cards;
@@ -220,7 +250,7 @@ $wrapper_attributes = get_block_wrapper_attributes( array( 'class' => 'wpch-prog
 
 		<?php
 		if ( $show_legend ) :
-			$items = $legend_items();
+			$items = $legend_items( $visible_tracks );
 			if ( array() !== $items ) :
 				?>
 				<div class="wpch-programme__legend">
