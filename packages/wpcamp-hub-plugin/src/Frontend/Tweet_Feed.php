@@ -127,7 +127,6 @@ class Tweet_Feed {
 		$url    = $tweet->get_url();
 		$text   = $tweet->get_text();
 		$stamp  = $tweet->get_timestamp();
-		$event  = $tweet->get_event();
 
 		// We rarely have a real display name, so the primary line is the handle
 		// (falling back to the name/title only when no handle is stored). The
@@ -196,9 +195,6 @@ class Tweet_Feed {
 					<?php echo $icon; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- static inline SVG from the category map. ?>
 					<?php echo esc_html( $meta['label'] ); ?>
 				</span>
-				<?php if ( null !== $event ) : ?>
-					<span class="wpch-feed__event">#<?php echo esc_html( preg_replace( '/[^A-Za-z0-9]/', '', get_the_title( $event->get_id() ) ) ); ?></span>
-				<?php endif; ?>
 			</div>
 			<?php if ( '' !== $url ) : ?>
 				</a>
