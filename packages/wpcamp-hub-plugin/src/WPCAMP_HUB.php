@@ -185,6 +185,11 @@ class WPCAMP_HUB {
 		$this->loader->add_action( 'init', $attendees_page, 'add_endpoint', 10, 0 );
 		$this->loader->add_filter( 'template_include', $attendees_page, 'template_include', 20, 1 );
 
+		// Per-event speakers subpage — /event/<slug>/speakers/.
+		$speakers_page = new \WPCAMP_HUB\Frontend\Speakers_Page();
+		$this->loader->add_action( 'init', $speakers_page, 'add_endpoint', 10, 0 );
+		$this->loader->add_filter( 'template_include', $speakers_page, 'template_include', 20, 1 );
+
 		// Serve the imported attendee avatar everywhere (front end + admin).
 		$avatar = new \WPCAMP_HUB\Frontend\Avatar();
 		$this->loader->add_filter( 'get_avatar_url', $avatar, 'filter_url', 10, 3 );
