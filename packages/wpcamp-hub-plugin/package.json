@@ -19,6 +19,7 @@
     "env:stop": "wp-env stop",
     "env:destroy": "wp-env destroy",
     "env:cli": "wp-env run cli --env-cwd=wp-content/plugins/wpcamp-hub",
-    "test:php": "wp-env run tests-cli --env-cwd=wp-content/plugins/wpcamp-hub bash -lc 'composer install --working-dir=tests --no-interaction && vendor/bin/phpunit'"
+    "test:php": "wp-env run tests-cli --env-cwd=wp-content/plugins/wpcamp-hub bash -lc 'composer install --working-dir=tests --no-interaction && vendor/bin/phpunit'",
+    "test:php:external": "wp-env run tests-cli --env-cwd=wp-content/plugins/wpcamp-hub bash -lc 'composer install --working-dir=tests --no-interaction && WPCAMP_HUB_RUN_EXTERNAL_HTTP=1 vendor/bin/phpunit --group external-http'"
   }
 }

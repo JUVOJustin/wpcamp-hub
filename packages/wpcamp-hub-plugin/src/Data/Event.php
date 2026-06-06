@@ -20,6 +20,54 @@ class Event extends Post_Entity {
 	}
 
 	/**
+	 * Whether this event is a major WordCamp running the native WordCamp tech
+	 * stack, and is therefore eligible for automated session/speaker import.
+	 */
+	public function is_major_wordcamp(): bool {
+		return (bool) get_post_meta( $this->get_id(), 'wpcamp_is_major_wordcamp', true );
+	}
+
+	/**
+	 * Base WordCamp REST API URL derived from the official event URL.
+	 */
+	public function get_wordcamp_api_url(): string {
+		return $this->get_official_url();
+	}
+
+	/**
+	 * All events flagged as major WordCamps with an official event URL.
+	 *
+	 * @return list<self>
+	 */
+	public static function major_wordcamps(): array {
+		$post_ids = get_posts(
+			array(
+				'post_type'      => Data_Structure::POST_TYPE_EVENT,
+				'post_status'    => 'publish',
+				'fields'         => 'ids',
+				'posts_per_page' => -1,
+				// phpcs:ignore WordPress.DB.SlowDBQuery.slow_db_query_meta_query
+				'meta_query'     => array(
+					array(
+						'key'   => 'wpcamp_is_major_wordcamp',
+						'value' => '1',
+					),
+				),
+			)
+		);
+
+		$events = array();
+		foreach ( array_map( 'intval', $post_ids ) as $post_id ) {
+			$event = self::from( $post_id );
+			if ( '' !== $event->get_official_url() ) {
+				$events[] = $event;
+			}
+		}
+
+		return $events;
+	}
+
+	/**
 	 * Event start date/time.
 	 *
 	 * @return \DateTimeImmutable|null Null when not set or unparseable.

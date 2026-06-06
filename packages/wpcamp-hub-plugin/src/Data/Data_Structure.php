@@ -186,6 +186,7 @@ class Data_Structure {
 				'wpcamp_official_url'      => self::field( 'string', 'Official event URL.', true, null, 'uri' ),
 				'wpcamp_attendees_url'     => self::field( 'string', 'Official WordCamp attendees page URL.', true, null, 'uri' ),
 				'wpcamp_source'            => self::field( 'string', 'Event source such as curated, WordCamp, or Twitter/X.' ),
+				'wpcamp_is_major_wordcamp' => self::field( 'boolean', 'Whether this event is a major WordCamp running the native WordCamp tech stack, eligible for automated session/speaker import.' ),
 				'wpcamp_related_tweets'    => self::field( 'array', 'Related tweet IDs.' ),
 				'wpcamp_related_attendees' => self::field( 'array', 'Related attendee user IDs.' ),
 			),
@@ -207,6 +208,7 @@ class Data_Structure {
 				'wpcamp_related_event'     => self::field( 'integer', 'Related event ID.' ),
 				'wpcamp_official_url'      => self::field( 'string', 'Official session URL.', true, null, 'uri' ),
 				'wpcamp_source'            => self::field( 'string', 'Session source.' ),
+				'wpcamp_source_id'         => self::field( 'string', 'Source identifier for an imported session (e.g. WordCamp REST post ID).', false ),
 				'wpcamp_related_attendees' => self::field( 'array', 'Related attendee user IDs.' ),
 			),
 			self::POST_TYPE_MEETING_INVITE => array(
@@ -228,6 +230,7 @@ class Data_Structure {
 			'wpcamp_wporg_profile_url'   => self::field( 'string', 'WordPress.org profile URL.', false, null, 'uri' ),
 			'wpcamp_wporg_username'      => self::field( 'string', 'WordPress.org username or slug.', false ),
 			'wpcamp_wporg_profile'       => self::field( 'object', 'Raw WordPress.org profile API data.', false ),
+			'wpcamp_wordcamp_speaker'    => self::field( 'string', 'Source identifier for an imported WordCamp speaker (site host + speaker post ID).', false ),
 			'wpcamp_gravatar_hash'       => self::field( 'string', 'Gravatar hash identifier.', false ),
 			'wpcamp_gravatar_profile'    => self::field( 'object', 'Raw Gravatar profile data.', false ),
 			'wpcamp_attendee_source_url' => self::field( 'string', 'Attendees page URL that last imported this attendee.', false, null, 'uri' ),

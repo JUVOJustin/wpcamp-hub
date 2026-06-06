@@ -69,7 +69,8 @@
             "exclude_from_copy": {
                 "packages": [
                     "phpstan/phpstan",
-                    "szepeviktor/phpstan-wordpress"
+                    "szepeviktor/phpstan-wordpress",
+                    "woocommerce/action-scheduler"
                 ]
             },
             "exclude_from_prefix": {
