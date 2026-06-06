@@ -92,7 +92,7 @@ function wpcamp_hub_enqueue_assets() {
 	$theme   = wp_get_theme();
 	$version = $theme->get( 'Version' );
 
-	// Fonts — self-hosted (EB Garamond, Hanken Grotesk, JetBrains Mono).
+	// Fonts — self-hosted (Hanken Grotesk, JetBrains Mono).
 	wp_enqueue_style(
 		'wpcamp-hub-fonts',
 		get_theme_file_uri( 'assets/css/fonts.css' ),
