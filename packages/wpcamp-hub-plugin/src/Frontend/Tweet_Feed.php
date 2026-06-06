@@ -34,8 +34,8 @@ class Tweet_Feed {
 	/**
 	 * Build the Twitter/X profile-image URL for a handle.
 	 *
-	 * Uses the public `profile_image` redirect endpoint, which 302s to the
-	 * account's current avatar — so no API token or stored image is needed.
+	 * Uses unavatar.io, which resolves and proxies the account's current X
+	 * avatar (with its own fallback) — so no API token or stored image is needed.
 	 *
 	 * @param string $handle Author handle (with or without a leading "@").
 	 * @return string Profile image URL, or '' when the handle is empty/invalid.
@@ -47,7 +47,7 @@ class Tweet_Feed {
 			return '';
 		}
 
-		return sprintf( 'https://twitter.com/%s/profile_image?size=original', rawurlencode( $handle ) );
+		return sprintf( 'https://unavatar.io/x/%s', rawurlencode( $handle ) );
 	}
 
 	/**
