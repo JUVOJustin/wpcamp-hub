@@ -116,6 +116,12 @@ class WPCAMP_HUB {
 		$this->loader->add_action( 'created_wpcamp_track', $this->data_structure, 'save_track_color', 10, 1 );
 		$this->loader->add_action( 'edited_wpcamp_track', $this->data_structure, 'save_track_color', 10, 1 );
 
+		// Tweet label accent colour + icon fields on the taxonomy term forms.
+		$this->loader->add_action( 'wpcamp_tweet_label_add_form_fields', $this->data_structure, 'add_tweet_label_fields', 10, 0 );
+		$this->loader->add_action( 'wpcamp_tweet_label_edit_form_fields', $this->data_structure, 'edit_tweet_label_fields', 10, 1 );
+		$this->loader->add_action( 'created_wpcamp_tweet_label', $this->data_structure, 'save_tweet_label_fields', 10, 1 );
+		$this->loader->add_action( 'edited_wpcamp_tweet_label', $this->data_structure, 'save_tweet_label_fields', 10, 1 );
+
 		add_action(
 			'admin_enqueue_scripts',
 			function () {
@@ -146,6 +152,11 @@ class WPCAMP_HUB {
 	private function define_public_hooks(): void {
 
 		$this->loader->add_action( 'init', $this->data_structure, 'register' );
+
+		// Community tweet feed — AJAX-paginated archive cards.
+		$tweet_feed = new \WPCAMP_HUB\Frontend\Tweet_Feed();
+		$this->loader->add_action( 'wp_ajax_' . \WPCAMP_HUB\Frontend\Tweet_Feed::AJAX_ACTION, $tweet_feed, 'ajax_feed', 10, 0 );
+		$this->loader->add_action( 'wp_ajax_nopriv_' . \WPCAMP_HUB\Frontend\Tweet_Feed::AJAX_ACTION, $tweet_feed, 'ajax_feed', 10, 0 );
 
 		add_action(
 			'wp_enqueue_scripts',

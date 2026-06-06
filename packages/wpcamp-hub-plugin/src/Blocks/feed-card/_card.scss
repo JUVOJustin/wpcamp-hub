@@ -1,0 +1,110 @@
+/**
+ * Feed Card — shared card styles (front end + editor).
+ *
+ * Imported by both the static `feed-card` block and the dynamic `feed` block
+ * so a single card design ships with whichever block is on the page.
+ * Pill accent + tint are set per category via the wpch-feed--* modifier.
+ */
+
+.wpch-feed {
+	--wpch-feed-color: var( --wp--preset--color--brand, #3858e9 );
+	--wpch-feed-tint: var( --wp--preset--color--brand-tint, #eef1fe );
+
+	background: #fff;
+	border: 1px solid var( --wp--preset--color--line, #dcdcde );
+	border-radius: 8px;
+	padding: 20px;
+	display: flex;
+	flex-direction: column;
+	font-family: var( --wp--preset--font-family--sans );
+
+	* {
+		box-sizing: border-box;
+	}
+
+	.wpch-feed__link {
+		display: flex;
+		flex-direction: column;
+		flex: 1;
+		text-decoration: none;
+		color: inherit;
+	}
+
+	.wpch-feed__head {
+		display: flex;
+		align-items: center;
+		gap: 11px;
+		margin-bottom: 12px;
+	}
+
+	.wpch-feed__avatar {
+		width: 38px;
+		height: 38px;
+		border-radius: 50%;
+		flex: none;
+		background: var( --wp--preset--color--blue-200, #b7c3fb );
+	}
+
+	.wpch-feed__author {
+		font-weight: 700;
+		font-size: 14.5px;
+		line-height: 1.2;
+		color: var( --wp--preset--color--ink-900, #1e1e1e );
+	}
+
+	.wpch-feed__handle {
+		font:
+			500 12px var( --wp--preset--font-family--mono, monospace );
+		color: var( --wp--preset--color--ink-500, #757575 );
+	}
+
+	.wpch-feed__text {
+		margin: 0 0 14px;
+		font-size: 14.5px;
+		line-height: 1.55;
+		color: var( --wp--preset--color--ink-700, #2c3338 );
+		flex: 1;
+	}
+
+	.wpch-feed__pill {
+		display: inline-flex;
+		align-items: center;
+		gap: 6px;
+		align-self: flex-start;
+		font-size: 12px;
+		font-weight: 700;
+		letter-spacing: 0.03em;
+		padding: 4px 10px 4px 8px;
+		border-radius: 999px;
+		color: var( --wpch-feed-color );
+		background: var( --wpch-feed-tint );
+	}
+
+	.wpch-feed__pill-icon {
+		width: 14px;
+		height: 14px;
+		flex: none;
+	}
+
+	/* category accents */
+	&.wpch-feed--brand {
+		--wpch-feed-color: var( --wp--preset--color--brand, #3858e9 );
+		--wpch-feed-tint: var( --wp--preset--color--brand-tint, #eef1fe );
+	}
+	&.wpch-feed--fest-teal {
+		--wpch-feed-color: var( --wp--preset--color--fest-teal, #14b8a6 );
+		--wpch-feed-tint: #def6f3;
+	}
+	&.wpch-feed--fest-coral {
+		--wpch-feed-color: var( --wp--preset--color--fest-coral, #ff5a4d );
+		--wpch-feed-tint: #ffe9e6;
+	}
+	&.wpch-feed--fest-violet {
+		--wpch-feed-color: var( --wp--preset--color--fest-violet, #7c5cff );
+		--wpch-feed-tint: #ece7ff;
+	}
+	&.wpch-feed--fest-gold {
+		--wpch-feed-color: var( --wp--preset--color--fest-gold, #ffb020 );
+		--wpch-feed-tint: #fff2d9;
+	}
+}

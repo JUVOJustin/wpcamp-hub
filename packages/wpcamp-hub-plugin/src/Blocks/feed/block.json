@@ -1,0 +1,68 @@
+{
+	"$schema": "https://schemas.wp.org/trunk/block.json",
+	"apiVersion": 3,
+	"name": "wpcamp-hub/feed",
+	"version": "1.0.0",
+	"title": "Community Feed",
+	"category": "design",
+	"icon": "format-status",
+	"description": "The community feed — curated X/Twitter posts grouped by event hashtag. Each event gets its own feed of cards, pulled dynamically from the tweets CPT.",
+	"keywords": [ "feed", "tweets", "community", "social", "hashtag", "events" ],
+	"textdomain": "wpcamp-hub",
+	"supports": {
+		"html": false,
+		"anchor": true,
+		"align": [ "full" ],
+		"color": {
+			"background": true,
+			"gradients": true,
+			"text": false
+		},
+		"spacing": {
+			"padding": true,
+			"margin": true
+		}
+	},
+	"attributes": {
+		"eyebrow": {
+			"type": "string",
+			"source": "html",
+			"selector": ".wpch-feeds__eyebrow",
+			"default": "From the community"
+		},
+		"heading": {
+			"type": "string",
+			"source": "html",
+			"selector": ".wpch-feeds__heading",
+			"default": "What people are saying"
+		},
+		"linkLabel": {
+			"type": "string",
+			"default": "All events"
+		},
+		"linkUrl": {
+			"type": "string",
+			"default": ""
+		},
+		"eventsCount": {
+			"type": "number",
+			"default": 3
+		},
+		"tweetsPerEvent": {
+			"type": "number",
+			"default": 4
+		},
+		"columns": {
+			"type": "number",
+			"default": 3
+		},
+		"showEmpty": {
+			"type": "boolean",
+			"default": false
+		}
+	},
+	"usesContext": [],
+	"editorScript": "file:./index.js",
+	"style": "file:./style-index.css",
+	"render": "file:./render.php"
+}

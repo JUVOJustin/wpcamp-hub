@@ -22,6 +22,7 @@ class Data_Structure {
 	public const string TAXONOMY_TRACK       = 'wpcamp_track';
 
 	public const string TERM_META_COLOR = 'wpcamp_color';
+	public const string TERM_META_ICON  = 'wpcamp_icon';
 
 	/**
 	 * Register all data structures.
@@ -395,7 +396,7 @@ class Data_Structure {
 	}
 
 	/**
-	 * Register taxonomy term meta (track accent colour).
+	 * Register taxonomy term meta (track accent colour; tweet label colour + icon).
 	 */
 	private function register_term_meta(): void {
 		register_term_meta(
@@ -410,6 +411,44 @@ class Data_Structure {
 				'default'           => '',
 			)
 		);
+
+		register_term_meta(
+			self::TAXONOMY_TWEET_LABEL,
+			self::TERM_META_COLOR,
+			array(
+				'type'              => 'string',
+				'description'       => __( 'Accent colour for the feed label (hex).', 'wpcamp-hub' ),
+				'single'            => true,
+				'show_in_rest'      => true,
+				'sanitize_callback' => 'sanitize_hex_color',
+				'default'           => '',
+			)
+		);
+
+		register_term_meta(
+			self::TAXONOMY_TWEET_LABEL,
+			self::TERM_META_ICON,
+			array(
+				'type'              => 'string',
+				'description'       => __( 'Icon key for the feed label.', 'wpcamp-hub' ),
+				'single'            => true,
+				'show_in_rest'      => true,
+				'sanitize_callback' => array( self::class, 'sanitize_feed_icon' ),
+				'default'           => '',
+			)
+		);
+	}
+
+	/**
+	 * Sanitize a feed icon key against the known icon registry.
+	 *
+	 * @param mixed $value Submitted icon key.
+	 * @return string Valid icon key, or '' when unknown.
+	 */
+	public static function sanitize_feed_icon( mixed $value ): string {
+		$key = is_string( $value ) ? sanitize_key( $value ) : '';
+
+		return '' !== $key && Feed_Icon::exists( $key ) ? $key : '';
 	}
 
 	/**
@@ -463,6 +502,93 @@ class Data_Structure {
 			return;
 		}
 		update_term_meta( $term_id, self::TERM_META_COLOR, $color );
+	}
+
+	/**
+	 * Render the colour + icon fields on the "Add Tweet Label" form.
+	 */
+	public function add_tweet_label_fields(): void {
+		?>
+		<div class="form-field term-wpcamp-color-wrap">
+			<label for="wpcamp-color"><?php esc_html_e( 'Accent colour', 'wpcamp-hub' ); ?></label>
+			<input type="color" name="<?php echo esc_attr( self::TERM_META_COLOR ); ?>" id="wpcamp-color" value="#3858E9" />
+			<p><?php esc_html_e( 'Pill, card accent and filter-rail colour for posts with this label.', 'wpcamp-hub' ); ?></p>
+		</div>
+		<div class="form-field term-wpcamp-icon-wrap">
+			<label for="wpcamp-icon"><?php esc_html_e( 'Icon', 'wpcamp-hub' ); ?></label>
+			<select name="<?php echo esc_attr( self::TERM_META_ICON ); ?>" id="wpcamp-icon">
+				<option value=""><?php esc_html_e( '— Default —', 'wpcamp-hub' ); ?></option>
+				<?php foreach ( Feed_Icon::keys() as $icon_key ) : ?>
+					<option value="<?php echo esc_attr( $icon_key ); ?>"><?php echo esc_html( $icon_key ); ?></option>
+				<?php endforeach; ?>
+			</select>
+			<p><?php esc_html_e( 'Shown on the pill and in the feed filter rail.', 'wpcamp-hub' ); ?></p>
+		</div>
+		<?php
+	}
+
+	/**
+	 * Render the colour + icon fields on the "Edit Tweet Label" form.
+	 *
+	 * @param \WP_Term $term Term being edited.
+	 */
+	public function edit_tweet_label_fields( \WP_Term $term ): void {
+		$color = get_term_meta( $term->term_id, self::TERM_META_COLOR, true );
+		$color = is_string( $color ) && '' !== $color ? $color : '#3858E9';
+		$icon  = get_term_meta( $term->term_id, self::TERM_META_ICON, true );
+		$icon  = is_string( $icon ) ? $icon : '';
+		?>
+		<tr class="form-field term-wpcamp-color-wrap">
+			<th scope="row">
+				<label for="wpcamp-color"><?php esc_html_e( 'Accent colour', 'wpcamp-hub' ); ?></label>
+			</th>
+			<td>
+				<input type="color" name="<?php echo esc_attr( self::TERM_META_COLOR ); ?>" id="wpcamp-color" value="<?php echo esc_attr( $color ); ?>" />
+				<p class="description"><?php esc_html_e( 'Pill, card accent and filter-rail colour for posts with this label.', 'wpcamp-hub' ); ?></p>
+			</td>
+		</tr>
+		<tr class="form-field term-wpcamp-icon-wrap">
+			<th scope="row">
+				<label for="wpcamp-icon"><?php esc_html_e( 'Icon', 'wpcamp-hub' ); ?></label>
+			</th>
+			<td>
+				<select name="<?php echo esc_attr( self::TERM_META_ICON ); ?>" id="wpcamp-icon">
+					<option value=""><?php esc_html_e( '— Default —', 'wpcamp-hub' ); ?></option>
+					<?php foreach ( Feed_Icon::keys() as $icon_key ) : ?>
+						<option value="<?php echo esc_attr( $icon_key ); ?>" <?php selected( $icon, $icon_key ); ?>><?php echo esc_html( $icon_key ); ?></option>
+					<?php endforeach; ?>
+				</select>
+				<p class="description"><?php esc_html_e( 'Shown on the pill and in the feed filter rail.', 'wpcamp-hub' ); ?></p>
+			</td>
+		</tr>
+		<?php
+	}
+
+	/**
+	 * Persist the tweet label colour and icon when a term is created or edited.
+	 *
+	 * @param int $term_id Term ID.
+	 */
+	public function save_tweet_label_fields( int $term_id ): void {
+		// phpcs:disable WordPress.Security.NonceVerification.Missing -- core handles the term-form nonce.
+		if ( isset( $_POST[ self::TERM_META_COLOR ] ) ) {
+			$color = sanitize_hex_color( wp_unslash( $_POST[ self::TERM_META_COLOR ] ) );
+			if ( null === $color || '' === $color ) {
+				delete_term_meta( $term_id, self::TERM_META_COLOR );
+			} else {
+				update_term_meta( $term_id, self::TERM_META_COLOR, $color );
+			}
+		}
+
+		if ( isset( $_POST[ self::TERM_META_ICON ] ) ) {
+			$icon = self::sanitize_feed_icon( sanitize_key( wp_unslash( $_POST[ self::TERM_META_ICON ] ) ) );
+			if ( '' === $icon ) {
+				delete_term_meta( $term_id, self::TERM_META_ICON );
+			} else {
+				update_term_meta( $term_id, self::TERM_META_ICON, $icon );
+			}
+		}
+		// phpcs:enable WordPress.Security.NonceVerification.Missing
 	}
 
 	/**

@@ -59,6 +59,25 @@ add_action( 'widgets_init', 'wpcamp_hub_widgets_init' );
 /**
  * Enqueue fonts, design tokens, component styles and the icon library.
  */
+/**
+ * Version string for a theme-owned asset: its file modification time.
+ *
+ * Busts the browser cache whenever the file changes, so edits to CSS/JS show
+ * up without bumping the theme version by hand. Falls back to the theme
+ * version when the file is missing.
+ *
+ * @param string $relative_path Theme-relative asset path.
+ * @return string Cache-busting version string.
+ */
+function wpcamp_hub_asset_version( $relative_path ) {
+	$file = get_theme_file_path( $relative_path );
+	if ( file_exists( $file ) ) {
+		return (string) filemtime( $file );
+	}
+
+	return (string) wp_get_theme()->get( 'Version' );
+}
+
 function wpcamp_hub_enqueue_assets() {
 	$theme   = wp_get_theme();
 	$version = $theme->get( 'Version' );
@@ -84,7 +103,7 @@ function wpcamp_hub_enqueue_assets() {
 		'wpcamp-hub-theme',
 		get_theme_file_uri( 'assets/css/theme.css' ),
 		array( 'wpcamp-hub-tokens' ),
-		$version
+		wpcamp_hub_asset_version( 'assets/css/theme.css' )
 	);
 
 	// Root stylesheet (theme header; reserved for overrides).
@@ -102,7 +121,7 @@ function wpcamp_hub_enqueue_assets() {
 		'wpcamp-hub-header',
 		get_theme_file_uri( 'assets/js/header.js' ),
 		array(),
-		$version,
+		wpcamp_hub_asset_version( 'assets/js/header.js' ),
 		true
 	);
 
@@ -126,7 +145,7 @@ function wpcamp_hub_enqueue_assets() {
 			'wpcamp-hub-event',
 			get_theme_file_uri( 'assets/js/event.js' ),
 			array( 'leaflet' ),
-			$version,
+			wpcamp_hub_asset_version( 'assets/js/event.js' ),
 			true
 		);
 		wp_localize_script(
@@ -134,6 +153,26 @@ function wpcamp_hub_enqueue_assets() {
 			'wpcampHubEvent',
 			array(
 				'markerBase' => get_theme_file_uri( 'assets/leaflet/images/' ),
+			)
+		);
+	}
+
+	// Tweets archive: AJAX filter + pagination for the community feed.
+	if ( is_post_type_archive( 'wpcamp_tweet' ) ) {
+		wp_enqueue_script(
+			'wpcamp-hub-tweet-feed',
+			get_theme_file_uri( 'assets/js/tweet-feed.js' ),
+			array(),
+			wpcamp_hub_asset_version( 'assets/js/tweet-feed.js' ),
+			true
+		);
+		wp_localize_script(
+			'wpcamp-hub-tweet-feed',
+			'wpcampHubFeed',
+			array(
+				'ajaxUrl' => admin_url( 'admin-ajax.php' ),
+				'action'  => 'wpcamp_tweet_feed',
+				'nonce'   => wp_create_nonce( 'wpcamp_tweet_feed' ),
 			)
 		);
 	}

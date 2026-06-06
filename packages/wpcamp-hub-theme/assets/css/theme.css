@@ -523,3 +523,111 @@ a { color: var(--brand); text-decoration: none; }
 .wpch-event__tweet-text { margin: 0 0 12px; font-size: 14px; line-height: 1.55; color: var(--ink-700); flex: 1; }
 .wpch-event__tweet-link { font-size: 13px; font-weight: 600; color: var(--brand); text-decoration: none; }
 .wpch-event__tweet-link:hover { text-decoration: underline; }
+
+/* ============================================================
+   Community feed (tweets archive) — sidebar rail + timeline
+   ============================================================ */
+.wpch-feed-archive { padding: 32px 0 64px; }
+
+.wpch-feed-grid {
+  display: grid;
+  grid-template-columns: 260px 1fr;
+  gap: 40px;
+  align-items: start;
+}
+@media (max-width: 860px) {
+  .wpch-feed-grid { grid-template-columns: 1fr; gap: 28px; }
+}
+
+/* ---- filter rail ---- */
+.wpch-feed-rail { position: sticky; top: 88px; display: flex; flex-direction: column; }
+@media (max-width: 860px) { .wpch-feed-rail { position: static; } }
+
+.wpch-feed-rail__label {
+  font: 600 12px var(--font-mono); letter-spacing: .04em; text-transform: uppercase;
+  color: var(--ink-500); margin-bottom: 10px; padding-left: 14px;
+}
+.wpch-feed-rail__list { display: flex; flex-direction: column; gap: 2px; }
+
+.wpch-feed-stat {
+  --stat: var(--brand);
+  display: flex; align-items: center; gap: 12px; width: 100%;
+  padding: 11px 14px; border: none; background: none; cursor: pointer;
+  border-radius: 8px; text-align: left; transition: background .15s ease;
+}
+.wpch-feed-stat:hover { background: var(--bg-subtle); }
+.wpch-feed-stat.is-active { background: var(--bg-subtle); }
+.wpch-feed-stat__dot {
+  width: 34px; height: 34px; border-radius: 8px; flex: none;
+  display: grid; place-items: center;
+  color: var(--stat);
+  background: color-mix(in srgb, var(--stat) 14%, #fff);
+}
+.wpch-feed-stat--ink { --stat: var(--ink-700); }
+.wpch-feed-stat--ink .wpch-feed-stat__dot { background: var(--bg-subtle); }
+.wpch-feed-stat--brand       { --stat: var(--brand); }
+.wpch-feed-stat--fest-teal   { --stat: var(--fest-teal); }
+.wpch-feed-stat--fest-coral  { --stat: var(--fest-coral); }
+.wpch-feed-stat--fest-violet { --stat: var(--fest-violet); }
+.wpch-feed-stat--fest-gold   { --stat: var(--fest-gold); }
+.wpch-feed-stat__label { font-weight: 600; font-size: 14.5px; color: var(--ink-900); }
+.wpch-feed-stat__count { margin-left: auto; font: 700 13px var(--font-mono); color: var(--ink-500); }
+.wpch-feed-stat.is-active .wpch-feed-stat__count { color: var(--stat); }
+
+.wpch-feed-rail__group { margin-top: 22px; }
+.wpch-feed-rail__select {
+  width: 100%; font: 500 14px var(--font-sans); color: var(--ink-900);
+  padding: 9px 12px; border: 1px solid var(--line); border-radius: var(--radius-sm, 4px);
+  background: #fff; cursor: pointer;
+}
+.wpch-feed-rail__select:focus { outline: none; border-color: var(--brand); box-shadow: var(--shadow-focus); }
+
+/* ---- timeline ---- */
+.wpch-feed-search { position: relative; display: block; margin-bottom: 18px; }
+.wpch-feed-search__icon { position: absolute; left: 13px; top: 50%; transform: translateY(-50%); color: var(--ink-400); pointer-events: none; }
+.wpch-feed-search__input {
+  width: 100%; font: 500 15px var(--font-sans); color: var(--ink-900);
+  padding: 11px 14px 11px 40px; border: 1px solid var(--line-strong); border-radius: 2px; background: #fff;
+}
+.wpch-feed-search__input::placeholder { color: var(--ink-400); }
+.wpch-feed-search__input:focus { outline: none; border-color: var(--brand); box-shadow: var(--shadow-focus); }
+
+.wpch-feed-timeline__count { margin: 0 0 18px; font: 500 13.5px var(--font-mono); color: var(--ink-500); }
+.wpch-feed-timeline__grid { display: flex; flex-direction: column; gap: 16px; }
+.wpch-feed-archive.is-loading .wpch-feed-timeline__grid,
+.wpch-feed-grid.is-loading .wpch-feed-timeline__grid { opacity: .55; transition: opacity .15s ease; }
+.wpch-feed-timeline__empty { margin: 8px 0 0; font-size: 15px; color: var(--ink-500); }
+.wpch-feed-timeline__more { margin-top: 32px; text-align: center; }
+.wpch-feed-timeline__more button[hidden] { display: none; }
+
+/* feed card — the feed-card design, themed with the theme's tokens so it renders
+   identically here without loading the block stylesheet */
+.wpch-feed-timeline .wpch-feed {
+  --wpch-feed-color: var(--brand);
+  --wpch-feed-tint: var(--brand-tint);
+  background: #fff; border: 1px solid var(--line); border-radius: 10px;
+  padding: 20px 22px; display: flex; flex-direction: column;
+  font-family: var(--font-sans);
+  transition: border-color .15s ease, box-shadow .15s ease;
+}
+.wpch-feed-timeline .wpch-feed:hover { border-color: var(--line-strong); box-shadow: var(--shadow-sm); }
+.wpch-feed-timeline .wpch-feed__link { display: flex; flex-direction: column; flex: 1; text-decoration: none; color: inherit; }
+.wpch-feed-timeline .wpch-feed__head { display: flex; align-items: center; gap: 12px; margin-bottom: 4px; }
+.wpch-feed-timeline .wpch-feed__avatar { width: 44px; height: 44px; border-radius: 50%; flex: none; background: var(--bg-sunken, #e8eaed); object-fit: cover; }
+.wpch-feed-timeline .wpch-feed__author { font-weight: 700; font-size: 15.5px; line-height: 1.2; color: var(--ink-900); }
+.wpch-feed-timeline .wpch-feed__handle { font: 500 13px var(--font-mono); color: var(--ink-500); }
+.wpch-feed-timeline .wpch-feed__text { margin: 14px 0 0; font-size: 16px; line-height: 1.6; color: var(--ink-900); flex: 1; word-break: break-word; }
+.wpch-feed-timeline .wpch-feed__foot { display: flex; align-items: center; justify-content: space-between; gap: 10px; flex-wrap: wrap; margin-top: 14px; }
+.wpch-feed-timeline .wpch-feed__pill {
+  display: inline-flex; align-items: center; gap: 6px;
+  font-size: 12px; font-weight: 700; letter-spacing: .03em;
+  padding: 4px 10px 4px 8px; border-radius: 999px;
+  color: var(--wpch-feed-color); background: var(--wpch-feed-tint);
+}
+.wpch-feed-timeline .wpch-feed__pill-icon { width: 14px; height: 14px; flex: none; }
+.wpch-feed-timeline .wpch-feed__event { font: 600 12px var(--font-mono); color: var(--ink-400, #999); }
+.wpch-feed-timeline .wpch-feed--brand       { --wpch-feed-color: var(--brand);       --wpch-feed-tint: var(--brand-tint); }
+.wpch-feed-timeline .wpch-feed--fest-teal    { --wpch-feed-color: var(--fest-teal);   --wpch-feed-tint: var(--fest-teal-tint); }
+.wpch-feed-timeline .wpch-feed--fest-coral   { --wpch-feed-color: var(--fest-coral);  --wpch-feed-tint: var(--fest-coral-tint); }
+.wpch-feed-timeline .wpch-feed--fest-violet  { --wpch-feed-color: var(--fest-violet); --wpch-feed-tint: var(--fest-violet-tint); }
+.wpch-feed-timeline .wpch-feed--fest-gold    { --wpch-feed-color: var(--fest-gold);   --wpch-feed-tint: var(--fest-gold-tint); }
