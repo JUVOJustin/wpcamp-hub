@@ -6,8 +6,8 @@
 	"title": "Programme Excerpt",
 	"category": "design",
 	"icon": "list-view",
-	"description": "Programme section — heading, intro text, a link, the track legend and a grid of session cards. Cards can later be queried dynamically from the sessions CPT.",
-	"keywords": [ "programme", "sessions", "schedule", "cards" ],
+	"description": "Programme section — heading, intro, the track legend and a grid of cards. Cards can be placed manually or pulled dynamically from a linked event's sessions or tweets.",
+	"keywords": [ "programme", "sessions", "tweets", "schedule", "cards", "event" ],
 	"textdomain": "wpcamp-hub",
 	"supports": {
 		"html": false,
@@ -65,6 +65,9 @@
 		"contentSource": {
 			"type": "string",
 			"default": "manual"
+		},
+		"eventId": {
+			"type": "number"
 		},
 		"legendSource": {
 			"type": "string",

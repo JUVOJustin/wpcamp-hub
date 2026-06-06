@@ -2,6 +2,11 @@
  * Programme Excerpt — shared styles (front end + editor).
  */
 
+/* Tweet cards (contentSource = "tweets") render via Tweet_Feed::render_card(),
+   which uses the shared feed-card design. Pull in that partial so the cards are
+   styled even when no feed/feed-card block is on the page. */
+@use '../feed-card/card';
+
 .wpch-programme {
 	padding: 80px 0;
 	font-family: var( --wp--preset--font-family--sans );

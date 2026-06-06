@@ -16,7 +16,12 @@
 
 use WPCAMP_HUB\Data\Track;
 use WPCAMP_HUB\Data\Session;
+use WPCAMP_HUB\Data\Tweet;
+use WPCAMP_HUB\Data\Event;
 use WPCAMP_HUB\Data\Data_Structure;
+use WPCAMP_HUB\Frontend\Tweet_Feed;
+use WPCAMP_HUB\Frontend\Sessions_Page;
+use WPCAMP_HUB\Frontend\Tweets_Page;
 
 if ( ! defined( 'ABSPATH' ) ) {
 	exit;
@@ -32,20 +37,51 @@ $content_source = isset( $attributes['contentSource'] ) ? $attributes['contentSo
 $columns        = isset( $attributes['columns'] ) ? (int) $attributes['columns'] : 3;
 $sessions_count = isset( $attributes['sessionsCount'] ) ? (int) $attributes['sessionsCount'] : 3;
 $legend_attr    = isset( $attributes['legend'] ) && is_array( $attributes['legend'] ) ? $attributes['legend'] : array();
+$event_id       = isset( $attributes['eventId'] ) ? (int) $attributes['eventId'] : 0;
+
+// Resolve the linked event, when set and valid.
+$event = null;
+if ( $event_id > 0 && class_exists( Event::class ) && Event::get_post_type() === get_post_type( $event_id ) ) {
+	$event = Event::from( $event_id );
+}
+
+// Tracks actually present in the rendered session cards (name => colour),
+// populated while building the cards below. The dynamic legend is limited to
+// these so it only reflects what the query shows.
+$visible_tracks = array();
 
 /**
- * Build the legend item list, from either the manual attribute or the tracks.
+ * Build the legend item list.
  *
+ * For the "tracks" source the legend is limited to the tracks that appear in
+ * the rendered session cards ($visible_tracks), preserving the canonical track
+ * order. The manual source lists exactly what the author configured.
+ *
+ * @param array<string,string> $visible_tracks Tracks present in the rendered cards (name => colour).
  * @return array<int,array{name:string,color:string}>
  */
-$legend_items = static function () use ( $legend_source, $legend_attr ): array {
+$legend_items = static function ( array $visible_tracks ) use ( $legend_source, $legend_attr, $content_source ): array {
 	if ( 'tracks' === $legend_source ) {
+		$tracks = Track::all();
+
+		// Limit to the tracks present in the rendered cards when those cards are
+		// sessions; other content modes have no session tracks to scope against,
+		// so the legend describes the full taxonomy.
+		if ( 'sessions' === $content_source ) {
+			$tracks = array_values(
+				array_filter(
+					$tracks,
+					static fn( Track $track ): bool => isset( $visible_tracks[ $track->get_name() ] )
+				)
+			);
+		}
+
 		return array_map(
 			static fn( Track $track ): array => array(
 				'name'  => $track->get_name(),
 				'color' => $track->get_color(),
 			),
-			Track::all()
+			$tracks
 		);
 	}
 
@@ -114,30 +150,96 @@ $render_session_card = static function ( Session $session ): string {
 	return (string) ob_get_clean();
 };
 
+$limit = $sessions_count > 0 ? $sessions_count : 3;
+
 // ---- cards markup ----------------------------------------------------------
 if ( 'sessions' === $content_source ) {
-	$query = new WP_Query(
-		array(
-			'post_type'           => Data_Structure::POST_TYPE_SESSION,
-			'posts_per_page'      => $sessions_count > 0 ? $sessions_count : 3,
-			'post_status'         => 'publish',
-			'orderby'             => 'meta_value',
-			'meta_key'            => 'wpcamp_start_time', // phpcs:ignore WordPress.DB.SlowDBQuery.slow_db_query_meta_key
-			'order'               => 'ASC',
-			'ignore_sticky_posts' => true,
-		)
-	);
+	// Sessions: scoped to the linked event when set, otherwise the latest
+	// sessions site-wide.
+	if ( $event instanceof Event ) {
+		$sessions = $event->get_sessions();
+		usort(
+			$sessions,
+			static fn( Session $a, Session $b ): int => strcmp( $a->get_start_time(), $b->get_start_time() )
+		);
+		$sessions = array_slice( $sessions, 0, $limit );
+	} else {
+		$query    = new WP_Query(
+			array(
+				'post_type'           => Data_Structure::POST_TYPE_SESSION,
+				'posts_per_page'      => $limit,
+				'post_status'         => 'publish',
+				'orderby'             => 'meta_value',
+				'meta_key'            => 'wpcamp_start_time', // phpcs:ignore WordPress.DB.SlowDBQuery.slow_db_query_meta_key
+				'order'               => 'ASC',
+				'ignore_sticky_posts' => true,
+			)
+		);
+		$sessions = array_map( static fn( $p ): Session => Session::from( $p ), $query->posts );
+		wp_reset_postdata();
+	}
 
 	$cards = '';
-	foreach ( $query->posts as $session_post ) {
-		$cards .= $render_session_card( Session::from( $session_post ) );
+	foreach ( $sessions as $session ) {
+		$track = $session->get_track();
+		if ( null !== $track ) {
+			// Track which tracks are actually present, keyed by name so the
+			// legend can be limited to what the query renders.
+			$visible_tracks[ $track->get_name() ] = $track->get_color();
+		}
+		$cards .= $render_session_card( $session );
 	}
-	wp_reset_postdata();
+	$grid_inner = $cards;
+} elseif ( 'tweets' === $content_source && class_exists( Tweet_Feed::class ) ) {
+	// Tweets: scoped to the linked event when set, otherwise the latest tweets
+	// site-wide.
+	if ( $event instanceof Event ) {
+		$tweets = array_slice( $event->get_tweets(), 0, $limit );
+	} else {
+		$query  = new WP_Query(
+			array(
+				'post_type'           => Data_Structure::POST_TYPE_TWEET,
+				'posts_per_page'      => $limit,
+				'post_status'         => 'publish',
+				'ignore_sticky_posts' => true,
+			)
+		);
+		$tweets = array_map( static fn( $p ): Tweet => Tweet::from( $p ), $query->posts );
+		wp_reset_postdata();
+	}
 
+	$cards = '';
+	foreach ( $tweets as $tweet ) {
+		$cards .= Tweet_Feed::render_card( $tweet );
+	}
 	$grid_inner = $cards;
 } else {
 	// Manual mode: use the InnerBlocks output.
 	$grid_inner = $content;
+}
+
+// Auto-fill the section link (URL + label) to the event's subpage when not set
+// manually. The label only auto-adapts while it is empty or still the default
+// "All events", so an author-chosen label is preserved.
+if ( $event instanceof Event ) {
+	$default_label  = __( 'All events', 'wpcamp-hub' );
+	$label_is_blank = '' === trim( (string) $link_label ) || $default_label === $link_label;
+
+	if ( 'tweets' === $content_source && class_exists( Tweets_Page::class ) ) {
+		if ( '' === $link_url ) {
+			$link_url = Tweets_Page::url_for( $event->get_id() );
+		}
+		if ( $label_is_blank ) {
+			$link_label = __( 'All posts', 'wpcamp-hub' );
+		}
+	} elseif ( 'sessions' === $content_source && class_exists( Sessions_Page::class ) ) {
+		if ( '' === $link_url ) {
+			$link_url = Sessions_Page::url_for( $event->get_id() );
+		}
+		if ( $label_is_blank ) {
+			$link_label = __( 'All sessions', 'wpcamp-hub' );
+		}
+	}
 }
 
 $wrapper_attributes = get_block_wrapper_attributes( array( 'class' => 'wpch-programme' ) );
@@ -162,7 +264,7 @@ $wrapper_attributes = get_block_wrapper_attributes( array( 'class' => 'wpch-prog
 
 		<?php
 		if ( $show_legend ) :
-			$items = $legend_items();
+			$items = $legend_items( $visible_tracks );
 			if ( array() !== $items ) :
 				?>
 				<div class="wpch-programme__legend">
